@@ -23,6 +23,7 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 .logo{display:flex;align-items:baseline;gap:4px;}
 .logo-main{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--text);letter-spacing:-0.5px;}
 .logo-sub{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--accent2);letter-spacing:-0.5px;}
+.logo-sub-initial{display:none;}
 
 /* ── Sensor badge ────────────────────────────────────────────────────────── */
 .sensor-badge{font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;transition:all 0.3s;}
@@ -57,7 +58,8 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 
 /* ── Movement grid ───────────────────────────────────────────────────────── */
 .movement-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-@media(max-width:380px){.movement-grid{grid-template-columns:1fr;}}
+.movement-group-label{grid-column:1/-1;font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:4px 2px 0;}
+@media(max-width:360px){.logo-sub-word{display:none;}.logo-sub-initial{display:inline;}}
 
 /* ── Movement card ───────────────────────────────────────────────────────── */
 .movement-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;transition:border-color 0.25s;animation:fadeUp 0.3s ease both;}
@@ -166,7 +168,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 <header class="app-header">
   <div class="logo">
     <span class="logo-main">PhysiQ</span>
-    <span class="logo-sub">&nbsp;— Motion</span>
+    <span class="logo-sub">— <span class="logo-sub-word">Motion</span><span class="logo-sub-initial">M</span></span>
   </div>
   <span class="sensor-badge" id="sensorBadge">Sin sensor</span>
 </header>
