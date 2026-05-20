@@ -1,6 +1,6 @@
 # PhysiQ — Motion
 
-Mobile-first inclinometer web app for measuring joint range of motion (ROM) using the phone's built-in sensors. Part of the [PhysiQ](https://physiodevapp.github.io) clinical toolkit.
+Mobile-first inclinometer web app for measuring joint range of motion (ROM) using the phone's built-in sensors.
 
 **[→ Open app](https://physiodevapp.github.io/physiq-motion/)**
 
