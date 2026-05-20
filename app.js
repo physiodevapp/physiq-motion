@@ -319,7 +319,6 @@ function angularDiff(a, b) {
 function exportToPhysiQReport() {
   const payload = {
     src: 'physiq-motion',
-    region: 'cervical',
     patient: document.getElementById('patientName').value.trim(),
     fecha: new Date().toLocaleDateString('es-ES'),
     rom: Object.fromEntries(
