@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ## Project Overview
 
-PhysiQ-Motion is a mobile-first inclinometer web app for measuring cervical range of motion (ROM) using the phone's built-in accelerometer and magnetometer via `DeviceOrientationEvent`. It measures all 6 cervical movements (flexion, extension, lateral flexion L/R, rotation L/R) and exports results to PhysiQ-Report.
+PhysiQ-Motion is a mobile-first inclinometer web app for measuring joint range of motion (ROM) using the phone's built-in accelerometer and magnetometer via `DeviceOrientationEvent`. It measures movements across any joint region and exports results to PhysiQ-Report.
 
 **Deployment:** GitHub Pages — push to `main` deploys automatically.
 
@@ -21,12 +21,15 @@ No unit tests yet.
 
 ## Commit format
 
+Always use this format when committing:
+
 ```
 git commit -m "short imperative title" -m "description when needed"
 ```
 
-- First `-m`: title (max ~72 chars)
-- Second `-m`: only when relevant context to add
+- First `-m` is the title (max ~72 characters)
+- Second `-m` is only included when there is relevant context to add
+- Never use `git commit` without flags or interactive editors
 - **Never add co-authorship** (`Co-authored-by`) under any circumstance
 
 ## File Architecture
@@ -52,7 +55,7 @@ Identical to `physiq-assessment` and `physiq-report`:
 
 Uses `DeviceOrientationEvent` (browser-fused accelerometer + magnetometer — no raw sensor access needed):
 
-| Axis | Cervical movement | Phone placement |
+| Axis | Movement | Phone placement |
 |------|-------------------|-----------------|
 | `beta` | Flexion / Extension | Vertical, screen facing examiner, against forehead |
 | `gamma` | Lateral flexion L/R | Vertical, screen facing examiner, against temple |
@@ -108,7 +111,7 @@ idle ──[calibrateNeutral()]──► calibrated ──[startMeasurement()]�
                                                [saveResult()] → card updated, overlay closes
 ```
 
-## Reference Values (cervical norms)
+## Reference Values (cervical ROM norms — current defaults)
 
 | Movement | Reference |
 |----------|-----------|
@@ -128,8 +131,7 @@ Deficit classification (shown in summary table and card badges):
 
 ```js
 {
-  src: 'physiq-rom',
-  region: 'cervical',
+  src: 'physiq-motion',
   patient: string,
   fecha: 'DD/MM/YYYY',
   rom: {
