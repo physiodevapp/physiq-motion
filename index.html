@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PhysiQ — ROM</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0d12;--surface:#111620;--surface2:#171e2e;--surface3:#1e2740;
+  --border:#232d45;--border2:#2d3a58;
+  --accent:#4f9cf9;--accent2:#38d9a9;--accent3:#ffd43b;
+  --text:#e8edf5;--text2:#8fa0bf;--text3:#5a6e8a;
+  --red:#ff6b6b;--orange:#ff9f43;--green:#38d9a9;
+  --danger:#ff4757;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.app-header{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;padding:0 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(10,13,18,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
+.logo{display:flex;align-items:baseline;gap:4px;}
+.logo-main{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--text);letter-spacing:-0.5px;}
+.logo-sub{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--accent2);letter-spacing:-0.5px;}
+
+/* ── Sensor badge ────────────────────────────────────────────────────────── */
+.sensor-badge{font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;transition:all 0.3s;}
+.sensor-badge.active{color:var(--green);border-color:rgba(56,217,169,0.35);background:rgba(56,217,169,0.08);}
+.sensor-badge.pending{color:var(--orange);border-color:rgba(255,159,67,0.35);background:rgba(255,159,67,0.08);}
+.sensor-badge.error{color:var(--red);border-color:rgba(255,107,107,0.35);background:rgba(255,107,107,0.08);}
+
+/* ── Main ────────────────────────────────────────────────────────────────── */
+main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
+
+/* ── Permission card ─────────────────────────────────────────────────────── */
+.permission-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;}
+.perm-icon{font-size:32px;}
+.perm-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);}
+.perm-desc{font-size:13px;color:var(--text2);line-height:1.5;max-width:280px;}
+
+/* ── No-sensor banner ────────────────────────────────────────────────────── */
+.no-sensor-banner{background:rgba(255,71,87,0.08);border:1px solid rgba(255,71,87,0.3);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--red);line-height:1.5;}
+
+/* ── Info row ────────────────────────────────────────────────────────────── */
+.info-row{display:flex;gap:10px;align-items:flex-end;}
+.field{flex:1;display:flex;flex-direction:column;gap:5px;}
+.field-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;}
+.field-input{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:border-color 0.2s;width:100%;}
+.field-input:focus{border-color:var(--accent);}
+.region-badge{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);border:1px solid rgba(79,156,249,0.3);background:rgba(79,156,249,0.08);padding:9px 14px;border-radius:8px;white-space:nowrap;}
+
+/* ── Section header ──────────────────────────────────────────────────────── */
+.section-header{display:flex;justify-content:space-between;align-items:center;}
+.section-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;}
+.section-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);}
+
+/* ── Movement grid ───────────────────────────────────────────────────────── */
+.movement-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:380px){.movement-grid{grid-template-columns:1fr;}}
+
+/* ── Movement card ───────────────────────────────────────────────────────── */
+.movement-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;transition:border-color 0.25s;animation:fadeUp 0.3s ease both;}
+.movement-card.ok{border-color:rgba(56,217,169,0.3);}
+.movement-card.borderline{border-color:rgba(255,159,67,0.3);}
+.movement-card.deficit{border-color:rgba(255,107,107,0.3);}
+.mov-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.mov-icon{font-size:20px;line-height:1;}
+.mov-label{font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;color:var(--text);}
+.mov-ref{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-top:2px;}
+.mov-value{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:var(--text2);line-height:1;}
+.mov-value.ok{color:var(--green);}
+.mov-value.borderline{color:var(--orange);}
+.mov-value.deficit{color:var(--red);}
+
+/* ── Badges ──────────────────────────────────────────────────────────────── */
+.badge{display:inline-block;font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:4px;}
+.badge-ok{background:rgba(56,217,169,0.12);color:var(--green);}
+.badge-borderline{background:rgba(255,159,67,0.12);color:var(--orange);}
+.badge-deficit{background:rgba(255,107,107,0.12);color:var(--red);}
+
+/* ── Card buttons ────────────────────────────────────────────────────────── */
+.btn-measure{background:var(--accent);color:#0a0d12;border:none;border-radius:8px;padding:9px 12px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:background 0.2s,transform 0.1s;width:100%;}
+.btn-measure:hover{background:#3a7fd4;}
+.btn-measure:active{transform:scale(0.97);}
+.btn-measure.remeasure{background:transparent;color:var(--accent);border:1px solid rgba(79,156,249,0.4);}
+.btn-measure.remeasure:hover{background:rgba(79,156,249,0.08);}
+.btn-primary{background:var(--accent);color:#0a0d12;border:none;border-radius:10px;padding:13px 20px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:background 0.2s;width:100%;}
+.btn-primary:hover{background:#3a7fd4;}
+
+/* ── Summary card ────────────────────────────────────────────────────────── */
+.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.summary-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.summary-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--accent2);}
+.summary-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);}
+.rom-table{width:100%;border-collapse:collapse;font-size:12px;}
+.rom-table th{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:8px 14px;text-align:left;border-bottom:1px solid var(--border);}
+.rom-table td{padding:9px 14px;border-bottom:1px solid rgba(35,45,69,0.5);font-family:'DM Mono',monospace;color:var(--text);}
+.rom-table td:first-child{color:var(--text2);}
+.rom-table tr:last-child td{border-bottom:none;}
+.export-row{padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);}
+.btn-export{flex:1;background:var(--accent2);color:#0a0d12;border:none;border-radius:10px;padding:13px 16px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.2s;min-width:180px;}
+.btn-export:hover{background:#2ab89a;}
+.btn-reset{background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:10px;padding:13px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
+.btn-reset:hover{border-color:var(--text2);color:var(--text2);}
+
+/* ── Measurement overlay ─────────────────────────────────────────────────── */
+.measure-overlay{position:fixed;inset:0;z-index:200;background:rgba(10,13,18,0.75);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.measure-overlay.open{opacity:1;pointer-events:all;}
+.measure-sheet{background:var(--surface);border-top:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:640px;padding:0 20px 40px;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);max-height:92vh;overflow-y:auto;}
+.measure-overlay.open .measure-sheet{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:14px auto 18px;}
+.sheet-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.sheet-close{background:var(--surface2);border:1px solid var(--border);color:var(--text2);width:34px;height:34px;border-radius:8px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.2s;}
+.sheet-close:hover{background:var(--surface3);}
+.sheet-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);flex:1;}
+.sheet-region{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);border:1px solid rgba(79,156,249,0.3);padding:4px 8px;border-radius:6px;}
+.sheet-instruction{background:var(--surface2);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--text2);line-height:1.55;margin-bottom:16px;}
+.sheet-instruction strong{color:var(--text);}
+
+/* ── Placement diagram ───────────────────────────────────────────────────── */
+.placement-diagram{display:flex;justify-content:center;margin-bottom:16px;}
+.placement-svg{width:88px;height:108px;}
+
+/* ── Angle display ───────────────────────────────────────────────────────── */
+.angle-display{text-align:center;padding:22px 16px 18px;background:var(--surface2);border-radius:16px;margin-bottom:16px;position:relative;}
+.angle-value{font-family:'DM Mono',monospace;font-size:76px;font-weight:500;color:var(--text2);line-height:1;transition:color 0.3s;}
+.angle-value.live{color:var(--accent);}
+.angle-value.measuring{color:var(--accent);}
+.angle-value.done{color:var(--green);}
+.angle-unit{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:6px;}
+.peak-label{position:absolute;top:12px;right:16px;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent3);}
+
+/* ── Phase steps ─────────────────────────────────────────────────────────── */
+.phase-steps{display:flex;justify-content:center;gap:32px;margin-bottom:22px;}
+.phase-step-item{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0.3;transition:opacity 0.3s;font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;}
+.phase-step-item.active{opacity:1;}
+.phase-step-item.done{opacity:0.6;}
+.phase-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:background 0.3s;}
+.phase-step-item.active .phase-dot{background:var(--accent);}
+.phase-step-item.done .phase-dot{background:var(--green);}
+
+/* ── Sheet action buttons ────────────────────────────────────────────────── */
+.sheet-actions{display:flex;flex-direction:column;gap:8px;}
+.btn-sheet{border-radius:12px;padding:15px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:500;cursor:pointer;width:100%;transition:background 0.2s,transform 0.1s;border:none;}
+.btn-sheet:active{transform:scale(0.98);}
+.btn-calibrate{background:var(--surface3);border:1px solid var(--border2);color:var(--text);}
+.btn-calibrate:hover{background:var(--border);}
+.btn-start{background:var(--accent);color:#0a0d12;}
+.btn-start:hover{background:#3a7fd4;}
+.btn-stop{background:var(--orange);color:#0a0d12;}
+.btn-stop:hover{background:#e58a38;}
+.btn-save{background:var(--accent2);color:#0a0d12;}
+.btn-save:hover{background:#2ab89a;}
+.btn-redo{background:transparent;border:1px solid var(--border);color:var(--text3);font-family:'DM Mono',monospace;font-size:12px;padding:11px;}
+.btn-redo:hover{border-color:var(--text2);color:var(--text2);}
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+.pulsing{animation:pulse 1s ease-in-out infinite;}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">
+    <span class="logo-main">PhysiQ</span>
+    <span class="logo-sub">&nbsp;— ROM</span>
+  </div>
+  <span class="sensor-badge" id="sensorBadge">Sin sensor</span>
+</header>
+
+<main>
+
+  <!-- Sin sensor -->
+  <div class="no-sensor-banner" id="noSensorBanner" style="display:none">
+    Este dispositivo no expone sensores de orientación al navegador. Prueba con Chrome en Android o Safari en iOS (requiere HTTPS).
+  </div>
+
+  <!-- Permiso iOS -->
+  <div class="permission-card" id="permissionCard" style="display:none">
+    <div class="perm-icon">📐</div>
+    <div class="perm-title">Activar sensor de movimiento</div>
+    <div class="perm-desc">PhysiQ ROM necesita acceso al acelerómetro y giroscopio del dispositivo para medir ángulos en tiempo real.</div>
+    <button class="btn-primary" onclick="requestPermission()">Activar sensor</button>
+  </div>
+
+  <!-- Paciente + región -->
+  <div class="info-row">
+    <div class="field">
+      <label class="field-label" for="patientName">Paciente</label>
+      <input type="text" class="field-input" id="patientName" placeholder="Nombre (opcional)">
+    </div>
+    <div class="region-badge">Cervical</div>
+  </div>
+
+  <!-- Cabecera sección -->
+  <div class="section-header">
+    <span class="section-label">Movilidad Cervical</span>
+    <span class="section-sub" id="completionBadge">0 / 6</span>
+  </div>
+
+  <!-- Tarjetas de movimiento -->
+  <div class="movement-grid" id="movementGrid"></div>
+
+  <!-- Resumen -->
+  <div class="summary-card" id="summaryCard" style="display:none">
+    <div class="summary-header">
+      <span class="summary-title">Resumen ROM</span>
+      <span class="summary-sub" id="summaryDate"></span>
+    </div>
+    <table class="rom-table">
+      <thead>
+        <tr><th>Movimiento</th><th>Medido</th><th>Ref.</th><th>Estado</th></tr>
+      </thead>
+      <tbody id="romTableBody"></tbody>
+    </table>
+    <div class="export-row">
+      <button class="btn-export" onclick="exportToPhysiQReport()">📤 Exportar a PhysiQ Report</button>
+      <button class="btn-reset" onclick="resetAll()">↺ Nueva medición</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- Overlay de medición (bottom sheet) -->
+<div class="measure-overlay" id="measureOverlay" onclick="handleOverlayClick(event)">
+  <div class="measure-sheet" id="measureSheet">
+    <div class="sheet-handle"></div>
+
+    <div class="sheet-header">
+      <button class="sheet-close" onclick="closeMeasurement()">✕</button>
+      <div class="sheet-title" id="sheetTitle">—</div>
+      <div class="sheet-region">Cervical</div>
+    </div>
+
+    <div class="sheet-instruction" id="sheetInstruction"></div>
+    <div class="placement-diagram" id="placementDiagram"></div>
+
+    <div class="angle-display">
+      <div class="angle-value" id="angleValue">—</div>
+      <div class="angle-unit">grados</div>
+      <div class="peak-label" id="peakLabel"></div>
+    </div>
+
+    <div class="phase-steps">
+      <div class="phase-step-item" id="phaseStep1">
+        <div class="phase-dot" id="phaseDot1"></div>
+        <span>Neutro</span>
+      </div>
+      <div class="phase-step-item" id="phaseStep2">
+        <div class="phase-dot" id="phaseDot2"></div>
+        <span>Midiendo</span>
+      </div>
+      <div class="phase-step-item" id="phaseStep3">
+        <div class="phase-dot" id="phaseDot3"></div>
+        <span>Listo</span>
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn-sheet btn-calibrate" id="btnCalibrate" onclick="calibrateNeutral()">
+        Calibrar posición neutra
+      </button>
+      <button class="btn-sheet btn-start" id="btnStartMeasure" onclick="startMeasurement()" style="display:none">
+        Iniciar medición
+      </button>
+      <button class="btn-sheet btn-stop" id="btnStopMeasure" onclick="stopMeasurement()" style="display:none">
+        Detener y registrar
+      </button>
+      <button class="btn-sheet btn-save" id="btnSaveResult" onclick="saveResult()" style="display:none">
+        ✓ Confirmar resultado
+      </button>
+      <button class="btn-sheet btn-redo" id="btnRedo" onclick="redoMeasurement()" style="display:none">
+        ↺ Repetir desde neutro
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
