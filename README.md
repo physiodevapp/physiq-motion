@@ -72,7 +72,7 @@ Tapping **Export to PhysiQ Report** encodes the session as Base64 and opens Phys
 |-----|-----|------|
 | PhysiQ Assessment | https://physiodevapp.github.io/physiq-assessment/ | 5-phase clinical assessment |
 | PhysiQ Report | https://physiodevapp.github.io/physiq-report/ | Audio transcription + AI report generation |
-| PhysiQ Motion | https://physiodevapp.github.io/physiq-motion/ | Joint ROM measurement |
+| PhysiQ Motion | https://physiodevapp.github.io/physiq-motion/ | Joint motion measurement |
 
 ## Deployment
 

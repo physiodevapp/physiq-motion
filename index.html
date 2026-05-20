@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>PhysiQ — ROM</title>
+<title>PhysiQ — Motion</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <style>
@@ -166,7 +166,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 <header class="app-header">
   <div class="logo">
     <span class="logo-main">PhysiQ</span>
-    <span class="logo-sub">&nbsp;— ROM</span>
+    <span class="logo-sub">&nbsp;— Motion</span>
   </div>
   <span class="sensor-badge" id="sensorBadge">Sin sensor</span>
 </header>
@@ -182,7 +182,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
   <div class="permission-card" id="permissionCard" style="display:none">
     <div class="perm-icon">📐</div>
     <div class="perm-title">Activar sensor de movimiento</div>
-    <div class="perm-desc">PhysiQ ROM necesita acceso al acelerómetro y giroscopio del dispositivo para medir ángulos en tiempo real.</div>
+    <div class="perm-desc">PhysiQ Motion necesita acceso al acelerómetro y giroscopio del dispositivo para medir ángulos en tiempo real.</div>
     <button class="btn-primary" onclick="requestPermission()">Activar sensor</button>
   </div>
 
@@ -206,7 +206,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
   <!-- Resumen -->
   <div class="summary-card" id="summaryCard" style="display:none">
     <div class="summary-header">
-      <span class="summary-title">Resumen ROM</span>
+      <span class="summary-title">Resumen</span>
       <span class="summary-sub" id="summaryDate"></span>
     </div>
     <table class="rom-table">
