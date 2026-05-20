@@ -3,22 +3,22 @@
 // ── Definición de movimientos ─────────────────────────────────────────────
 const MOVEMENTS = {
   flexion: {
-    label: 'Flexión', axis: 'beta', ref: 50, icon: '⬇',
+    label: 'Flexión', axis: 'quat', ref: 50, icon: '⬇',
     placement: 'vertical',
     instruction: 'Coloca el teléfono <strong>verticalmente apoyado en la frente</strong>, pantalla hacia el examinador. El paciente parte de posición neutra e inclina la cabeza lentamente hacia adelante hasta su rango máximo.'
   },
   extension: {
-    label: 'Extensión', axis: 'beta', ref: 60, icon: '⬆',
+    label: 'Extensión', axis: 'quat', ref: 60, icon: '⬆',
     placement: 'vertical',
     instruction: 'Coloca el teléfono <strong>verticalmente apoyado en la frente</strong>, pantalla hacia el examinador. El paciente parte de posición neutra e inclina la cabeza lentamente hacia atrás hasta su rango máximo.'
   },
   lat_izq: {
-    label: 'Lat. Izquierda', axis: 'gamma', ref: 45, icon: '↙',
+    label: 'Lat. Izquierda', axis: 'quat', ref: 45, icon: '↙',
     placement: 'vertical',
     instruction: 'Coloca el teléfono <strong>verticalmente sobre la sien izquierda</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.'
   },
   lat_der: {
-    label: 'Lat. Derecha', axis: 'gamma', ref: 45, icon: '↘',
+    label: 'Lat. Derecha', axis: 'quat', ref: 45, icon: '↘',
     placement: 'vertical',
     instruction: 'Coloca el teléfono <strong>verticalmente sobre la sien derecha</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.'
   },
@@ -237,7 +237,9 @@ function handleOverlayClick(e) {
 
 function calibrateNeutral() {
   const axis = MOVEMENTS[state.active.movementId].axis;
-  state.active.neutralRef = sensor[axis];
+  state.active.neutralRef = axis === 'quat'
+    ? eulerToQuat(sensor.beta, sensor.gamma)
+    : sensor[axis];
   state.active.phase      = 'calibrated';
   state.active.peakDelta  = 0;
   document.getElementById('angleValue').textContent = '0°';
@@ -309,10 +311,14 @@ function updateLiveAngle() {
   const { movementId, phase, neutralRef } = state.active;
   if (!movementId || phase === 'idle' || neutralRef === null) return;
 
-  const axis  = MOVEMENTS[movementId].axis;
-  const delta = axis === 'alpha'
-    ? Math.abs(angularDiff(sensor.alpha, neutralRef))
-    : Math.abs(sensor[axis] - neutralRef);
+  const axis = MOVEMENTS[movementId].axis;
+  let delta;
+  if (axis === 'quat') {
+    const qDelta = quatMultiply({ w: neutralRef.w, x: -neutralRef.x, y: -neutralRef.y, z: -neutralRef.z }, eulerToQuat(sensor.beta, sensor.gamma));
+    delta = quatAngleDeg(qDelta);
+  } else {
+    delta = Math.abs(angularDiff(sensor.alpha, neutralRef));
+  }
   const deg = Math.round(delta);
 
   document.getElementById('angleValue').textContent = deg + '°';
@@ -329,6 +335,32 @@ function angularDiff(a, b) {
   while (d >  180) d -= 360;
   while (d < -180) d += 360;
   return d;
+}
+
+// ── Cuaternión (beta + gamma, ignora alpha/brújula) ───────────────────────
+// Convención DeviceOrientationEvent: rotación intrínseca X(beta) → Y(gamma)
+function eulerToQuat(beta, gamma) {
+  const b = beta  * Math.PI / 180;
+  const g = gamma * Math.PI / 180;
+  return {
+    w:  Math.cos(b / 2) * Math.cos(g / 2),
+    x:  Math.sin(b / 2) * Math.cos(g / 2),
+    y:  Math.cos(b / 2) * Math.sin(g / 2),
+    z:  Math.sin(b / 2) * Math.sin(g / 2)
+  };
+}
+
+function quatMultiply(a, b) {
+  return {
+    w: a.w*b.w - a.x*b.x - a.y*b.y - a.z*b.z,
+    x: a.w*b.x + a.x*b.w + a.y*b.z - a.z*b.y,
+    y: a.w*b.y - a.x*b.z + a.y*b.w + a.z*b.x,
+    z: a.w*b.z + a.x*b.y - a.y*b.x + a.z*b.w
+  };
+}
+
+function quatAngleDeg(q) {
+  return 2 * Math.acos(Math.min(1, Math.abs(q.w))) * 180 / Math.PI;
 }
 
 // ── Exportar a PhysiQ Report ──────────────────────────────────────────────
