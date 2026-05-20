@@ -24,12 +24,12 @@ const MOVEMENTS = {
   },
   rot_izq: {
     label: 'Rotación Izq.', axis: 'alpha', ref: 80, icon: '↺',
-    placement: 'flat',
+    placement: 'flat-left',
     instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la izquierda hasta su rango máximo.<br><br><small style="color:var(--text3)">⚠️ Calibra siempre desde la posición neutra (vista al frente). Evita fuentes metálicas cercanas.</small>'
   },
   rot_der: {
     label: 'Rotación Der.', axis: 'alpha', ref: 80, icon: '↻',
-    placement: 'flat',
+    placement: 'flat-right',
     instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la derecha hasta su rango máximo.<br><br><small style="color:var(--text3)">⚠️ Calibra siempre desde la posición neutra (vista al frente). Evita fuentes metálicas cercanas.</small>'
   }
 };
@@ -361,16 +361,19 @@ function resetAll() {
 
 // ── SVG ilustraciones de colocación ──────────────────────────────────────
 function placementSVG(type) {
-  if (type === 'flat') {
+  if (type === 'flat-left' || type === 'flat-right') {
+    const left = type === 'flat-left';
+    // Arc alongside the phone (x=18–70, y=37–69); left arc curves out left, right arc curves out right
+    const arrow = left
+      ? `<path d="M14,42 Q2,53 14,66" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a1)"/>`
+      : `<path d="M74,66 Q86,55 74,42" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a1)"/>`;
     return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
       <ellipse cx="44" cy="60" rx="25" ry="33" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
       <rect x="18" y="37" width="52" height="32" rx="7" fill="none" stroke="#c084fc" stroke-width="1.5"/>
       <rect x="22" y="41" width="44" height="24" rx="4" fill="#171e2e"/>
-      <path d="M34,78 Q22,86 22,95 Q22,103 34,105" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a1)"/>
-      <path d="M54,78 Q66,86 66,95 Q66,103 54,105" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a2)"/>
+      ${arrow}
       <defs>
         <marker id="a1" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
-        <marker id="a2" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
       </defs>
     </svg>`;
   }
