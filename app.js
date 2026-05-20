@@ -14,13 +14,13 @@ const MOVEMENTS = {
   },
   lat_izq: {
     label: 'Lat. Izquierda', axis: 'gamma', ref: 45, icon: '↙',
-    placement: 'vertical',
-    instruction: 'Coloca el teléfono <strong>verticalmente sobre la sien izquierda</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.'
+    placement: 'landscape-left',
+    instruction: 'Coloca el teléfono <strong>en modo apaisado sobre la sien izquierda</strong>, con la pantalla en vertical mirando al examinador (no hacia arriba). El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.'
   },
   lat_der: {
     label: 'Lat. Derecha', axis: 'gamma', ref: 45, icon: '↘',
-    placement: 'vertical',
-    instruction: 'Coloca el teléfono <strong>verticalmente sobre la sien derecha</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.'
+    placement: 'landscape-right',
+    instruction: 'Coloca el teléfono <strong>en modo apaisado sobre la sien derecha</strong>, con la pantalla en vertical mirando al examinador (no hacia arriba). El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.'
   },
   rot_izq: {
     label: 'Rotación Izq.', axis: 'alpha', ref: 80, icon: '↺',
@@ -362,28 +362,43 @@ function resetAll() {
 // ── SVG ilustraciones de colocación ──────────────────────────────────────
 function placementSVG(type) {
   if (type === 'flat') {
-    // Vista superior: teléfono plano sobre la cabeza, flechas de rotación
     return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
       <ellipse cx="44" cy="60" rx="25" ry="33" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
-      <rect x="18" y="37" width="52" height="32" rx="7" fill="none" stroke="#4f9cf9" stroke-width="1.5"/>
+      <rect x="18" y="37" width="52" height="32" rx="7" fill="none" stroke="#c084fc" stroke-width="1.5"/>
       <rect x="22" y="41" width="44" height="24" rx="4" fill="#171e2e"/>
-      <path d="M34,78 Q22,86 22,95 Q22,103 34,105" stroke="#38d9a9" stroke-width="1.5" fill="none" marker-end="url(#a1)"/>
-      <path d="M54,78 Q66,86 66,95 Q66,103 54,105" stroke="#38d9a9" stroke-width="1.5" fill="none" marker-end="url(#a2)"/>
+      <path d="M34,78 Q22,86 22,95 Q22,103 34,105" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a1)"/>
+      <path d="M54,78 Q66,86 66,95 Q66,103 54,105" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a2)"/>
       <defs>
-        <marker id="a1" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#38d9a9"/></marker>
-        <marker id="a2" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#38d9a9"/></marker>
+        <marker id="a1" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
+        <marker id="a2" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
       </defs>
     </svg>`;
   }
-  // Vertical: teléfono de pie sobre la frente/sien, flecha de inclinación
+  if (type === 'landscape-left' || type === 'landscape-right') {
+    const left = type === 'landscape-left';
+    // Endpoint on ellipse (cx=44,cy=86,rx=13,ry=17) at ±210°/330°: (33,78) or (55,78)
+    const ex = left ? 33 : 55;
+    const qx = left ? 26 : 62;
+    return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="16" width="68" height="42" rx="6" fill="none" stroke="#c084fc" stroke-width="1.5"/>
+      <rect x="14" y="20" width="60" height="34" rx="3" fill="#171e2e"/>
+      <circle cx="78" cy="37" r="2.5" fill="none" stroke="#c084fc" stroke-width="1.2"/>
+      <ellipse cx="44" cy="86" rx="13" ry="17" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
+      <path d="M44,60 Q${qx},70 ${ex},78" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a4)"/>
+      <defs>
+        <marker id="a4" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
+      </defs>
+    </svg>`;
+  }
+  // Vertical: teléfono de pie sobre la frente, flecha de inclinación
   return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
-    <rect x="27" y="8" width="34" height="58" rx="6" fill="none" stroke="#4f9cf9" stroke-width="1.5"/>
+    <rect x="27" y="8" width="34" height="58" rx="6" fill="none" stroke="#c084fc" stroke-width="1.5"/>
     <rect x="31" y="13" width="26" height="46" rx="3" fill="#171e2e"/>
-    <circle cx="44" cy="71" r="3.5" fill="none" stroke="#4f9cf9" stroke-width="1.2"/>
+    <circle cx="44" cy="71" r="3.5" fill="none" stroke="#c084fc" stroke-width="1.2"/>
     <ellipse cx="44" cy="94" rx="18" ry="11" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
-    <path d="M44,79 Q30,87 28,94" stroke="#38d9a9" stroke-width="1.5" fill="none" marker-end="url(#a3)"/>
+    <path d="M44,79 Q30,87 28,94" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a3)"/>
     <defs>
-      <marker id="a3" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#38d9a9"/></marker>
+      <marker id="a3" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
     </defs>
   </svg>`;
 }

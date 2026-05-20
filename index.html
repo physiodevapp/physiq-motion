@@ -100,8 +100,8 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .rom-table td{padding:9px 14px;border-bottom:1px solid rgba(35,45,69,0.5);font-family:'DM Mono',monospace;color:var(--text);}
 .rom-table td:first-child{color:var(--text2);}
 .rom-table tr:last-child td{border-bottom:none;}
-.export-row{padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);}
-.btn-export{flex:1;background:var(--accent2);color:#0a0d12;border:none;border-radius:10px;padding:13px 16px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.2s;min-width:180px;}
+.export-row{padding:14px 16px;display:flex;gap:8px;border-top:1px solid var(--border);}
+.btn-export{flex:1;background:var(--accent2);color:#0a0d12;border:none;border-radius:10px;padding:13px 16px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.2s;}
 .btn-export:hover{background:#a855f7;}
 .btn-reset{background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:10px;padding:13px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
 .btn-reset:hover{border-color:var(--text2);color:var(--text2);}
@@ -161,6 +161,8 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
 .pulsing{animation:pulse 1s ease-in-out infinite;}
+.btn-label-short{display:none;}
+@media(max-width:480px){.btn-label-full{display:none;}.btn-label-short{display:inline;}}
 </style>
 </head>
 <body>
@@ -218,8 +220,8 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
       <tbody id="romTableBody"></tbody>
     </table>
     <div class="export-row">
-      <button class="btn-export" onclick="exportToPhysiQReport()">📤 Exportar a PhysiQ Report</button>
-      <button class="btn-reset" onclick="resetAll()">↺ Nueva medición</button>
+      <button class="btn-export" onclick="exportToPhysiQReport()">📤 <span class="btn-label-full">Exportar a PhysiQ Report</span><span class="btn-label-short">Exportar</span></button>
+      <button class="btn-reset" onclick="resetAll()">↺ <span class="btn-label-full">Nueva medición</span><span class="btn-label-short">Nueva</span></button>
     </div>
   </div>
 
