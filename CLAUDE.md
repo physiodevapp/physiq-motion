@@ -55,19 +55,11 @@ Identical to `physiq-assessment` and `physiq-report`:
 
 Uses `DeviceOrientationEvent` (browser-fused accelerometer + magnetometer — no raw sensor access needed):
 
-| Method | Movements | Phone placement |
-|--------|-----------|-----------------|
-| Quaternion (beta + gamma) | Flexion, Extension, Lateral L/R | Any stable orientation against the body segment |
-| `alpha` (compass) | Rotation L/R | **Flat on top of head, screen facing up** |
-
-**Quaternion approach** — flexion, extension and lateral flexion use the total angular displacement between the neutral quaternion and the current quaternion, computed from `beta` and `gamma` only (alpha/compass ignored). This makes measurement axis-independent: the phone can be placed in portrait or landscape and the correct angle is always reported.
-
-```js
-// Intrinsic X(beta) → Y(gamma) rotation, DeviceOrientationEvent convention
-function eulerToQuat(beta, gamma) { ... }
-// angle = 2 · arccos(|q_delta.w|)
-function quatAngleDeg(q) { ... }
-```
+| Axis | Movement | Phone placement |
+|------|----------|-----------------|
+| `beta` | Flexion / Extension | Vertical, screen facing examiner, against forehead |
+| `gamma` | Lateral flexion L/R | Vertical, screen facing examiner, against temple |
+| `alpha` | Rotation L/R | **Flat on top of head, screen facing up** |
 
 **iOS 13+** requires `DeviceOrientationEvent.requestPermission()` triggered by a user gesture (button tap). Android grants automatically.
 
