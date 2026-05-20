@@ -119,14 +119,28 @@ function setSensorBadge(cls, text) {
 }
 
 // ── Renderizado de tarjetas ───────────────────────────────────────────────
+const MOVEMENT_GROUPS = [
+  { label: 'Flexo-extensión',     ids: ['flexion', 'extension'] },
+  { label: 'Inclinación lateral', ids: ['lat_izq', 'lat_der']   },
+  { label: 'Rotación',            ids: ['rot_izq', 'rot_der']   }
+];
+
 function renderMovementGrid() {
   const grid = document.getElementById('movementGrid');
   grid.innerHTML = '';
   let done = 0;
-  Object.entries(MOVEMENTS).forEach(([id, def], i) => {
-    const val = state.measurements[id];
-    if (val !== null) done++;
-    grid.appendChild(buildCard(id, def, val, i));
+  let cardIndex = 0;
+  MOVEMENT_GROUPS.forEach(group => {
+    const label = document.createElement('span');
+    label.className = 'movement-group-label';
+    label.textContent = group.label;
+    grid.appendChild(label);
+    group.ids.forEach(id => {
+      const def = MOVEMENTS[id];
+      const val = state.measurements[id];
+      if (val !== null) done++;
+      grid.appendChild(buildCard(id, def, val, cardIndex++));
+    });
   });
   document.getElementById('completionBadge').textContent = `${done} / 6`;
   const any = Object.values(state.measurements).some(v => v !== null);
@@ -207,10 +221,12 @@ function openMeasurement(id) {
   resetAngleDisplay();
   refreshSheetUI();
   document.getElementById('measureOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeMeasurement() {
   document.getElementById('measureOverlay').classList.remove('open');
+  document.body.style.overflow = '';
   state.active.movementId = null;
   state.active.phase = 'idle';
 }
