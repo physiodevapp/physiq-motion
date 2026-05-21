@@ -296,8 +296,8 @@ function handleOverlayClick(e) {
 function calibrateNeutral() {
   const { axis } = REGIONS[state.regionId].movements[state.active.movementId];
   if (axis === 'gravity') {
-    state.active.gravRef    = { x: grav.x, y: grav.y, z: grav.z };
-    state.active.neutralRef = null;
+    state.active.neutralRef = tiltY();
+    state.active.gravRef    = null;
   } else {
     state.active.neutralRef = sensor[axis];
     state.active.gravRef    = null;
@@ -333,7 +333,7 @@ function saveResult() {
 }
 
 function redoMeasurement() {
-  Object.assign(state.active, { phase: 'idle', neutralRef: null, gravRef: null, peakDelta: 0, result: null });
+  Object.assign(state.active, { phase: 'idle', neutralRef: null, peakDelta: 0, result: null });
   resetAngleDisplay();
   refreshSheetUI();
 }
@@ -372,16 +372,15 @@ function refreshSheetUI() {
 
 // ── Ángulo en vivo ────────────────────────────────────────────────────────
 function updateLiveAngle() {
-  const { movementId, phase, neutralRef, gravRef } = state.active;
+  const { movementId, phase, neutralRef } = state.active;
   if (!movementId || !state.regionId || phase === 'idle') return;
+  if (neutralRef === null) return;
 
   const { axis } = REGIONS[state.regionId].movements[movementId];
   let delta;
   if (axis === 'gravity') {
-    if (!gravRef) return;
-    delta = angleFromGravity(gravRef);
+    delta = Math.abs(tiltY() - neutralRef);
   } else {
-    if (neutralRef === null) return;
     delta = (axis === 'alpha' || axis === 'beta')
       ? Math.abs(angularDiff(sensor[axis], neutralRef))
       : Math.abs(sensor[axis] - neutralRef);
@@ -397,14 +396,11 @@ function updateLiveAngle() {
   }
 }
 
-// Ángulo 3D entre vector de gravedad actual y referencia de calibración
-// Invariante a rotaciones alrededor del eje Y del teléfono (spin/yaw) cuando g_ref ≈ (0,-g,0)
-function angleFromGravity(ref) {
-  const dot    = grav.x * ref.x + grav.y * ref.y + grav.z * ref.z;
-  const magNow = Math.sqrt(grav.x ** 2 + grav.y ** 2 + grav.z ** 2);
-  const magRef = Math.sqrt(ref.x  ** 2 + ref.y  ** 2 + ref.z  ** 2);
-  if (magNow < 0.1 || magRef < 0.1) return 0;
-  return Math.acos(Math.max(-1, Math.min(1, dot / (magNow * magRef)))) * (180 / Math.PI);
+// Inclinómetro de eje único: ángulo entre el eje Y del teléfono y la gravedad
+// Invariante a cualquier rotación alrededor de Y (gx²+gz² y |gy| no cambian con giro en Y)
+function tiltY() {
+  const perp = Math.sqrt(grav.x ** 2 + grav.z ** 2);
+  return Math.atan2(perp, Math.abs(grav.y)) * (180 / Math.PI);
 }
 
 // Diferencia angular con manejo de wrap-around (alpha: 0–360°, beta: ±180°)
