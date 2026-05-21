@@ -310,7 +310,7 @@ function updateLiveAngle() {
   if (!movementId || phase === 'idle' || neutralRef === null) return;
 
   const axis  = MOVEMENTS[movementId].axis;
-  const delta = axis === 'alpha'
+  const delta = (axis === 'alpha' || axis === 'beta')
     ? Math.abs(angularDiff(sensor.alpha, neutralRef))
     : Math.abs(sensor[axis] - neutralRef);
   const deg = Math.round(delta);
@@ -323,7 +323,7 @@ function updateLiveAngle() {
   }
 }
 
-// Diferencia angular con manejo de wrap-around 0°–360° (solo para alpha)
+// Diferencia angular con manejo de wrap-around (alpha: 0–360°, beta: ±180°)
 function angularDiff(a, b) {
   let d = a - b;
   while (d >  180) d -= 360;
