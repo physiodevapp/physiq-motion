@@ -311,7 +311,7 @@ function updateLiveAngle() {
 
   const axis  = MOVEMENTS[movementId].axis;
   const delta = (axis === 'alpha' || axis === 'beta')
-    ? Math.abs(angularDiff(sensor.alpha, neutralRef))
+    ? Math.abs(angularDiff(sensor[axis], neutralRef))
     : Math.abs(sensor[axis] - neutralRef);
   const deg = Math.round(delta);
 
