@@ -56,6 +56,10 @@ let sensorSeen    = false;
 const EMA_ALPHA  = 0.15;
 let smoothedDelta = 0;
 
+// Filtro complementario adaptativo (accel + giroscopio Z) para movimientos en plano sagital
+let cfAngle    = 0;
+let cfLastTime = null;
+
 // ── Init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('summaryDate').textContent = new Date().toLocaleDateString('es-ES');
@@ -119,9 +123,28 @@ function handleOrientation(e) {
 
 function handleMotion(e) {
   const g = e.accelerationIncludingGravity;
+  const r = e.rotationRate;
+  const now = e.timeStamp;
   if (!g || g.x === null) return;
   grav.x = g.x; grav.y = g.y; grav.z = g.z;
   if (!sensorSeen) { sensorSeen = true; setSensorBadge('active', 'Sensor activo'); }
+
+  const { phase, neutralRef, movementId } = state.active;
+  if (neutralRef !== null && phase !== 'idle' && movementId && state.regionId) {
+    const { axis } = REGIONS[state.regionId].movements[movementId] || {};
+    if (axis === 'gravity' && r && r.alpha !== null && cfLastTime !== null) {
+      const dt = (now - cfLastTime) / 1000;
+      if (dt > 0 && dt < 0.5) {
+        const g2    = grav.x ** 2 + grav.y ** 2 + grav.z ** 2;
+        const xyMag = Math.sqrt(grav.x ** 2 + grav.y ** 2);
+        // Cuando el teléfono se tumba, gz absorbe gravedad y xyMag decrece → confianza baja
+        const confidence = g2 > 0.01 ? xyMag / Math.sqrt(g2) : 0;
+        const accelRel   = angularDiff(accelAngle(), neutralRef);
+        cfAngle = confidence * accelRel + (1 - confidence) * (cfAngle + r.alpha * dt);
+      }
+    }
+  }
+  cfLastTime = now;
   updateLiveAngle();
 }
 
@@ -296,8 +319,9 @@ function handleOverlayClick(e) {
 function calibrateNeutral() {
   const { axis } = REGIONS[state.regionId].movements[state.active.movementId];
   if (axis === 'gravity') {
-    state.active.neutralRef = tiltY();
-    state.active.gravRef    = null;
+    state.active.neutralRef = accelAngle();
+    cfAngle    = 0;
+    cfLastTime = null;
   } else {
     state.active.neutralRef = sensor[axis];
     state.active.gravRef    = null;
@@ -340,6 +364,8 @@ function redoMeasurement() {
 
 function resetAngleDisplay() {
   smoothedDelta = 0;
+  cfAngle       = 0;
+  cfLastTime    = null;
   document.getElementById('angleValue').textContent = '—';
   document.getElementById('angleValue').className   = 'angle-value';
   document.getElementById('peakLabel').textContent  = '';
@@ -379,7 +405,7 @@ function updateLiveAngle() {
   const { axis } = REGIONS[state.regionId].movements[movementId];
   let delta;
   if (axis === 'gravity') {
-    delta = Math.abs(tiltY() - neutralRef);
+    delta = Math.abs(cfAngle);
   } else {
     delta = (axis === 'alpha' || axis === 'beta')
       ? Math.abs(angularDiff(sensor[axis], neutralRef))
@@ -396,11 +422,11 @@ function updateLiveAngle() {
   }
 }
 
-// Inclinómetro de eje único: ángulo entre el eje Y del teléfono y la gravedad
-// Invariante a cualquier rotación alrededor de Y (gx²+gz² y |gy| no cambian con giro en Y)
-function tiltY() {
-  const perp = Math.sqrt(grav.x ** 2 + grav.z ** 2);
-  return Math.atan2(perp, Math.abs(grav.y)) * (180 / Math.PI);
+// Ángulo en el plano XY: mide la rotación alrededor del eje Z (perpendicular a pantalla)
+// Referencia: 0° cuando el teléfono está vertical (gy≈-g). Ignora gz → estable aunque el
+// teléfono se tumbe, siempre que el CF corrija con el giroscopio.
+function accelAngle() {
+  return Math.atan2(grav.x, -grav.y) * (180 / Math.PI);
 }
 
 // Diferencia angular con manejo de wrap-around (alpha: 0–360°, beta: ±180°)
