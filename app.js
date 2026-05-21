@@ -298,7 +298,7 @@ function handleOverlayClick(e) {
 function calibrateNeutral() {
   const { axis } = REGIONS[state.regionId].movements[state.active.movementId];
   if (axis === 'gravity') {
-    state.active.gravRef    = Math.atan2(grav.x, -grav.y);
+    state.active.gravRef    = { x: grav.x, y: grav.y };
     state.active.neutralRef = null;
   } else {
     state.active.neutralRef = sensor[axis];
@@ -399,13 +399,11 @@ function updateLiveAngle() {
   }
 }
 
-// Ángulo de flexión proyectado sobre el plano de la pantalla — insensible al pitch
-function angleFromGravity(refAngle) {
-  const cur = Math.atan2(grav.x, -grav.y);
-  let d = cur - refAngle;
-  while (d >  Math.PI) d -= 2 * Math.PI;
-  while (d < -Math.PI) d += 2 * Math.PI;
-  return Math.abs(d) * (180 / Math.PI);
+// Ángulo relativo entre proyecciones XY de g y g0 — insensible al pitch para cualquier orientación de partida
+function angleFromGravity(ref) {
+  const num = grav.x * ref.y - grav.y * ref.x;
+  const den = grav.x * ref.x + grav.y * ref.y;
+  return Math.abs(Math.atan2(num, den)) * (180 / Math.PI);
 }
 
 // Diferencia angular con manejo de wrap-around (alpha: 0–360°, beta: ±180°)
