@@ -1,46 +1,41 @@
 'use strict';
 
-// ── Definición de movimientos ─────────────────────────────────────────────
-const MOVEMENTS = {
-  flexion: {
-    label: 'Flexión', axis: 'beta', ref: 50, icon: '⬇',
-    placement: 'vertical',
-    instruction: 'Coloca el teléfono <strong>verticalmente apoyado en la frente</strong>, pantalla hacia el examinador. El paciente parte de posición neutra e inclina la cabeza lentamente hacia adelante hasta su rango máximo.'
+// ── Regiones y movimientos ──────────────────────────────────────────────────
+const REGIONS = {
+  cervical: {
+    label: 'Cervical', abbr: 'Cx',
+    groups: [
+      { label: 'Flexo-extensión',     ids: ['flexion', 'extension'] },
+      { label: 'Inclinación lateral', ids: ['lat_izq', 'lat_der']   },
+      { label: 'Rotación',            ids: ['rot_izq', 'rot_der']   }
+    ],
+    movements: {
+      flexion:   { label: 'Flexión',        axis: 'beta',  ref: 50, icon: '⬇', placement: 'apex-edge',      instruction: 'Coloca el teléfono <strong>de canto sobre el apex del cráneo</strong>, con la pantalla mirando hacia arriba. El paciente parte de posición neutra e inclina la cabeza lentamente hacia adelante hasta su rango máximo.' },
+      extension: { label: 'Extensión',      axis: 'beta',  ref: 60, icon: '⬆', placement: 'vertical',       instruction: 'Coloca el teléfono <strong>verticalmente apoyado en la frente</strong>, pantalla hacia el examinador. El paciente parte de posición neutra e inclina la cabeza lentamente hacia atrás hasta su rango máximo.' },
+      lat_izq:   { label: 'Lat. Izquierda', axis: 'gamma', ref: 45, icon: '↙', placement: 'landscape-left',  instruction: 'Coloca el teléfono <strong>en modo apaisado sobre la sien izquierda</strong>, con la pantalla en vertical mirando al examinador (no hacia arriba). El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.' },
+      lat_der:   { label: 'Lat. Derecha',   axis: 'gamma', ref: 45, icon: '↘', placement: 'landscape-right', instruction: 'Coloca el teléfono <strong>en modo apaisado sobre la sien derecha</strong>, con la pantalla en vertical mirando al examinador (no hacia arriba). El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.' },
+      rot_izq:   { label: 'Rotación Izq.',  axis: 'alpha', ref: 80, icon: '↺', placement: 'flat-left',       instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la izquierda hasta su rango máximo.<br><br><small style="color:var(--text3)">⚠️ Calibra siempre desde la posición neutra (vista al frente). Evita fuentes metálicas cercanas.</small>' },
+      rot_der:   { label: 'Rotación Der.',  axis: 'alpha', ref: 80, icon: '↻', placement: 'flat-right',      instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la derecha hasta su rango máximo.<br><br><small style="color:var(--text3)">⚠️ Calibra siempre desde la posición neutra (vista al frente). Evita fuentes metálicas cercanas.</small>' }
+    }
   },
-  extension: {
-    label: 'Extensión', axis: 'beta', ref: 60, icon: '⬆',
-    placement: 'vertical',
-    instruction: 'Coloca el teléfono <strong>verticalmente apoyado en la frente</strong>, pantalla hacia el examinador. El paciente parte de posición neutra e inclina la cabeza lentamente hacia atrás hasta su rango máximo.'
-  },
-  lat_izq: {
-    label: 'Lat. Izquierda', axis: 'gamma', ref: 45, icon: '↙',
-    placement: 'landscape-left',
-    instruction: 'Coloca el teléfono <strong>en modo apaisado sobre la sien izquierda</strong>, con la pantalla en vertical mirando al examinador (no hacia arriba). El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.'
-  },
-  lat_der: {
-    label: 'Lat. Derecha', axis: 'gamma', ref: 45, icon: '↘',
-    placement: 'landscape-right',
-    instruction: 'Coloca el teléfono <strong>en modo apaisado sobre la sien derecha</strong>, con la pantalla en vertical mirando al examinador (no hacia arriba). El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.'
-  },
-  rot_izq: {
-    label: 'Rotación Izq.', axis: 'alpha', ref: 80, icon: '↺',
-    placement: 'flat-left',
-    instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la izquierda hasta su rango máximo.<br><br><small style="color:var(--text3)">⚠️ Calibra siempre desde la posición neutra (vista al frente). Evita fuentes metálicas cercanas.</small>'
-  },
-  rot_der: {
-    label: 'Rotación Der.', axis: 'alpha', ref: 80, icon: '↻',
-    placement: 'flat-right',
-    instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la derecha hasta su rango máximo.<br><br><small style="color:var(--text3)">⚠️ Calibra siempre desde la posición neutra (vista al frente). Evita fuentes metálicas cercanas.</small>'
-  }
+  hombro:  { label: 'Hombro',  abbr: 'Hb', groups: [], movements: {} },
+  codo:    { label: 'Codo',    abbr: 'Co', groups: [], movements: {} },
+  muneca:  { label: 'Muñeca',  abbr: 'Mn', groups: [], movements: {} },
+  cadera:  { label: 'Cadera',  abbr: 'Cd', groups: [], movements: {} },
+  rodilla: { label: 'Rodilla', abbr: 'Rd', groups: [], movements: {} },
+  tobillo: { label: 'Tobillo', abbr: 'Tb', groups: [], movements: {} },
+  lumbar:  { label: 'Lumbar',  abbr: 'Lb', groups: [], movements: {} }
 };
 
 // ── Estado ────────────────────────────────────────────────────────────────
 const state = {
-  measurements: {
-    flexion: null, extension: null,
-    lat_izq: null, lat_der: null,
-    rot_izq: null, rot_der: null
-  },
+  regionId: null,
+  measurements: Object.fromEntries(
+    Object.entries(REGIONS).map(([id, def]) => [
+      id,
+      Object.fromEntries(Object.keys(def.movements).map(k => [k, null]))
+    ])
+  ),
   active: {
     movementId: null,
     phase: 'idle',      // 'idle' | 'calibrated' | 'measuring' | 'done'
@@ -57,9 +52,8 @@ let sensorSeen    = false;
 
 // ── Init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('summaryDate').textContent =
-    new Date().toLocaleDateString('es-ES');
-  renderMovementGrid();
+  document.getElementById('summaryDate').textContent = new Date().toLocaleDateString('es-ES');
+  renderRegionGrid();
   initSensor();
 });
 
@@ -70,7 +64,6 @@ function initSensor() {
     document.getElementById('noSensorBanner').style.display = 'block';
     return;
   }
-  // iOS 13+ necesita permiso explícito vía gesto de usuario
   if (typeof DeviceOrientationEvent.requestPermission === 'function') {
     setSensorBadge('pending', 'Requiere permiso');
     document.getElementById('permissionCard').style.display = 'block';
@@ -89,7 +82,7 @@ async function requestPermission() {
       setSensorBadge('error', 'Permiso denegado');
     }
   } catch {
-    attachSensor(); // fallback para entornos sin requestPermission
+    attachSensor();
   }
 }
 
@@ -118,32 +111,75 @@ function setSensorBadge(cls, text) {
   b.textContent = text;
 }
 
-// ── Renderizado de tarjetas ───────────────────────────────────────────────
-const MOVEMENT_GROUPS = [
-  { label: 'Flexo-extensión',     ids: ['flexion', 'extension'] },
-  { label: 'Inclinación lateral', ids: ['lat_izq', 'lat_der']   },
-  { label: 'Rotación',            ids: ['rot_izq', 'rot_der']   }
-];
-
-function renderMovementGrid() {
-  const grid = document.getElementById('movementGrid');
+// ── Pantalla de regiones ──────────────────────────────────────────────────
+function renderRegionGrid() {
+  const grid = document.getElementById('regionGrid');
   grid.innerHTML = '';
-  let done = 0;
-  let cardIndex = 0;
-  MOVEMENT_GROUPS.forEach(group => {
+  Object.entries(REGIONS).forEach(([id, def], i) => {
+    const hasMovements = Object.keys(def.movements).length > 0;
+    const meas    = state.measurements[id] || {};
+    const done    = Object.values(meas).filter(v => v !== null).length;
+    const total   = Object.keys(def.movements).length;
+    const hasData = done > 0;
+
+    const card = document.createElement('div');
+    card.className = 'region-card' +
+      (!hasMovements ? ' empty' : '') +
+      (hasData       ? ' has-data' : '');
+    card.style.animationDelay = (i * 0.04) + 's';
+    if (hasMovements) card.onclick = () => selectRegion(id);
+
+    const countText = !hasMovements
+      ? 'Por configurar'
+      : hasData ? `${done} / ${total}` : `${total} movimientos`;
+
+    card.innerHTML = `
+      <div class="region-abbr">${def.abbr}</div>
+      <div class="region-label">${def.label}</div>
+      <div class="region-count">${countText}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+function selectRegion(id) {
+  state.regionId = id;
+  document.getElementById('regionScreen').style.display = 'none';
+  document.getElementById('measureScreen').style.display = '';
+  document.getElementById('activeRegionLabel').textContent = REGIONS[id].label;
+  renderMovementGrid();
+}
+
+function goBackToRegions() {
+  state.regionId = null;
+  document.getElementById('measureScreen').style.display = 'none';
+  document.getElementById('regionScreen').style.display = '';
+  renderRegionGrid();
+}
+
+// ── Renderizado de tarjetas de movimiento ─────────────────────────────────
+function renderMovementGrid() {
+  const region = REGIONS[state.regionId];
+  const meas   = state.measurements[state.regionId];
+  const grid   = document.getElementById('movementGrid');
+  grid.innerHTML = '';
+  let done = 0, cardIndex = 0;
+
+  region.groups.forEach(group => {
     const label = document.createElement('span');
     label.className = 'movement-group-label';
     label.textContent = group.label;
     grid.appendChild(label);
     group.ids.forEach(id => {
-      const def = MOVEMENTS[id];
-      const val = state.measurements[id];
+      const def = region.movements[id];
+      const val = meas[id];
       if (val !== null) done++;
       grid.appendChild(buildCard(id, def, val, cardIndex++));
     });
   });
-  document.getElementById('completionBadge').textContent = `${done} / 6`;
-  const any = Object.values(state.measurements).some(v => v !== null);
+
+  const total = Object.keys(region.movements).length;
+  document.getElementById('completionBadge').textContent = `${done} / ${total}`;
+  const any = Object.values(meas).some(v => v !== null);
   document.getElementById('summaryCard').style.display = any ? 'block' : 'none';
   if (any) renderSummaryTable();
 }
@@ -154,8 +190,8 @@ function buildCard(id, def, val, i) {
   card.className = 'movement-card' + (val !== null ? ' ' + status : '');
   card.style.animationDelay = (i * 0.05) + 's';
 
-  const badgeHtml  = val !== null ? badgeFor(val, def.ref) : '';
-  const valueHtml  = val !== null
+  const badgeHtml = val !== null ? badgeFor(val, def.ref) : '';
+  const valueHtml = val !== null
     ? `<div class="mov-value ${status}">${val}°</div>`
     : `<div class="mov-value">—</div>`;
   const btnCls   = val !== null ? 'btn-measure remeasure' : 'btn-measure';
@@ -184,7 +220,7 @@ function statusFor(val, ref) {
 }
 
 function badgeFor(val, ref) {
-  const s = statusFor(val, ref);
+  const s   = statusFor(val, ref);
   const pct = Math.round((1 - val / ref) * 100);
   const labels = { ok: 'Normal', borderline: `−${pct}%`, deficit: `−${pct}%` };
   return `<span class="badge badge-${s}">${labels[s]}</span>`;
@@ -192,10 +228,12 @@ function badgeFor(val, ref) {
 
 // ── Tabla resumen ─────────────────────────────────────────────────────────
 function renderSummaryTable() {
-  const tbody = document.getElementById('romTableBody');
+  const region = REGIONS[state.regionId];
+  const meas   = state.measurements[state.regionId];
+  const tbody  = document.getElementById('romTableBody');
   tbody.innerHTML = '';
-  Object.entries(MOVEMENTS).forEach(([id, def]) => {
-    const val = state.measurements[id];
+  Object.entries(region.movements).forEach(([id, def]) => {
+    const val = meas[id];
     if (val === null) return;
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -209,15 +247,15 @@ function renderSummaryTable() {
 
 // ── Overlay de medición ───────────────────────────────────────────────────
 function openMeasurement(id) {
-  const def = MOVEMENTS[id];
+  const def = REGIONS[state.regionId].movements[id];
   Object.assign(state.active, {
     movementId: id, phase: 'idle',
     neutralRef: null, peakDelta: 0, result: null
   });
 
-  document.getElementById('sheetTitle').textContent       = def.label;
-  document.getElementById('sheetInstruction').innerHTML   = def.instruction;
-  document.getElementById('placementDiagram').innerHTML   = placementSVG(def.placement);
+  document.getElementById('sheetTitle').textContent     = def.label;
+  document.getElementById('sheetInstruction').innerHTML = def.instruction;
+  document.getElementById('placementDiagram').innerHTML = placementSVG(def.placement);
   resetAngleDisplay();
   refreshSheetUI();
   document.getElementById('measureOverlay').classList.add('open');
@@ -236,7 +274,7 @@ function handleOverlayClick(e) {
 }
 
 function calibrateNeutral() {
-  const axis = MOVEMENTS[state.active.movementId].axis;
+  const axis = REGIONS[state.regionId].movements[state.active.movementId].axis;
   state.active.neutralRef = sensor[axis];
   state.active.phase      = 'calibrated';
   state.active.peakDelta  = 0;
@@ -262,7 +300,7 @@ function stopMeasurement() {
 }
 
 function saveResult() {
-  state.measurements[state.active.movementId] = state.active.result;
+  state.measurements[state.regionId][state.active.movementId] = state.active.result;
   closeMeasurement();
   renderMovementGrid();
 }
@@ -290,9 +328,9 @@ function refreshSheetUI() {
   show('btnRedo',         p === 'calibrated' || p === 'done');
 
   const steps = [
-    { id: 'phaseStep1', active: p === 'idle',                        done: p !== 'idle'       },
-    { id: 'phaseStep2', active: p === 'calibrated' || p === 'measuring', done: p === 'done'   },
-    { id: 'phaseStep3', active: p === 'done',                         done: false              }
+    { id: 'phaseStep1', active: p === 'idle',                            done: p !== 'idle'  },
+    { id: 'phaseStep2', active: p === 'calibrated' || p === 'measuring', done: p === 'done'  },
+    { id: 'phaseStep3', active: p === 'done',                            done: false         }
   ];
   steps.forEach(({ id, active, done }, idx) => {
     const el  = document.getElementById(id);
@@ -307,9 +345,9 @@ function refreshSheetUI() {
 // ── Ángulo en vivo ────────────────────────────────────────────────────────
 function updateLiveAngle() {
   const { movementId, phase, neutralRef } = state.active;
-  if (!movementId || phase === 'idle' || neutralRef === null) return;
+  if (!movementId || !state.regionId || phase === 'idle' || neutralRef === null) return;
 
-  const axis  = MOVEMENTS[movementId].axis;
+  const axis  = REGIONS[state.regionId].movements[movementId].axis;
   const delta = (axis === 'alpha' || axis === 'beta')
     ? Math.abs(angularDiff(sensor[axis], neutralRef))
     : Math.abs(sensor[axis] - neutralRef);
@@ -333,18 +371,21 @@ function angularDiff(a, b) {
 
 // ── Exportar a PhysiQ Report ──────────────────────────────────────────────
 function exportToPhysiQReport() {
+  const region = REGIONS[state.regionId];
+  const meas   = state.measurements[state.regionId];
   const payload = {
     src: 'physiq-motion',
     patient: document.getElementById('patientName').value.trim(),
     fecha: new Date().toLocaleDateString('es-ES'),
+    region: state.regionId,
     rom: Object.fromEntries(
-      Object.entries(state.measurements)
+      Object.entries(meas)
         .filter(([, v]) => v !== null)
         .map(([id, val]) => [id, {
-          label:   MOVEMENTS[id].label,
+          label:   region.movements[id].label,
           value:   val,
-          ref:     MOVEMENTS[id].ref,
-          deficit: val < MOVEMENTS[id].ref * 0.9
+          ref:     region.movements[id].ref,
+          deficit: val < region.movements[id].ref * 0.9
         }])
     )
   };
@@ -352,9 +393,10 @@ function exportToPhysiQReport() {
   window.open('https://physiodevapp.github.io/physiq-report/?rom=' + encoded);
 }
 
-// ── Reset ─────────────────────────────────────────────────────────────────
+// ── Reset región activa ───────────────────────────────────────────────────
 function resetAll() {
-  Object.keys(state.measurements).forEach(k => { state.measurements[k] = null; });
+  const meas = state.measurements[state.regionId];
+  Object.keys(meas).forEach(k => { meas[k] = null; });
   document.getElementById('patientName').value = '';
   renderMovementGrid();
 }
@@ -363,7 +405,6 @@ function resetAll() {
 function placementSVG(type) {
   if (type === 'flat-left' || type === 'flat-right') {
     const left = type === 'flat-left';
-    // Arc alongside the phone (x=18–70, y=37–69); left arc curves out left, right arc curves out right
     const arrow = left
       ? `<path d="M14,42 Q2,53 14,66" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a1)"/>`
       : `<path d="M74,66 Q86,55 74,42" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a1)"/>`;
@@ -379,7 +420,6 @@ function placementSVG(type) {
   }
   if (type === 'landscape-left' || type === 'landscape-right') {
     const left = type === 'landscape-left';
-    // Endpoint on ellipse (cx=44,cy=86,rx=13,ry=17) at ±210°/330°: (33,78) or (55,78)
     const ex = left ? 33 : 55;
     const qx = left ? 26 : 62;
     return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
@@ -393,7 +433,19 @@ function placementSVG(type) {
       </defs>
     </svg>`;
   }
-  // Vertical: teléfono de pie sobre la frente, flecha de inclinación
+  if (type === 'apex-edge') {
+    return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="44" cy="80" rx="22" ry="19" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
+      <rect x="13" y="53" width="58" height="8" rx="3" fill="none" stroke="#c084fc" stroke-width="1.5"/>
+      <rect x="16" y="55" width="52" height="4" rx="2" fill="#171e2e"/>
+      <line x1="44" y1="61" x2="44" y2="61" stroke="#8fa0bf" stroke-width="1"/>
+      <path d="M25,61 Q15,70 22,79" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#aE)"/>
+      <defs>
+        <marker id="aE" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
+      </defs>
+    </svg>`;
+  }
+  // Vertical (extension)
   return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
     <rect x="27" y="8" width="34" height="58" rx="6" fill="none" stroke="#c084fc" stroke-width="1.5"/>
     <rect x="31" y="13" width="26" height="46" rx="3" fill="#171e2e"/>
