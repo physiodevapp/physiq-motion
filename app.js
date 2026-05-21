@@ -56,6 +56,11 @@ let sensorSeen    = false;
 const EMA_ALPHA  = 0.15;
 let smoothedDelta = 0;
 
+// Filtro complementario (gyro + accel) para movimientos basados en gravedad
+const CF_ALPHA = 0.98;
+let cfAngle    = 0;
+let cfLastTime = null;
+
 // ── Init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('summaryDate').textContent = new Date().toLocaleDateString('es-ES');
@@ -118,12 +123,23 @@ function handleOrientation(e) {
 }
 
 function handleMotion(e) {
-  const g = e.accelerationIncludingGravity;
+  const g   = e.accelerationIncludingGravity;
+  const r   = e.rotationRate;
+  const now = e.timeStamp;
   if (!g || g.x === null) return;
-  grav.x = g.x;
-  grav.y = g.y;
-  grav.z = g.z;
+  grav.x = g.x; grav.y = g.y; grav.z = g.z;
   if (!sensorSeen) { sensorSeen = true; setSensorBadge('active', 'Sensor activo'); }
+
+  const ref = state.active.gravRef;
+  if (ref && r && r.beta !== null && cfLastTime !== null) {
+    const dt = (now - cfLastTime) / 1000;
+    if (dt > 0 && dt < 0.5) {
+      const gyroRate = -r.beta;           // negativo: beta+ = tope hacia examinador, no flexión
+      const accelAng = angleFromGravity(ref);
+      cfAngle = CF_ALPHA * (cfAngle + gyroRate * dt) + (1 - CF_ALPHA) * accelAng;
+    }
+  }
+  cfLastTime = now;
   updateLiveAngle();
 }
 
@@ -298,8 +314,10 @@ function handleOverlayClick(e) {
 function calibrateNeutral() {
   const { axis } = REGIONS[state.regionId].movements[state.active.movementId];
   if (axis === 'gravity') {
-    state.active.gravRef    = { x: grav.x, y: grav.y };
+    state.active.gravRef    = { y: grav.y, z: grav.z };
     state.active.neutralRef = null;
+    cfAngle    = 0;
+    cfLastTime = null;
   } else {
     state.active.neutralRef = sensor[axis];
     state.active.gravRef    = null;
@@ -342,6 +360,8 @@ function redoMeasurement() {
 
 function resetAngleDisplay() {
   smoothedDelta = 0;
+  cfAngle       = 0;
+  cfLastTime    = null;
   document.getElementById('angleValue').textContent = '—';
   document.getElementById('angleValue').className   = 'angle-value';
   document.getElementById('peakLabel').textContent  = '';
@@ -381,7 +401,7 @@ function updateLiveAngle() {
   let delta;
   if (axis === 'gravity') {
     if (!gravRef) return;
-    delta = angleFromGravity(gravRef);
+    delta = Math.abs(cfAngle);
   } else {
     if (neutralRef === null) return;
     delta = (axis === 'alpha' || axis === 'beta')
@@ -399,11 +419,11 @@ function updateLiveAngle() {
   }
 }
 
-// Ángulo relativo entre proyecciones XY de g y g0 — insensible al pitch para cualquier orientación de partida
+// Ángulo firmado en el plano YZ entre g actual y g0 — componente accel del filtro complementario
 function angleFromGravity(ref) {
-  const num = grav.x * ref.y - grav.y * ref.x;
-  const den = grav.x * ref.x + grav.y * ref.y;
-  return Math.abs(Math.atan2(num, den)) * (180 / Math.PI);
+  const num = grav.z * ref.y - grav.y * ref.z;
+  const den = grav.z * ref.z + grav.y * ref.y;
+  return Math.atan2(num, den) * (180 / Math.PI);
 }
 
 // Diferencia angular con manejo de wrap-around (alpha: 0–360°, beta: ±180°)
