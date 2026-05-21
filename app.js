@@ -11,7 +11,7 @@ const REGIONS = {
     ],
     movements: {
       flexion:   { label: 'Flexión',        axis: 'gravity', ref: 50, icon: '⬇', placement: 'apex-edge',      instruction: 'Coloca el teléfono <strong>de canto sobre el apex del cráneo</strong>, con la pantalla mirando hacia arriba. El paciente parte de posición neutra e inclina la cabeza lentamente hacia adelante hasta su rango máximo.' },
-      extension: { label: 'Extensión',      axis: 'beta',  ref: 60, icon: '⬆', placement: 'vertical',       instruction: 'Coloca el teléfono <strong>verticalmente apoyado en la frente</strong>, pantalla hacia el examinador. El paciente parte de posición neutra e inclina la cabeza lentamente hacia atrás hasta su rango máximo.' },
+      extension: { label: 'Extensión',      axis: 'gravity', ref: 60, icon: '⬆', placement: 'vertical',       instruction: 'Coloca el teléfono <strong>verticalmente apoyado en la frente</strong>, pantalla hacia el examinador. El paciente parte de posición neutra e inclina la cabeza lentamente hacia atrás hasta su rango máximo.' },
       lat_izq:   { label: 'Lat. Izquierda', axis: 'gamma', ref: 45, icon: '↙', placement: 'landscape-left',  instruction: 'Coloca el teléfono <strong>en modo apaisado sobre la sien izquierda</strong>, con la pantalla en vertical mirando al examinador (no hacia arriba). El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.' },
       lat_der:   { label: 'Lat. Derecha',   axis: 'gamma', ref: 45, icon: '↘', placement: 'landscape-right', instruction: 'Coloca el teléfono <strong>en modo apaisado sobre la sien derecha</strong>, con la pantalla en vertical mirando al examinador (no hacia arriba). El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.' },
       rot_izq:   { label: 'Rotación Izq.',  axis: 'alpha', ref: 80, icon: '↺', placement: 'flat-left',       instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la izquierda hasta su rango máximo.<br><br><small style="color:var(--text3)">⚠️ Calibra siempre desde la posición neutra (vista al frente). Evita fuentes metálicas cercanas.</small>' },
@@ -51,6 +51,10 @@ const sensor = { alpha: 0, beta: 0, gamma: 0 };
 const grav   = { x: 0, y: 0, z: 0 };
 let sensorStarted = false;
 let sensorSeen    = false;
+
+// Suavizado de la visualización
+const EMA_ALPHA  = 0.15;
+let smoothedDelta = 0;
 
 // ── Init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -302,6 +306,7 @@ function calibrateNeutral() {
   }
   state.active.phase     = 'calibrated';
   state.active.peakDelta = 0;
+  smoothedDelta          = 0;
   document.getElementById('angleValue').textContent = '0°';
   document.getElementById('angleValue').className   = 'angle-value live';
   refreshSheetUI();
@@ -336,6 +341,7 @@ function redoMeasurement() {
 }
 
 function resetAngleDisplay() {
+  smoothedDelta = 0;
   document.getElementById('angleValue').textContent = '—';
   document.getElementById('angleValue').className   = 'angle-value';
   document.getElementById('peakLabel').textContent  = '';
@@ -382,13 +388,14 @@ function updateLiveAngle() {
       ? Math.abs(angularDiff(sensor[axis], neutralRef))
       : Math.abs(sensor[axis] - neutralRef);
   }
-  const deg = Math.round(delta);
+  smoothedDelta = EMA_ALPHA * delta + (1 - EMA_ALPHA) * smoothedDelta;
+  const deg = Math.round(smoothedDelta);
 
   document.getElementById('angleValue').textContent = deg + '°';
 
-  if (phase === 'measuring' && deg > state.active.peakDelta) {
-    state.active.peakDelta = deg;
-    document.getElementById('peakLabel').textContent = 'Máx: ' + deg + '°';
+  if (phase === 'measuring' && delta > state.active.peakDelta) {
+    state.active.peakDelta = delta;
+    document.getElementById('peakLabel').textContent = 'Máx: ' + Math.round(delta) + '°';
   }
 }
 
