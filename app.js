@@ -10,7 +10,7 @@ const REGIONS = {
       { label: 'Rotación',            ids: ['rot_izq', 'rot_der']   }
     ],
     movements: {
-      flexion:   { label: 'Flexión',        axis: 'beta',  ref: 50, icon: '⬇', placement: 'apex-edge',      instruction: 'Coloca el teléfono <strong>de canto sobre el apex del cráneo</strong>, con la pantalla mirando hacia arriba. El paciente parte de posición neutra e inclina la cabeza lentamente hacia adelante hasta su rango máximo.' },
+      flexion:   { label: 'Flexión',        axis: 'gravity', ref: 50, icon: '⬇', placement: 'apex-edge',      instruction: 'Coloca el teléfono <strong>de canto sobre el apex del cráneo</strong>, con la pantalla mirando hacia arriba. El paciente parte de posición neutra e inclina la cabeza lentamente hacia adelante hasta su rango máximo.' },
       extension: { label: 'Extensión',      axis: 'beta',  ref: 60, icon: '⬆', placement: 'vertical',       instruction: 'Coloca el teléfono <strong>verticalmente apoyado en la frente</strong>, pantalla hacia el examinador. El paciente parte de posición neutra e inclina la cabeza lentamente hacia atrás hasta su rango máximo.' },
       lat_izq:   { label: 'Lat. Izquierda', axis: 'gamma', ref: 45, icon: '↙', placement: 'landscape-left',  instruction: 'Coloca el teléfono <strong>en modo apaisado sobre la sien izquierda</strong>, con la pantalla en vertical mirando al examinador (no hacia arriba). El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.' },
       lat_der:   { label: 'Lat. Derecha',   axis: 'gamma', ref: 45, icon: '↘', placement: 'landscape-right', instruction: 'Coloca el teléfono <strong>en modo apaisado sobre la sien derecha</strong>, con la pantalla en vertical mirando al examinador (no hacia arriba). El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.' },
@@ -39,14 +39,16 @@ const state = {
   active: {
     movementId: null,
     phase: 'idle',      // 'idle' | 'calibrated' | 'measuring' | 'done'
-    neutralRef: null,
+    neutralRef: null,   // para movimientos basados en ángulo Euler
+    gravRef: null,      // para movimientos basados en vector de gravedad
     peakDelta: 0,
     result: null
   }
 };
 
-// Lecturas crudas del sensor (actualizadas por deviceorientation)
+// Lecturas crudas del sensor
 const sensor = { alpha: 0, beta: 0, gamma: 0 };
+const grav   = { x: 0, y: 0, z: 0 };
 let sensorStarted = false;
 let sensorSeen    = false;
 
@@ -64,7 +66,10 @@ function initSensor() {
     document.getElementById('noSensorBanner').style.display = 'block';
     return;
   }
-  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+  const needsPermission =
+    typeof DeviceOrientationEvent?.requestPermission === 'function' ||
+    typeof DeviceMotionEvent?.requestPermission     === 'function';
+  if (needsPermission) {
     setSensorBadge('pending', 'Requiere permiso');
     document.getElementById('permissionCard').style.display = 'block';
   } else {
@@ -74,13 +79,18 @@ function initSensor() {
 
 async function requestPermission() {
   try {
-    const res = await DeviceOrientationEvent.requestPermission();
-    if (res === 'granted') {
-      document.getElementById('permissionCard').style.display = 'none';
-      attachSensor();
-    } else {
+    const requests = [];
+    if (typeof DeviceOrientationEvent?.requestPermission === 'function')
+      requests.push(DeviceOrientationEvent.requestPermission());
+    if (typeof DeviceMotionEvent?.requestPermission === 'function')
+      requests.push(DeviceMotionEvent.requestPermission());
+    const results = await Promise.all(requests);
+    if (results.some(r => r !== 'granted')) {
       setSensorBadge('error', 'Permiso denegado');
+      return;
     }
+    document.getElementById('permissionCard').style.display = 'none';
+    attachSensor();
   } catch {
     attachSensor();
   }
@@ -91,6 +101,7 @@ function attachSensor() {
   sensorStarted = true;
   setSensorBadge('pending', 'Esperando...');
   window.addEventListener('deviceorientation', handleOrientation, true);
+  window.addEventListener('devicemotion',      handleMotion,      true);
 }
 
 function handleOrientation(e) {
@@ -98,10 +109,17 @@ function handleOrientation(e) {
   sensor.alpha = e.alpha ?? sensor.alpha;
   sensor.beta  = e.beta  ?? sensor.beta;
   sensor.gamma = e.gamma ?? sensor.gamma;
-  if (!sensorSeen) {
-    sensorSeen = true;
-    setSensorBadge('active', 'Sensor activo');
-  }
+  if (!sensorSeen) { sensorSeen = true; setSensorBadge('active', 'Sensor activo'); }
+  updateLiveAngle();
+}
+
+function handleMotion(e) {
+  const g = e.accelerationIncludingGravity;
+  if (!g || g.x === null) return;
+  grav.x = g.x;
+  grav.y = g.y;
+  grav.z = g.z;
+  if (!sensorSeen) { sensorSeen = true; setSensorBadge('active', 'Sensor activo'); }
   updateLiveAngle();
 }
 
@@ -274,10 +292,16 @@ function handleOverlayClick(e) {
 }
 
 function calibrateNeutral() {
-  const axis = REGIONS[state.regionId].movements[state.active.movementId].axis;
-  state.active.neutralRef = sensor[axis];
-  state.active.phase      = 'calibrated';
-  state.active.peakDelta  = 0;
+  const { axis } = REGIONS[state.regionId].movements[state.active.movementId];
+  if (axis === 'gravity') {
+    state.active.gravRef    = { ...grav };
+    state.active.neutralRef = null;
+  } else {
+    state.active.neutralRef = sensor[axis];
+    state.active.gravRef    = null;
+  }
+  state.active.phase     = 'calibrated';
+  state.active.peakDelta = 0;
   document.getElementById('angleValue').textContent = '0°';
   document.getElementById('angleValue').className   = 'angle-value live';
   refreshSheetUI();
@@ -306,7 +330,7 @@ function saveResult() {
 }
 
 function redoMeasurement() {
-  Object.assign(state.active, { phase: 'idle', neutralRef: null, peakDelta: 0, result: null });
+  Object.assign(state.active, { phase: 'idle', neutralRef: null, gravRef: null, peakDelta: 0, result: null });
   resetAngleDisplay();
   refreshSheetUI();
 }
@@ -344,13 +368,20 @@ function refreshSheetUI() {
 
 // ── Ángulo en vivo ────────────────────────────────────────────────────────
 function updateLiveAngle() {
-  const { movementId, phase, neutralRef } = state.active;
-  if (!movementId || !state.regionId || phase === 'idle' || neutralRef === null) return;
+  const { movementId, phase, neutralRef, gravRef } = state.active;
+  if (!movementId || !state.regionId || phase === 'idle') return;
 
-  const axis  = REGIONS[state.regionId].movements[movementId].axis;
-  const delta = (axis === 'alpha' || axis === 'beta')
-    ? Math.abs(angularDiff(sensor[axis], neutralRef))
-    : Math.abs(sensor[axis] - neutralRef);
+  const { axis } = REGIONS[state.regionId].movements[movementId];
+  let delta;
+  if (axis === 'gravity') {
+    if (!gravRef) return;
+    delta = angleFromGravity(gravRef);
+  } else {
+    if (neutralRef === null) return;
+    delta = (axis === 'alpha' || axis === 'beta')
+      ? Math.abs(angularDiff(sensor[axis], neutralRef))
+      : Math.abs(sensor[axis] - neutralRef);
+  }
   const deg = Math.round(delta);
 
   document.getElementById('angleValue').textContent = deg + '°';
@@ -359,6 +390,15 @@ function updateLiveAngle() {
     state.active.peakDelta = deg;
     document.getElementById('peakLabel').textContent = 'Máx: ' + deg + '°';
   }
+}
+
+// Ángulo entre vector de gravedad actual y referencia — continuo 0°–180°, sin gimbal lock
+function angleFromGravity(ref) {
+  const dot    = grav.x * ref.x + grav.y * ref.y + grav.z * ref.z;
+  const magRef = Math.sqrt(ref.x ** 2 + ref.y ** 2 + ref.z ** 2);
+  const magCur = Math.sqrt(grav.x ** 2 + grav.y ** 2 + grav.z ** 2);
+  if (magRef === 0 || magCur === 0) return 0;
+  return Math.acos(Math.max(-1, Math.min(1, dot / (magRef * magCur)))) * (180 / Math.PI);
 }
 
 // Diferencia angular con manejo de wrap-around (alpha: 0–360°, beta: ±180°)
