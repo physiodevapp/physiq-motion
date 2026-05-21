@@ -294,7 +294,7 @@ function handleOverlayClick(e) {
 function calibrateNeutral() {
   const { axis } = REGIONS[state.regionId].movements[state.active.movementId];
   if (axis === 'gravity') {
-    state.active.gravRef    = { ...grav };
+    state.active.gravRef    = Math.atan2(grav.x, -grav.y);
     state.active.neutralRef = null;
   } else {
     state.active.neutralRef = sensor[axis];
@@ -392,13 +392,13 @@ function updateLiveAngle() {
   }
 }
 
-// Ángulo entre vector de gravedad actual y referencia — continuo 0°–180°, sin gimbal lock
-function angleFromGravity(ref) {
-  const dot    = grav.x * ref.x + grav.y * ref.y + grav.z * ref.z;
-  const magRef = Math.sqrt(ref.x ** 2 + ref.y ** 2 + ref.z ** 2);
-  const magCur = Math.sqrt(grav.x ** 2 + grav.y ** 2 + grav.z ** 2);
-  if (magRef === 0 || magCur === 0) return 0;
-  return Math.acos(Math.max(-1, Math.min(1, dot / (magRef * magCur)))) * (180 / Math.PI);
+// Ángulo de flexión proyectado sobre el plano de la pantalla — insensible al pitch
+function angleFromGravity(refAngle) {
+  const cur = Math.atan2(grav.x, -grav.y);
+  let d = cur - refAngle;
+  while (d >  Math.PI) d -= 2 * Math.PI;
+  while (d < -Math.PI) d += 2 * Math.PI;
+  return Math.abs(d) * (180 / Math.PI);
 }
 
 // Diferencia angular con manejo de wrap-around (alpha: 0–360°, beta: ±180°)
