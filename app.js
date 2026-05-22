@@ -139,17 +139,21 @@ function handleMotion(e) {
   const { phase, neutralRef, gravRef, movementId } = state.active;
   if (neutralRef !== null && phase !== 'idle' && movementId && state.regionId) {
     const { axis } = REGIONS[state.regionId].movements[movementId] || {};
-    if (axis === 'gravity' && gravRef && r && r.alpha !== null && cfLastTime !== null) {
-      const dt = (now - cfLastTime) / 1000;
-      if (dt > 0 && dt < 0.5) {
-        const gMag = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
-        if (gMag > 0.1) {
-          const gn  = { x: grav.x/gMag, y: grav.y/gMag, z: grav.z/gMag };
-          const dot = Math.max(-1, Math.min(1, gn.x*gravRef.x + gn.y*gravRef.y + gn.z*gravRef.z));
-          const accelAngleDeg = Math.acos(dot) * (180 / Math.PI);
-          const omegaMag   = Math.sqrt((r.alpha||0)**2 + (r.beta||0)**2 + (r.gamma||0)**2);
-          const confidence = 1 - Math.min(1, Math.abs(gMag - 9.81) / 5);
-          cfAngle = confidence * accelAngleDeg + (1 - confidence) * (cfAngle + omegaMag * dt);
+    if (axis === 'gravity' && gravRef) {
+      const gMag = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
+      if (gMag > 0.1) {
+        const gn  = { x: grav.x/gMag, y: grav.y/gMag, z: grav.z/gMag };
+        const dot = Math.max(-1, Math.min(1, gn.x*gravRef.x + gn.y*gravRef.y + gn.z*gravRef.z));
+        const accelAngleDeg = Math.acos(dot) * (180 / Math.PI);
+        if (r && r.alpha !== null && cfLastTime !== null) {
+          const dt = (now - cfLastTime) / 1000;
+          if (dt > 0 && dt < 0.5) {
+            const omegaMag   = Math.sqrt((r.alpha||0)**2 + (r.beta||0)**2 + (r.gamma||0)**2);
+            const confidence = 1 - Math.min(1, Math.abs(gMag - 9.81) / 5);
+            cfAngle = confidence * accelAngleDeg + (1 - confidence) * (cfAngle + omegaMag * dt);
+          }
+        } else {
+          cfAngle = accelAngleDeg;
         }
       }
     }
@@ -419,7 +423,7 @@ function updateLiveAngle() {
   const { axis } = REGIONS[state.regionId].movements[movementId];
 
   const warn = document.getElementById('tiltWarning');
-  if (axis === 'gamma' && tiltInvalid) {
+  if ((axis === 'gamma' || axis === 'gravity') && tiltInvalid) {
     warn.style.display = '';
     return;
   }
