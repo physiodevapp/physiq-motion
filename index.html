@@ -150,6 +150,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .angle-value.done{color:var(--green);}
 .angle-unit{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:6px;}
 .peak-label{position:absolute;top:12px;right:16px;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent3);}
+.tilt-warning{margin-top:12px;padding:7px 12px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;color:#f87171;letter-spacing:0.2px;}
 
 /* ── Phase steps ─────────────────────────────────────────────────────────── */
 .phase-steps{display:flex;justify-content:center;gap:32px;margin-bottom:22px;}
@@ -273,6 +274,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
       <div class="angle-value" id="angleValue">—</div>
       <div class="angle-unit">grados</div>
       <div class="peak-label" id="peakLabel"></div>
+      <div class="tilt-warning" id="tiltWarning" style="display:none">⚠ Inclina menos el teléfono</div>
     </div>
 
     <div class="phase-steps">

@@ -51,6 +51,7 @@ const sensor = { alpha: 0, beta: 0, gamma: 0 };
 const grav   = { x: 0, y: 0, z: 0 };
 let sensorStarted = false;
 let sensorSeen    = false;
+let tiltInvalid   = false;
 
 // Suavizado de la visualización
 const EMA_ALPHA  = 0.15;
@@ -113,10 +114,8 @@ function attachSensor() {
 }
 
 function handleOrientation(e) {
-  if (e.alpha === null && e.beta === null && e.gamma === null) return;
-  sensor.alpha = e.alpha ?? sensor.alpha;
-  sensor.beta  = e.beta  ?? sensor.beta;
-  sensor.gamma = e.gamma ?? sensor.gamma;
+  if (e.alpha === null) return;
+  sensor.alpha = e.alpha;
   if (!sensorSeen) { sensorSeen = true; setSensorBadge('active', 'Sensor activo'); }
   updateLiveAngle();
 }
@@ -127,6 +126,14 @@ function handleMotion(e) {
   const now = e.timeStamp;
   if (!g || g.x === null) return;
   grav.x = g.x; grav.y = g.y; grav.z = g.z;
+
+  const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
+  if (gTotal > 0.5) {
+    sensor.beta  = Math.atan2(grav.z, -grav.y) * 180 / Math.PI;
+    sensor.gamma = Math.atan2(grav.x, -grav.y) * 180 / Math.PI;
+    tiltInvalid  = Math.abs(grav.z) / gTotal > 0.15;
+  }
+
   if (!sensorSeen) { sensorSeen = true; setSensorBadge('active', 'Sensor activo'); }
 
   const { phase, neutralRef, gravRef, movementId } = state.active;
@@ -410,6 +417,14 @@ function updateLiveAngle() {
   if (neutralRef === null) return;
 
   const { axis } = REGIONS[state.regionId].movements[movementId];
+
+  const warn = document.getElementById('tiltWarning');
+  if (axis === 'gamma' && tiltInvalid) {
+    warn.style.display = '';
+    return;
+  }
+  warn.style.display = 'none';
+
   let delta;
   if (axis === 'gravity') {
     delta = Math.abs(cfAngle);
