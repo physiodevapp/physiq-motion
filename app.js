@@ -10,12 +10,12 @@ const REGIONS = {
       { label: 'Rotación',            ids: ['rot_izq', 'rot_der']   }
     ],
     movements: {
-      flexion:   { label: 'Flexión',        axis: 'gravity', ref: 50, icon: '⬇', placement: 'apex-edge',      instruction: 'Coloca el teléfono <strong>de canto sobre el apex del cráneo</strong>, con la pantalla mirando hacia arriba. El paciente parte de posición neutra e inclina la cabeza lentamente hacia adelante hasta su rango máximo.' },
-      extension: { label: 'Extensión',      axis: 'gravity', ref: 60, icon: '⬆', placement: 'vertical',       instruction: 'Coloca el teléfono <strong>verticalmente apoyado en la frente</strong>, pantalla hacia el examinador. El paciente parte de posición neutra e inclina la cabeza lentamente hacia atrás hasta su rango máximo.' },
-      lat_izq:   { label: 'Lat. Izquierda', axis: 'gamma', ref: 45, icon: '↙', placement: 'landscape-left',  instruction: 'Coloca el teléfono <strong>en modo apaisado sobre la sien izquierda</strong>, con la pantalla en vertical mirando al examinador (no hacia arriba). El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.' },
-      lat_der:   { label: 'Lat. Derecha',   axis: 'gamma', ref: 45, icon: '↘', placement: 'landscape-right', instruction: 'Coloca el teléfono <strong>en modo apaisado sobre la sien derecha</strong>, con la pantalla en vertical mirando al examinador (no hacia arriba). El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.' },
-      rot_izq:   { label: 'Rotación Izq.',  axis: 'alpha', ref: 80, icon: '↺', placement: 'flat-left',       instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la izquierda hasta su rango máximo.<br><br><small style="color:var(--text3)">⚠️ Calibra siempre desde la posición neutra (vista al frente). Evita fuentes metálicas cercanas.</small>' },
-      rot_der:   { label: 'Rotación Der.',  axis: 'alpha', ref: 80, icon: '↻', placement: 'flat-right',      instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la derecha hasta su rango máximo.<br><br><small style="color:var(--text3)">⚠️ Calibra siempre desde la posición neutra (vista al frente). Evita fuentes metálicas cercanas.</small>' }
+      flexion:   { label: 'Flexión',        axis: 'gravity',      phoneOrientation: 'vertical',   ref: 50, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia adelante hasta su rango máximo.' },
+      extension: { label: 'Extensión',      axis: 'gravity',      phoneOrientation: 'vertical',   ref: 60, icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia atrás hasta su rango máximo.' },
+      lat_izq:   { label: 'Lat. Izquierda', axis: 'gravity',      phoneOrientation: 'vertical',   ref: 45, icon: '↙', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.' },
+      lat_der:   { label: 'Lat. Derecha',   axis: 'gravity',      phoneOrientation: 'vertical',   ref: 45, icon: '↘', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.' },
+      rot_izq:   { label: 'Rotación Izq.',  axis: 'rotationRate', phoneOrientation: 'horizontal', ref: 80, icon: '↺', placement: 'flat-left',         instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la izquierda hasta su rango máximo.' },
+      rot_der:   { label: 'Rotación Der.',  axis: 'rotationRate', phoneOrientation: 'horizontal', ref: 80, icon: '↻', placement: 'flat-right',        instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la derecha hasta su rango máximo.' }
     }
   },
   hombro:  { label: 'Hombro',  abbr: 'Hb', groups: [], movements: {} },
@@ -131,29 +131,34 @@ function handleMotion(e) {
   if (gTotal > 0.5) {
     sensor.beta  = Math.atan2(grav.z, -grav.y) * 180 / Math.PI;
     sensor.gamma = Math.atan2(grav.x, -grav.y) * 180 / Math.PI;
-    tiltInvalid  = Math.abs(grav.z) / gTotal > 0.15;
   }
 
   if (!sensorSeen) { sensorSeen = true; setSensorBadge('active', 'Sensor activo'); }
 
   const { phase, neutralRef, gravRef, movementId } = state.active;
-  if (neutralRef !== null && phase !== 'idle' && movementId && state.regionId) {
-    const { axis } = REGIONS[state.regionId].movements[movementId] || {};
-    if (axis === 'gravity' && gravRef) {
-      const gMag = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
-      if (gMag > 0.1) {
-        const gn  = { x: grav.x/gMag, y: grav.y/gMag, z: grav.z/gMag };
-        const dot = Math.max(-1, Math.min(1, gn.x*gravRef.x + gn.y*gravRef.y + gn.z*gravRef.z));
-        const accelAngleDeg = Math.acos(dot) * (180 / Math.PI);
-        if (r && r.alpha !== null && cfLastTime !== null) {
-          const dt = (now - cfLastTime) / 1000;
-          if (dt > 0 && dt < 0.5) {
-            const omegaMag   = Math.sqrt((r.alpha||0)**2 + (r.beta||0)**2 + (r.gamma||0)**2);
-            const confidence = 1 - Math.min(1, Math.abs(gMag - 9.81) / 5);
-            cfAngle = confidence * accelAngleDeg + (1 - confidence) * (cfAngle + omegaMag * dt);
+  if (phase !== 'idle' && movementId && state.regionId) {
+    const mov = REGIONS[state.regionId].movements[movementId];
+    if (mov) {
+      const { axis, phoneOrientation } = mov;
+
+      if (gTotal > 0.5) {
+        tiltInvalid = phoneOrientation === 'horizontal'
+          ? Math.sqrt(grav.x**2 + grav.y**2) / gTotal > 0.25
+          : Math.abs(grav.z) / gTotal > 0.25;
+      }
+
+      if (neutralRef !== null && r && r.alpha !== null && cfLastTime !== null) {
+        const dt = (now - cfLastTime) / 1000;
+        if (dt > 0 && dt < 0.5) {
+          if (axis === 'gravity' && gravRef && gTotal > 0.1) {
+            const gn  = { x: grav.x/gTotal, y: grav.y/gTotal, z: grav.z/gTotal };
+            const dot = Math.max(-1, Math.min(1, gn.x*gravRef.x + gn.y*gravRef.y + gn.z*gravRef.z));
+            const accelAngleDeg = Math.acos(dot) * 180 / Math.PI;
+            const confidence    = 1 - Math.min(1, Math.abs(gTotal - 9.81) / 5);
+            cfAngle = confidence * accelAngleDeg + (1 - confidence) * (cfAngle + (r.alpha || 0) * dt);
+          } else if (axis === 'rotationRate' && !tiltInvalid) {
+            cfAngle += (r.alpha || 0) * dt;
           }
-        } else {
-          cfAngle = accelAngleDeg;
         }
       }
     }
@@ -337,7 +342,12 @@ function calibrateNeutral() {
     state.active.gravRef    = mag > 0.1
       ? { x: grav.x/mag, y: grav.y/mag, z: grav.z/mag }
       : null;
-    state.active.neutralRef = 0;  // dummy para pasar los guards existentes
+    state.active.neutralRef = 0;
+    cfAngle    = 0;
+    cfLastTime = null;
+  } else if (axis === 'rotationRate') {
+    state.active.neutralRef = 0;
+    state.active.gravRef    = null;
     cfAngle    = 0;
     cfLastTime = null;
   } else {
@@ -422,30 +432,40 @@ function updateLiveAngle() {
 
   const { axis } = REGIONS[state.regionId].movements[movementId];
 
-  const warn = document.getElementById('tiltWarning');
-  if ((axis === 'gamma' || axis === 'gravity') && tiltInvalid) {
+  const warn     = document.getElementById('tiltWarning');
+  const angleEl  = document.getElementById('angleValue');
+  const shouldWarn = tiltInvalid && (phase === 'calibrated' || phase === 'measuring');
+  if (shouldWarn) {
     warn.style.display = '';
+    angleEl.classList.add('tilt');
     return;
   }
   warn.style.display = 'none';
+  angleEl.classList.remove('tilt');
 
   let delta;
-  if (axis === 'gravity') {
-    delta = Math.abs(cfAngle);
+  if (axis === 'gravity' || axis === 'rotationRate') {
+    delta = foldAngle(Math.abs(cfAngle));
   } else {
-    delta = (axis === 'alpha' || axis === 'beta')
+    const raw = (axis === 'alpha' || axis === 'beta')
       ? Math.abs(angularDiff(sensor[axis], neutralRef))
       : Math.abs(sensor[axis] - neutralRef);
+    delta = foldAngle(raw);
   }
+
   smoothedDelta = EMA_ALPHA * delta + (1 - EMA_ALPHA) * smoothedDelta;
   const deg = Math.round(smoothedDelta);
-
   document.getElementById('angleValue').textContent = deg + '°';
 
   if (phase === 'measuring' && delta > state.active.peakDelta) {
     state.active.peakDelta = delta;
     document.getElementById('peakLabel').textContent = 'Máx: ' + Math.round(delta) + '°';
   }
+}
+
+function foldAngle(deg) {
+  const a = Math.abs(deg) % 360;
+  return a > 180 ? 360 - a : a;
 }
 
 // Diferencia angular con manejo de wrap-around (alpha: 0–360°, beta: ±180°)
@@ -490,6 +510,28 @@ function resetAll() {
 
 // ── SVG ilustraciones de colocación ──────────────────────────────────────
 function placementSVG(type) {
+  if (type === 'sagittal-vertical') {
+    return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="52" cy="66" rx="22" ry="28" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
+      <rect x="10" y="44" width="9" height="44" rx="2" fill="none" stroke="#c084fc" stroke-width="1.5"/>
+      <rect x="12" y="47" width="5" height="38" rx="1" fill="#171e2e"/>
+      <path d="M22,56 Q36,62 32,74" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#aSV)"/>
+      <defs>
+        <marker id="aSV" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
+      </defs>
+    </svg>`;
+  }
+  if (type === 'frontal-vertical') {
+    return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="44" cy="72" rx="22" ry="28" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
+      <rect x="27" y="16" width="34" height="52" rx="6" fill="none" stroke="#c084fc" stroke-width="1.5"/>
+      <rect x="31" y="20" width="26" height="44" rx="3" fill="#171e2e"/>
+      <path d="M35,68 Q26,76 30,84" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#aFV)"/>
+      <defs>
+        <marker id="aFV" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
+      </defs>
+    </svg>`;
+  }
   if (type === 'flat-left' || type === 'flat-right') {
     const left = type === 'flat-left';
     const arrow = left
