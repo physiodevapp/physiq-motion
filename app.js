@@ -52,6 +52,7 @@ const grav   = { x: 0, y: 0, z: 0 };
 let sensorStarted = false;
 let sensorSeen    = false;
 let tiltInvalid   = false;
+let lastDisplayUpdate = 0;
 
 // Suavizado de la visualización
 const EMA_ALPHA  = 0.15;
@@ -416,6 +417,10 @@ function refreshSheetUI() {
 
 // ── Ángulo en vivo ────────────────────────────────────────────────────────
 function updateLiveAngle() {
+  const now = performance.now();
+  if (now - lastDisplayUpdate < 150) return;
+  lastDisplayUpdate = now;
+
   const { movementId, phase, neutralRef } = state.active;
   if (!movementId || !state.regionId || phase === 'idle' || phase === 'done') return;
   if (neutralRef === null) return;
