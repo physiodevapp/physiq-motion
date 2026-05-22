@@ -41,7 +41,15 @@ const REGIONS = {
       extension: { label: 'Extensión', axis: 'gravity', phoneOrientation: 'sagittal-vertical', ref: 5,   icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre la tibia con la <strong>pantalla paralela al plano frontal</strong>. Calibra con la rodilla en la posición inicial y extiende hasta el rango máximo.' }
     }
   },
-  tobillo: { label: 'Tobillo', abbr: 'Tb', groups: [], movements: {} },
+  tobillo: {
+    label: 'Tobillo', abbr: 'Tb',
+    groups: [
+      { label: 'Dorsiflexión', ids: ['dorsiflexion'] }
+    ],
+    movements: {
+      dorsiflexion: { label: 'Dorsiflexión', axis: 'gravity', phoneOrientation: 'vertical', ref: 20, icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador. Calibra con el tobillo en posición neutra y realiza la dorsiflexión hasta el rango máximo.' }
+    }
+  },
   lumbar:  { label: 'Lumbar',  abbr: 'Lb', groups: [], movements: {} }
 };
 
