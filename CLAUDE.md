@@ -75,6 +75,32 @@ function angularDiff(a, b) {
 
 **Magnetic interference warning** — alpha (compass) is sensitive to metal surfaces and equipment. Instructions prompt the examiner to calibrate from neutral and avoid magnetic sources nearby.
 
+### Sensor-to-Anatomy Mapping (General Framework)
+
+**Sensor types**
+
+| Axis | Sensor | Depends on | Range |
+|------|--------|-----------|-------|
+| `beta` | Accelerometer (gravity) | Forward/back tilt | −180° to 180° |
+| `gamma` | Accelerometer (gravity) | Left/right tilt | −90° to 90° |
+| `alpha` | Magnetometer (compass) | Horizontal heading | 0° to 360° |
+
+**Axis selection rule**
+- Movement in a **sagittal or frontal** plane (vertical) → `beta` or `gamma` (gravity-based, reliable indoors)
+- Movement in the **transverse** plane (axial rotation) → `alpha` (compass-based, requires `angularDiff()`, sensitive to magnetic interference)
+
+**Phone placement → anatomical plane**
+
+| Phone position | Screen direction | Active axis | Anatomical plane |
+|----------------|-----------------|-------------|-----------------|
+| Vertical on segment, portrait | Toward examiner | `beta` | Sagittal (flexion / extension) |
+| Vertical on segment, portrait | Toward examiner | `gamma` | Frontal (lateral flexion / abduction) |
+| Flat on horizontal segment | Facing up | `alpha` | Transverse (axial rotation) |
+
+`beta` = phone pitches like an airplane nose (segment flexes/extends). `gamma` = phone rolls sideways (abduction / lateral tilt). Which one activates depends on how the segment's movement tilts the phone's axes.
+
+**When adding a new body region:** always confirm with the user — patient position, which segment the phone is placed on, placement surface, and screen direction — then derive the axis from first principles. Do not assume from existing mappings.
+
 ## State Schema
 
 ```js
