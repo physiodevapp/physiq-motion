@@ -164,6 +164,9 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 
 /* ── Sheet action buttons ────────────────────────────────────────────────── */
 .sheet-actions{display:flex;flex-direction:column;gap:8px;}
+.sheet-actions-row{display:flex;gap:8px;}
+.sheet-actions-row .btn-redo{flex:1;}
+.sheet-actions-row .btn-start,.sheet-actions-row .btn-save{flex:2;}
 .btn-sheet{border-radius:12px;padding:15px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:500;cursor:pointer;width:100%;transition:background 0.2s,transform 0.1s;border:none;}
 .btn-sheet:active{transform:scale(0.98);}
 .btn-calibrate{background:var(--surface3);border:1px solid var(--border2);color:var(--text);}
@@ -176,6 +179,8 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .btn-save:hover{background:#a855f7;}
 .btn-redo{background:transparent;border:1px solid var(--border);color:var(--text3);font-family:'DM Mono',monospace;font-size:12px;padding:11px;}
 .btn-redo:hover{border-color:var(--text2);color:var(--text2);}
+.sheet-lbl-short{display:none;}
+@media(max-width:360px){.sheet-lbl-full{display:none;}.sheet-lbl-short{display:inline;}}
 
 /* ── Animations ──────────────────────────────────────────────────────────── */
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
@@ -296,18 +301,25 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
       <button class="btn-sheet btn-calibrate" id="btnCalibrate" onclick="calibrateNeutral()">
         Calibrar posición neutra
       </button>
-      <button class="btn-sheet btn-start" id="btnStartMeasure" onclick="startMeasurement()" style="display:none">
-        Iniciar medición
-      </button>
+      <div class="sheet-actions-row" id="rowCalibrated" style="display:none">
+        <button class="btn-sheet btn-redo" onclick="redoMeasurement()">
+          <span class="sheet-lbl-full">↺ Repetir</span><span class="sheet-lbl-short">↺</span>
+        </button>
+        <button class="btn-sheet btn-start" onclick="startMeasurement()">
+          <span class="sheet-lbl-full">Iniciar medición</span><span class="sheet-lbl-short">Iniciar</span>
+        </button>
+      </div>
       <button class="btn-sheet btn-stop" id="btnStopMeasure" onclick="stopMeasurement()" style="display:none">
         Detener y registrar
       </button>
-      <button class="btn-sheet btn-save" id="btnSaveResult" onclick="saveResult()" style="display:none">
-        ✓ Confirmar resultado
-      </button>
-      <button class="btn-sheet btn-redo" id="btnRedo" onclick="redoMeasurement()" style="display:none">
-        ↺ Repetir desde neutro
-      </button>
+      <div class="sheet-actions-row" id="rowDone" style="display:none">
+        <button class="btn-sheet btn-redo" onclick="redoMeasurement()">
+          <span class="sheet-lbl-full">↺ Repetir</span><span class="sheet-lbl-short">↺</span>
+        </button>
+        <button class="btn-sheet btn-save" onclick="saveResult()">
+          <span class="sheet-lbl-full">Confirmar resultado</span><span class="sheet-lbl-short">Confirmar</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
