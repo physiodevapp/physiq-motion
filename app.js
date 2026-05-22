@@ -19,7 +19,16 @@ const REGIONS = {
     }
   },
   hombro:  { label: 'Hombro',  abbr: 'Hb', groups: [], movements: {} },
-  codo:    { label: 'Codo',    abbr: 'Co', groups: [], movements: {} },
+  codo: {
+    label: 'Codo', abbr: 'Co',
+    groups: [
+      { label: 'Flexo-extensión', ids: ['flexion', 'extension'] }
+    ],
+    movements: {
+      flexion:   { label: 'Flexión',   axis: 'gravity', phoneOrientation: 'sagittal-vertical', ref: 145, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en extensión completa y flexiona hasta el rango máximo.' },
+      extension: { label: 'Extensión', axis: 'gravity', phoneOrientation: 'sagittal-vertical', ref: 5,   icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en posición inicial y extiende hasta el rango máximo.' }
+    }
+  },
   muneca:  { label: 'Muñeca',  abbr: 'Mn', groups: [], movements: {} },
   cadera:  { label: 'Cadera',  abbr: 'Cd', groups: [], movements: {} },
   rodilla: {
