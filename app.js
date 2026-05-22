@@ -34,11 +34,26 @@ const REGIONS = {
   rodilla: {
     label: 'Rodilla', abbr: 'Rd',
     groups: [
-      { label: 'Flexo-extensión', ids: ['flexion', 'extension'] }
+      { label: 'Extensión', ids: ['extension'] },
+      { label: 'Flexión',   ids: ['flexion']   },
+      { label: 'PKB',       ids: ['pkb']       }
     ],
     movements: {
-      flexion:   { label: 'Flexión',   axis: 'gravity', phoneOrientation: 'sagittal-vertical', ref: 135, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre la tibia con la <strong>pantalla paralela al plano frontal</strong>. Calibra con la rodilla en la posición inicial y flexiona hasta el rango máximo.' },
-      extension: { label: 'Extensión', axis: 'gravity', phoneOrientation: 'sagittal-vertical', ref: 5,   icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre la tibia con la <strong>pantalla paralela al plano frontal</strong>. Calibra con la rodilla en la posición inicial y extiende hasta el rango máximo.' }
+      extension: {
+        label: 'Extensión', measureType: 'two-segment-signed',
+        phoneOrientation: 'none', ref: 0, skipStatus: true, icon: '⬆',
+        instruction: '<strong>Paso 1</strong> — coloca el teléfono <strong>plano sobre el muslo</strong>, pantalla hacia arriba. Pulsa <em>Capturar muslo</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono igual <strong>sobre la tibia</strong>. Resultado: positivo = déficit de extensión; negativo = hiperextensión.'
+      },
+      flexion: {
+        label: 'Flexión', measureType: 'two-segment-abs',
+        phoneOrientation: 'none', ref: 135, icon: '⬇',
+        instruction: 'Con la rodilla en posición de máxima flexión. <strong>Paso 1</strong> — coloca el teléfono <strong>plano sobre el muslo</strong>, pantalla hacia arriba. Pulsa <em>Capturar muslo</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono <strong>plano sobre la tibia</strong>, pantalla hacia arriba.'
+      },
+      pkb: {
+        label: 'PKB', measureType: 'pkb-gamma',
+        phoneOrientation: 'none', ref: 135, icon: '↗',
+        instruction: 'Paciente en <strong>decúbito prono</strong>, rodilla en ~90°. Coloca el teléfono <strong>de canto sobre la tibia</strong>, lado largo a lo largo del segmento, pantalla en el plano sagital. El ángulo parte de 90° — el fisio interpreta: <em>valor − 90° = ROM adicional</em>.'
+      }
     }
   },
   tobillo: {
@@ -64,11 +79,12 @@ const state = {
   ),
   active: {
     movementId: null,
-    phase: 'idle',      // 'idle' | 'calibrated' | 'measuring' | 'done'
-    neutralRef: null,   // para movimientos basados en ángulo Euler
-    gravRef: null,      // para movimientos basados en vector de gravedad
+    phase: 'idle',      // 'idle' | 'calibrated' | 'measuring' | 'done' | 'seg1'
+    neutralRef: null,
+    gravRef: null,
     peakDelta: 0,
-    result: null
+    result: null,
+    seg1Value: null     // primer segmento capturado (two-segment types)
   }
 };
 
@@ -275,14 +291,15 @@ function renderMovementGrid() {
 
 function buildCard(id, def, val, i) {
   const card = document.createElement('div');
-  const status = statusFor(val, def.ref);
-  card.className = 'movement-card' + (val !== null ? ' ' + status : '');
+  const status = def.skipStatus ? '' : statusFor(val, def.ref);
+  card.className = 'movement-card' + (val !== null && status ? ' ' + status : '');
   card.style.animationDelay = (i * 0.05) + 's';
 
-  const badgeHtml = val !== null ? badgeFor(val, def.ref) : '';
+  const badgeHtml = val !== null && !def.skipStatus ? badgeFor(val, def.ref) : '';
   const valueHtml = val !== null
     ? `<div class="mov-value ${status}">${val}°</div>`
     : `<div class="mov-value">—</div>`;
+  const refHtml  = def.skipStatus ? '' : `<div class="mov-ref">Ref: ${def.ref}°</div>`;
   const btnCls   = val !== null ? 'btn-measure remeasure' : 'btn-measure';
   const btnLabel = val !== null ? 'Repetir' : 'Medir';
 
@@ -290,7 +307,7 @@ function buildCard(id, def, val, i) {
     <div class="mov-top">
       <div>
         <div class="mov-label">${def.label}</div>
-        <div class="mov-ref">Ref: ${def.ref}°</div>
+        ${refHtml}
       </div>
       ${badgeHtml}
     </div>
@@ -327,8 +344,8 @@ function renderSummaryTable() {
     tr.innerHTML = `
       <td>${def.label}</td>
       <td style="font-weight:500">${val}°</td>
-      <td>${def.ref}°</td>
-      <td>${badgeFor(val, def.ref)}</td>`;
+      <td>${def.skipStatus ? '—' : def.ref + '°'}</td>
+      <td>${def.skipStatus ? '' : badgeFor(val, def.ref)}</td>`;
     tbody.appendChild(tr);
   });
 }
@@ -338,10 +355,11 @@ function openMeasurement(id) {
   const def = REGIONS[state.regionId].movements[id];
   Object.assign(state.active, {
     movementId: id, phase: 'idle',
-    neutralRef: null, gravRef: null, peakDelta: 0, result: null
+    neutralRef: null, gravRef: null, peakDelta: 0, result: null, seg1Value: null
   });
 
   document.getElementById('sheetTitle').textContent = def.label;
+  document.getElementById('sheetInstruction').innerHTML = def.instruction || '';
   resetAngleDisplay();
   refreshSheetUI();
   document.getElementById('measureOverlay').classList.add('open');
@@ -404,7 +422,7 @@ function saveResult() {
 }
 
 function redoMeasurement() {
-  Object.assign(state.active, { phase: 'idle', neutralRef: null, gravRef: null, peakDelta: 0, result: null });
+  Object.assign(state.active, { phase: 'idle', neutralRef: null, gravRef: null, peakDelta: 0, result: null, seg1Value: null });
   resetAngleDisplay();
   refreshSheetUI();
 }
@@ -419,26 +437,49 @@ function resetAngleDisplay() {
 }
 
 function refreshSheetUI() {
-  const p = state.active.phase;
+  const p      = state.active.phase;
+  const movId  = state.active.movementId;
+  const mtype  = movId && state.regionId
+    ? (REGIONS[state.regionId].movements[movId].measureType || 'standard')
+    : 'standard';
+
   const show = (id, v) => { document.getElementById(id).style.display = v ? '' : 'none'; };
 
-  show('btnCalibrate',  p === 'idle');
-  show('rowCalibrated', p === 'calibrated');
-  show('btnStopMeasure', p === 'measuring');
-  show('rowDone',       p === 'done');
+  // button visibility
+  show('btnCalibrate',    mtype === 'standard' && p === 'idle');
+  show('rowCalibrated',   mtype === 'standard' && p === 'calibrated');
+  show('btnStopMeasure',  mtype === 'standard' && p === 'measuring');
+  show('btnCaptureSeg1',  (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'idle');
+  show('rowSeg1',         (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'seg1');
+  show('btnCapturePKB',   mtype === 'pkb-gamma' && p === 'idle');
+  show('rowDone',         p === 'done');
 
-  const steps = [
-    { id: 'phaseStep1', active: p === 'idle',                            done: p !== 'idle'  },
-    { id: 'phaseStep2', active: p === 'calibrated' || p === 'measuring', done: p === 'done'  },
-    { id: 'phaseStep3', active: p === 'done',                            done: false         }
-  ];
-  steps.forEach(({ id, active, done }, idx) => {
-    const el  = document.getElementById(id);
-    const dot = document.getElementById('phaseDot' + (idx + 1));
-    el.className = 'phase-step-item' +
-      (active ? ' active' : '') + (done ? ' done' : '');
-    dot.className = 'phase-dot' +
-      (p === 'measuring' && id === 'phaseStep2' ? ' pulsing' : '');
+  // phase step labels and states
+  const labels = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
+    ? ['Muslo', 'Tibia', 'Listo']
+    : mtype === 'pkb-gamma'
+    ? ['Posición', 'Listo', '']
+    : ['Neutro', 'Midiendo', 'Listo'];
+
+  const actives = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
+    ? [p === 'idle', p === 'seg1', p === 'done']
+    : mtype === 'pkb-gamma'
+    ? [p === 'idle', p === 'done', false]
+    : [p === 'idle', p === 'calibrated' || p === 'measuring', p === 'done'];
+
+  const dones = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
+    ? [p === 'seg1' || p === 'done', p === 'done', false]
+    : mtype === 'pkb-gamma'
+    ? [p === 'done', false, false]
+    : [p !== 'idle', p === 'done', false];
+
+  [1, 2, 3].forEach((n, i) => {
+    const el  = document.getElementById('phaseStep' + n);
+    const dot = document.getElementById('phaseDot' + n);
+    const lbl = document.getElementById('stepLabel' + n);
+    if (lbl) lbl.textContent = labels[i];
+    el.className  = 'phase-step-item' + (actives[i] ? ' active' : '') + (dones[i] ? ' done' : '');
+    dot.className = 'phase-dot' + (mtype === 'standard' && p === 'measuring' && n === 2 ? ' pulsing' : '');
   });
 }
 
@@ -448,15 +489,38 @@ function updateLiveAngle() {
   if (now - lastDisplayUpdate < 150) return;
   lastDisplayUpdate = now;
 
-  const { movementId, phase, neutralRef } = state.active;
-  if (!movementId || !state.regionId || phase === 'idle' || phase === 'done') return;
-  if (neutralRef === null) return;
+  const { movementId, phase } = state.active;
+  if (!movementId || !state.regionId || phase === 'done') return;
 
-  const { axis } = REGIONS[state.regionId].movements[movementId];
+  const def   = REGIONS[state.regionId].movements[movementId];
+  const mtype = def.measureType || 'standard';
 
-  const warn       = document.getElementById('tiltWarning');
-  const angleEl    = document.getElementById('angleValue');
-  const displayEl  = document.querySelector('.angle-display');
+  // ── nuevos tipos: two-segment y pkb ──────────────────────────────────
+  if (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') {
+    if (phase === 'idle' || phase === 'seg1') {
+      const deg = Math.round(segmentInclination());
+      document.getElementById('angleValue').textContent = deg + '°';
+      document.getElementById('angleValue').className   = 'angle-value live';
+    }
+    return;
+  }
+  if (mtype === 'pkb-gamma') {
+    if (phase === 'idle') {
+      const deg = Math.round(Math.abs(sensor.gamma));
+      document.getElementById('angleValue').textContent = deg + '°';
+      document.getElementById('angleValue').className   = 'angle-value live';
+    }
+    return;
+  }
+
+  // ── tipo estándar ─────────────────────────────────────────────────────
+  const { neutralRef } = state.active;
+  if (phase === 'idle' || neutralRef === null) return;
+
+  const { axis } = def;
+  const warn      = document.getElementById('tiltWarning');
+  const angleEl   = document.getElementById('angleValue');
+  const displayEl = document.querySelector('.angle-display');
   const shouldWarn = tiltInvalid && (phase === 'calibrated' || phase === 'measuring');
   if (shouldWarn) {
     warn.textContent = '⚠ fuera de plano';
@@ -499,6 +563,51 @@ function angularDiff(a, b) {
   while (d >  180) d -= 360;
   while (d < -180) d += 360;
   return d;
+}
+
+// ── Mediciones de dos segmentos y PKB ────────────────────────────────────
+
+// Inclinación del segmento respecto a la horizontal absoluta.
+// arcsin(-grav.y / g): positivo cuando el extremo superior (top) se despega,
+// negativo cuando lo hace el inferior. Se «dobla» en 90° (nunca supera ±90°).
+function segmentInclination() {
+  const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
+  if (gTotal < 0.5) return 0;
+  return Math.asin(Math.max(-1, Math.min(1, -grav.y / gTotal))) * 180 / Math.PI;
+}
+
+function captureSegment1() {
+  state.active.seg1Value = segmentInclination();
+  state.active.phase = 'seg1';
+  document.getElementById('angleValue').textContent = '—';
+  document.getElementById('angleValue').className = 'angle-value live';
+  document.getElementById('peakLabel').textContent =
+    'Muslo: ' + Math.round(state.active.seg1Value) + '°';
+  refreshSheetUI();
+}
+
+function captureSegment2() {
+  const { measureType } = REGIONS[state.regionId].movements[state.active.movementId];
+  const seg1 = state.active.seg1Value;
+  const seg2 = segmentInclination();
+  const result = measureType === 'two-segment-signed'
+    ? Math.round(seg2 - seg1)
+    : Math.round(180 - Math.abs(seg1) - Math.abs(seg2));
+  state.active.result = result;
+  state.active.phase  = 'done';
+  document.getElementById('angleValue').textContent = result + '°';
+  document.getElementById('angleValue').className   = 'angle-value done';
+  document.getElementById('peakLabel').textContent  = '';
+  refreshSheetUI();
+}
+
+function capturePKB() {
+  const result = Math.round(Math.abs(sensor.gamma));
+  state.active.result = result;
+  state.active.phase  = 'done';
+  document.getElementById('angleValue').textContent = result + '°';
+  document.getElementById('angleValue').className   = 'angle-value done';
+  refreshSheetUI();
 }
 
 // ── Exportar a PhysiQ Report ──────────────────────────────────────────────

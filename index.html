@@ -285,19 +285,20 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
     <div class="phase-steps">
       <div class="phase-step-item" id="phaseStep1">
         <div class="phase-dot" id="phaseDot1"></div>
-        <span>Neutro</span>
+        <span id="stepLabel1">Neutro</span>
       </div>
       <div class="phase-step-item" id="phaseStep2">
         <div class="phase-dot" id="phaseDot2"></div>
-        <span>Midiendo</span>
+        <span id="stepLabel2">Midiendo</span>
       </div>
       <div class="phase-step-item" id="phaseStep3">
         <div class="phase-dot" id="phaseDot3"></div>
-        <span>Listo</span>
+        <span id="stepLabel3">Listo</span>
       </div>
     </div>
 
     <div class="sheet-actions">
+      <!-- Flujo estándar -->
       <button class="btn-sheet btn-calibrate" id="btnCalibrate" onclick="calibrateNeutral()">
         Calibrar posición neutra
       </button>
@@ -312,6 +313,23 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
       <button class="btn-sheet btn-stop" id="btnStopMeasure" onclick="stopMeasurement()" style="display:none">
         Detener y registrar
       </button>
+      <!-- Flujo two-segment -->
+      <button class="btn-sheet btn-calibrate" id="btnCaptureSeg1" onclick="captureSegment1()" style="display:none">
+        Capturar muslo
+      </button>
+      <div class="sheet-actions-row" id="rowSeg1" style="display:none">
+        <button class="btn-sheet btn-redo" onclick="redoMeasurement()">
+          <span class="sheet-lbl-full">↺ Repetir</span><span class="sheet-lbl-short">↺</span>
+        </button>
+        <button class="btn-sheet btn-start" onclick="captureSegment2()">
+          <span class="sheet-lbl-full">Capturar tibia</span><span class="sheet-lbl-short">Tibia</span>
+        </button>
+      </div>
+      <!-- Flujo PKB -->
+      <button class="btn-sheet btn-calibrate" id="btnCapturePKB" onclick="capturePKB()" style="display:none">
+        Capturar ángulo
+      </button>
+      <!-- Resultado (todos los flujos) -->
       <div class="sheet-actions-row" id="rowDone" style="display:none">
         <button class="btn-sheet btn-redo" onclick="redoMeasurement()">
           <span class="sheet-lbl-full">↺ Repetir</span><span class="sheet-lbl-short">↺</span>
