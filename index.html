@@ -150,8 +150,9 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .angle-value.done{color:var(--green);}
 .angle-unit{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:6px;}
 .peak-label{position:absolute;top:12px;right:16px;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent3);}
-.tilt-badge{position:absolute;top:10px;left:14px;padding:3px 8px;background:rgba(239,68,68,0.18);border:1px solid rgba(239,68,68,0.45);border-radius:20px;font-family:'DM Mono',monospace;font-size:10px;color:#f87171;letter-spacing:0.3px;}
 .angle-value.tilt{opacity:0.25;transition:opacity 0.15s;}
+.angle-display.tilt-warn{background:rgba(239,68,68,0.10);border:1px solid rgba(239,68,68,0.40);}
+.angle-display.tilt-warn .angle-unit{color:#f87171;}
 
 /* ── Phase steps ─────────────────────────────────────────────────────────── */
 .phase-steps{display:flex;justify-content:center;gap:32px;margin-bottom:22px;}
@@ -273,9 +274,8 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 
     <div class="angle-display">
       <div class="angle-value" id="angleValue">—</div>
-      <div class="angle-unit">grados</div>
+      <div class="angle-unit" id="tiltWarning"></div>
       <div class="peak-label" id="peakLabel"></div>
-      <div class="tilt-badge" id="tiltWarning" style="display:none">⚠ fuera de plano</div>
     </div>
 
     <div class="phase-steps">

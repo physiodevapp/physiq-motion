@@ -259,7 +259,6 @@ function buildCard(id, def, val, i) {
 
   card.innerHTML = `
     <div class="mov-top">
-      <span class="mov-icon">${def.icon}</span>
       ${badgeHtml}
     </div>
     <div>
@@ -313,9 +312,7 @@ function openMeasurement(id) {
     neutralRef: null, gravRef: null, peakDelta: 0, result: null
   });
 
-  document.getElementById('sheetTitle').textContent     = def.label;
-  document.getElementById('sheetInstruction').innerHTML = def.instruction;
-  document.getElementById('placementDiagram').innerHTML = placementSVG(def.placement);
+  document.getElementById('sheetTitle').textContent = def.label;
   resetAngleDisplay();
   refreshSheetUI();
   document.getElementById('measureOverlay').classList.add('open');
@@ -425,15 +422,18 @@ function updateLiveAngle() {
 
   const { axis } = REGIONS[state.regionId].movements[movementId];
 
-  const warn     = document.getElementById('tiltWarning');
-  const angleEl  = document.getElementById('angleValue');
+  const warn       = document.getElementById('tiltWarning');
+  const angleEl    = document.getElementById('angleValue');
+  const displayEl  = document.querySelector('.angle-display');
   const shouldWarn = tiltInvalid && (phase === 'calibrated' || phase === 'measuring');
   if (shouldWarn) {
-    warn.style.display = '';
+    warn.textContent = '⚠ fuera de plano';
+    displayEl.classList.add('tilt-warn');
     angleEl.classList.add('tilt');
     return;
   }
-  warn.style.display = 'none';
+  warn.textContent = '';
+  displayEl.classList.remove('tilt-warn');
   angleEl.classList.remove('tilt');
 
   let delta;
@@ -499,83 +499,4 @@ function resetAll() {
   Object.keys(meas).forEach(k => { meas[k] = null; });
   document.getElementById('patientName').value = '';
   renderMovementGrid();
-}
-
-// ── SVG ilustraciones de colocación ──────────────────────────────────────
-function placementSVG(type) {
-  if (type === 'sagittal-vertical') {
-    return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="52" cy="66" rx="22" ry="28" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
-      <rect x="10" y="44" width="9" height="44" rx="2" fill="none" stroke="#c084fc" stroke-width="1.5"/>
-      <rect x="12" y="47" width="5" height="38" rx="1" fill="#171e2e"/>
-      <path d="M22,56 Q36,62 32,74" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#aSV)"/>
-      <defs>
-        <marker id="aSV" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
-      </defs>
-    </svg>`;
-  }
-  if (type === 'frontal-vertical') {
-    return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="44" cy="72" rx="22" ry="28" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
-      <rect x="27" y="16" width="34" height="52" rx="6" fill="none" stroke="#c084fc" stroke-width="1.5"/>
-      <rect x="31" y="20" width="26" height="44" rx="3" fill="#171e2e"/>
-      <path d="M35,68 Q26,76 30,84" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#aFV)"/>
-      <defs>
-        <marker id="aFV" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
-      </defs>
-    </svg>`;
-  }
-  if (type === 'flat-left' || type === 'flat-right') {
-    const left = type === 'flat-left';
-    const arrow = left
-      ? `<path d="M14,42 Q2,53 14,66" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a1)"/>`
-      : `<path d="M74,66 Q86,55 74,42" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a1)"/>`;
-    return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="44" cy="60" rx="25" ry="33" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
-      <rect x="18" y="37" width="52" height="32" rx="7" fill="none" stroke="#c084fc" stroke-width="1.5"/>
-      <rect x="22" y="41" width="44" height="24" rx="4" fill="#171e2e"/>
-      ${arrow}
-      <defs>
-        <marker id="a1" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
-      </defs>
-    </svg>`;
-  }
-  if (type === 'landscape-left' || type === 'landscape-right') {
-    const left = type === 'landscape-left';
-    const ex = left ? 33 : 55;
-    const qx = left ? 26 : 62;
-    return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
-      <rect x="10" y="16" width="68" height="42" rx="6" fill="none" stroke="#c084fc" stroke-width="1.5"/>
-      <rect x="14" y="20" width="60" height="34" rx="3" fill="#171e2e"/>
-      <circle cx="78" cy="37" r="2.5" fill="none" stroke="#c084fc" stroke-width="1.2"/>
-      <ellipse cx="44" cy="86" rx="13" ry="17" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
-      <path d="M44,60 Q${qx},70 ${ex},78" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a4)"/>
-      <defs>
-        <marker id="a4" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
-      </defs>
-    </svg>`;
-  }
-  if (type === 'apex-edge') {
-    return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="44" cy="80" rx="22" ry="19" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
-      <rect x="13" y="53" width="58" height="8" rx="3" fill="none" stroke="#c084fc" stroke-width="1.5"/>
-      <rect x="16" y="55" width="52" height="4" rx="2" fill="#171e2e"/>
-      <line x1="44" y1="61" x2="44" y2="61" stroke="#8fa0bf" stroke-width="1"/>
-      <path d="M25,61 Q15,70 22,79" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#aE)"/>
-      <defs>
-        <marker id="aE" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
-      </defs>
-    </svg>`;
-  }
-  // Vertical (extension)
-  return `<svg viewBox="0 0 88 108" class="placement-svg" xmlns="http://www.w3.org/2000/svg">
-    <rect x="27" y="8" width="34" height="58" rx="6" fill="none" stroke="#c084fc" stroke-width="1.5"/>
-    <rect x="31" y="13" width="26" height="46" rx="3" fill="#171e2e"/>
-    <circle cx="44" cy="71" r="3.5" fill="none" stroke="#c084fc" stroke-width="1.2"/>
-    <ellipse cx="44" cy="94" rx="18" ry="11" fill="none" stroke="#8fa0bf" stroke-width="1" stroke-dasharray="4,3"/>
-    <path d="M44,79 Q30,87 28,94" stroke="#c084fc" stroke-width="1.5" fill="none" marker-end="url(#a3)"/>
-    <defs>
-      <marker id="a3" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#c084fc"/></marker>
-    </defs>
-  </svg>`;
 }
