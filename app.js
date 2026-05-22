@@ -14,8 +14,8 @@ const REGIONS = {
       extension: { label: 'Extensión',      axis: 'gravity',      phoneOrientation: 'vertical',   ref: 60, icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia atrás hasta su rango máximo.' },
       lat_izq:   { label: 'Lat. Izquierda', axis: 'gravity',      phoneOrientation: 'vertical',   ref: 45, icon: '↙', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.' },
       lat_der:   { label: 'Lat. Derecha',   axis: 'gravity',      phoneOrientation: 'vertical',   ref: 45, icon: '↘', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.' },
-      rot_izq:   { label: 'Rotación Izq.',  axis: 'rotationRate', phoneOrientation: 'horizontal', ref: 80, icon: '↺', placement: 'flat-left',         instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la izquierda hasta su rango máximo.' },
-      rot_der:   { label: 'Rotación Der.',  axis: 'rotationRate', phoneOrientation: 'horizontal', ref: 80, icon: '↻', placement: 'flat-right',        instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la derecha hasta su rango máximo.' }
+      rot_izq:   { label: 'Rotación Izq.',  axis: 'alpha', phoneOrientation: 'horizontal', ref: 80, icon: '↺', placement: 'flat-left',         instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la izquierda hasta su rango máximo.' },
+      rot_der:   { label: 'Rotación Der.',  axis: 'alpha', phoneOrientation: 'horizontal', ref: 80, icon: '↻', placement: 'flat-right',        instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la derecha hasta su rango máximo.' }
     }
   },
   hombro:  { label: 'Hombro',  abbr: 'Hb', groups: [], movements: {} },
@@ -156,8 +156,6 @@ function handleMotion(e) {
             const accelAngleDeg = Math.acos(dot) * 180 / Math.PI;
             const confidence    = 1 - Math.min(1, Math.abs(gTotal - 9.81) / 5);
             cfAngle = confidence * accelAngleDeg + (1 - confidence) * (cfAngle + (r.alpha || 0) * dt);
-          } else if (axis === 'rotationRate' && !tiltInvalid) {
-            cfAngle += (r.alpha || 0) * dt;
           }
         }
       }
@@ -345,11 +343,6 @@ function calibrateNeutral() {
     state.active.neutralRef = 0;
     cfAngle    = 0;
     cfLastTime = null;
-  } else if (axis === 'rotationRate') {
-    state.active.neutralRef = 0;
-    state.active.gravRef    = null;
-    cfAngle    = 0;
-    cfLastTime = null;
   } else {
     state.active.neutralRef = sensor[axis];
     state.active.gravRef    = null;
@@ -427,7 +420,7 @@ function refreshSheetUI() {
 // ── Ángulo en vivo ────────────────────────────────────────────────────────
 function updateLiveAngle() {
   const { movementId, phase, neutralRef } = state.active;
-  if (!movementId || !state.regionId || phase === 'idle') return;
+  if (!movementId || !state.regionId || phase === 'idle' || phase === 'done') return;
   if (neutralRef === null) return;
 
   const { axis } = REGIONS[state.regionId].movements[movementId];
