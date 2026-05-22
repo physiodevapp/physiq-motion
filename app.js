@@ -22,7 +22,16 @@ const REGIONS = {
   codo:    { label: 'Codo',    abbr: 'Co', groups: [], movements: {} },
   muneca:  { label: 'Muñeca',  abbr: 'Mn', groups: [], movements: {} },
   cadera:  { label: 'Cadera',  abbr: 'Cd', groups: [], movements: {} },
-  rodilla: { label: 'Rodilla', abbr: 'Rd', groups: [], movements: {} },
+  rodilla: {
+    label: 'Rodilla', abbr: 'Rd',
+    groups: [
+      { label: 'Flexo-extensión', ids: ['flexion', 'extension'] }
+    ],
+    movements: {
+      flexion:   { label: 'Flexión',   axis: 'gravity', phoneOrientation: 'sagittal-vertical', ref: 135, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre la tibia con la <strong>pantalla paralela al plano frontal</strong>. Calibra con la rodilla en la posición inicial y flexiona hasta el rango máximo.' },
+      extension: { label: 'Extensión', axis: 'gravity', phoneOrientation: 'sagittal-vertical', ref: 5,   icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre la tibia con la <strong>pantalla paralela al plano frontal</strong>. Calibra con la rodilla en la posición inicial y extiende hasta el rango máximo.' }
+    }
+  },
   tobillo: { label: 'Tobillo', abbr: 'Tb', groups: [], movements: {} },
   lumbar:  { label: 'Lumbar',  abbr: 'Lb', groups: [], movements: {} }
 };
@@ -145,6 +154,8 @@ function handleMotion(e) {
       if (gTotal > 0.5) {
         tiltInvalid = phoneOrientation === 'horizontal'
           ? Math.sqrt(grav.x**2 + grav.y**2) / gTotal > 0.25
+          : phoneOrientation === 'sagittal-vertical'
+          ? Math.abs(grav.x) / gTotal > 0.25
           : Math.abs(grav.z) / gTotal > 0.25;
       }
 
