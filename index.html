@@ -329,6 +329,10 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
       <button class="btn-sheet btn-calibrate" id="btnCapturePKB" onclick="capturePKB()" style="display:none">
         Capturar ángulo
       </button>
+      <!-- Flujo gravity-vertical (tobillo sin calibración manual) -->
+      <button class="btn-sheet btn-calibrate" id="btnStartVertical" onclick="startVerticalMeasurement()" style="display:none">
+        Iniciar medición
+      </button>
       <!-- Resultado (todos los flujos) -->
       <div class="sheet-actions-row" id="rowDone" style="display:none">
         <button class="btn-sheet btn-redo" onclick="redoMeasurement()">

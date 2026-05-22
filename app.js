@@ -59,10 +59,12 @@ const REGIONS = {
   tobillo: {
     label: 'Tobillo', abbr: 'Tb',
     groups: [
-      { label: 'Dorsiflexión', ids: ['dorsiflexion'] }
+      { label: 'Dorsiflexión',   ids: ['dorsiflexion']   },
+      { label: 'Plantarflexión', ids: ['plantarflexion'] }
     ],
     movements: {
-      dorsiflexion: { label: 'Dorsiflexión', axis: 'gravity', phoneOrientation: 'vertical', ref: 20, icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador. Calibra con el tobillo en posición neutra y realiza la dorsiflexión hasta el rango máximo.' }
+      dorsiflexion:   { label: 'Dorsiflexión',   measureType: 'gravity-vertical', axis: 'gravity', phoneOrientation: 'sagittal-vertical', ref: 20, icon: '⬆', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador. Con la tibia a 90° el ángulo es 0°. Pulsa <em>Iniciar</em> y realiza la dorsiflexión hasta el rango máximo.' },
+      plantarflexion: { label: 'Plantarflexión', measureType: 'gravity-vertical', axis: 'gravity', phoneOrientation: 'sagittal-vertical', ref: 50, icon: '⬇', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador. Con la tibia a 90° el ángulo es 0°. Pulsa <em>Iniciar</em> y realiza la plantarflexión hasta el rango máximo.' }
     }
   },
   lumbar:  { label: 'Lumbar',  abbr: 'Lb', groups: [], movements: {} }
@@ -406,6 +408,27 @@ function startMeasurement() {
   refreshSheetUI();
 }
 
+function startVerticalMeasurement() {
+  const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
+  // gravRef siempre apunta al vertical físico: dirección del eje Y del móvil
+  const ySign = grav.y >= 0 ? 1 : -1;
+  state.active.gravRef    = { x: 0, y: ySign, z: 0 };
+  state.active.neutralRef = 0;
+  // cfAngle arranca en el ángulo real desde vertical (no necesariamente 0)
+  if (gTotal > 0.1) {
+    const dot = Math.max(-1, Math.min(1, grav.y * ySign / gTotal));
+    cfAngle = Math.acos(dot) * 180 / Math.PI;
+  } else {
+    cfAngle = 0;
+  }
+  cfLastTime             = null;
+  smoothedDelta          = cfAngle;
+  state.active.phase     = 'measuring';
+  state.active.peakDelta = 0;
+  document.getElementById('angleValue').className = 'angle-value measuring';
+  refreshSheetUI();
+}
+
 function stopMeasurement() {
   state.active.phase  = 'done';
   state.active.result = Math.round(state.active.peakDelta);
@@ -446,31 +469,38 @@ function refreshSheetUI() {
   const show = (id, v) => { document.getElementById(id).style.display = v ? '' : 'none'; };
 
   // button visibility
-  show('btnCalibrate',    mtype === 'standard' && p === 'idle');
-  show('rowCalibrated',   mtype === 'standard' && p === 'calibrated');
-  show('btnStopMeasure',  mtype === 'standard' && p === 'measuring');
-  show('btnCaptureSeg1',  (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'idle');
-  show('rowSeg1',         (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'seg1');
-  show('btnCapturePKB',   mtype === 'pkb-gamma' && p === 'idle');
-  show('rowDone',         p === 'done');
+  show('btnCalibrate',      mtype === 'standard' && p === 'idle');
+  show('rowCalibrated',     mtype === 'standard' && p === 'calibrated');
+  show('btnStopMeasure',    (mtype === 'standard' || mtype === 'gravity-vertical') && p === 'measuring');
+  show('btnCaptureSeg1',    (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'idle');
+  show('rowSeg1',           (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'seg1');
+  show('btnCapturePKB',     mtype === 'pkb-gamma' && p === 'idle');
+  show('btnStartVertical',  mtype === 'gravity-vertical' && p === 'idle');
+  show('rowDone',           p === 'done');
 
   // phase step labels and states
   const labels = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
     ? ['Muslo', 'Tibia', 'Listo']
     : mtype === 'pkb-gamma'
     ? ['Posición', 'Listo', '']
+    : mtype === 'gravity-vertical'
+    ? ['Medir', 'Midiendo', 'Listo']
     : ['Neutro', 'Midiendo', 'Listo'];
 
   const actives = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
     ? [p === 'idle', p === 'seg1', p === 'done']
     : mtype === 'pkb-gamma'
     ? [p === 'idle', p === 'done', false]
+    : mtype === 'gravity-vertical'
+    ? [p === 'idle', p === 'measuring', p === 'done']
     : [p === 'idle', p === 'calibrated' || p === 'measuring', p === 'done'];
 
   const dones = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
     ? [p === 'seg1' || p === 'done', p === 'done', false]
     : mtype === 'pkb-gamma'
     ? [p === 'done', false, false]
+    : mtype === 'gravity-vertical'
+    ? [p === 'measuring' || p === 'done', p === 'done', false]
     : [p !== 'idle', p === 'done', false];
 
   [1, 2, 3].forEach((n, i) => {
@@ -479,7 +509,9 @@ function refreshSheetUI() {
     const lbl = document.getElementById('stepLabel' + n);
     if (lbl) lbl.textContent = labels[i];
     el.className  = 'phase-step-item' + (actives[i] ? ' active' : '') + (dones[i] ? ' done' : '');
-    dot.className = 'phase-dot' + (mtype === 'standard' && p === 'measuring' && n === 2 ? ' pulsing' : '');
+    dot.className = 'phase-dot' + (
+      (mtype === 'standard' || mtype === 'gravity-vertical') && p === 'measuring' && n === 2 ? ' pulsing' : ''
+    );
   });
 }
 
@@ -494,6 +526,21 @@ function updateLiveAngle() {
 
   const def   = REGIONS[state.regionId].movements[movementId];
   const mtype = def.measureType || 'standard';
+
+  // ── gravity-vertical: preview en idle, medición en measuring ─────────
+  if (mtype === 'gravity-vertical') {
+    if (phase === 'idle') {
+      const gT = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
+      if (gT > 0.1) {
+        const yS  = grav.y >= 0 ? 1 : -1;
+        const dot = Math.max(-1, Math.min(1, grav.y * yS / gT));
+        document.getElementById('angleValue').textContent = Math.round(Math.acos(dot) * 180 / Math.PI) + '°';
+        document.getElementById('angleValue').className   = 'angle-value live';
+      }
+      return;
+    }
+    // En measuring/done cae al bloque estándar (usa cfAngle vía axis:'gravity')
+  }
 
   // ── nuevos tipos: two-segment y pkb ──────────────────────────────────
   if (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') {
