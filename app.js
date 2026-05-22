@@ -259,12 +259,14 @@ function buildCard(id, def, val, i) {
   const btnLabel = val !== null ? 'Repetir' : 'Medir';
 
   card.innerHTML = `
-    <div>
-      <div class="mov-label">${def.label}</div>
-      <div class="mov-ref">Ref: ${def.ref}°</div>
+    <div class="mov-top">
+      <div>
+        <div class="mov-label">${def.label}</div>
+        <div class="mov-ref">Ref: ${def.ref}°</div>
+      </div>
+      ${badgeHtml}
     </div>
     ${valueHtml}
-    <div class="mov-badge">${badgeHtml}</div>
     <button class="${btnCls}" onclick="openMeasurement('${id}')">${btnLabel}</button>`;
   return card;
 }
