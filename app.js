@@ -321,11 +321,10 @@ function refreshSheetUI() {
   const p = state.active.phase;
   const show = (id, v) => { document.getElementById(id).style.display = v ? '' : 'none'; };
 
-  show('btnCalibrate',    p === 'idle');
-  show('btnStartMeasure', p === 'calibrated');
-  show('btnStopMeasure',  p === 'measuring');
-  show('btnSaveResult',   p === 'done');
-  show('btnRedo',         p === 'calibrated' || p === 'done');
+  show('btnCalibrate',  p === 'idle');
+  show('rowCalibrated', p === 'calibrated');
+  show('btnStopMeasure', p === 'measuring');
+  show('rowDone',       p === 'done');
 
   const steps = [
     { id: 'phaseStep1', active: p === 'idle',                            done: p !== 'idle'  },
