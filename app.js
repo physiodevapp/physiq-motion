@@ -488,8 +488,9 @@ function refreshSheetUI() {
   // button visibility
   show('btnCalibrate',      mtype === 'standard' && p === 'idle');
   document.getElementById('btnCalibrate').disabled = tiltInvalid && p === 'idle';
-  show('rowMeasuring',      mtype === 'standard' && p === 'measuring');
+  show('btnStopMeasure',       mtype === 'standard' && p === 'measuring');
   document.getElementById('btnStopMeasure').disabled = tiltInvalid && p === 'measuring';
+  show('rowMeasuringActions',  mtype === 'standard' && p === 'measuring');
   show('rowVertical',       mtype === 'gravity-vertical' && p === 'measuring');
   document.getElementById('btnStopVertical').disabled = tiltInvalid && p === 'measuring';
   show('btnCaptureSeg1',    (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'idle');
