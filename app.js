@@ -615,12 +615,12 @@ function angularDiff(a, b) {
 // ── Mediciones de dos segmentos y PKB ────────────────────────────────────
 
 // Inclinación del segmento respecto a la horizontal absoluta.
-// arcsin(-grav.y / g): positivo cuando el extremo superior (top) se despega,
+// arcsin(grav.y / g): positivo cuando el extremo superior (top) se despega,
 // negativo cuando lo hace el inferior. Se «dobla» en 90° (nunca supera ±90°).
 function segmentInclination() {
   const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
   if (gTotal < 0.5) return 0;
-  return Math.asin(Math.max(-1, Math.min(1, -grav.y / gTotal))) * 180 / Math.PI;
+  return Math.asin(Math.max(-1, Math.min(1, grav.y / gTotal))) * 180 / Math.PI;
 }
 
 function captureSegment1() {
