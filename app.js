@@ -79,7 +79,7 @@ const state = {
   ),
   active: {
     movementId: null,
-    phase: 'idle',      // 'idle' | 'calibrated' | 'measuring' | 'done' | 'seg1'
+    phase: 'idle',      // 'idle' | 'measuring' | 'done' | 'seg1'
     neutralRef: null,
     gravRef: null,
     peakDelta: 0,
@@ -398,20 +398,14 @@ function calibrateNeutral() {
     state.active.neutralRef = sensor[axis];
     state.active.gravRef    = null;
   }
-  state.active.phase     = 'calibrated';
+  state.active.phase     = 'measuring';
   state.active.peakDelta = 0;
   smoothedDelta          = 0;
   document.getElementById('angleValue').textContent = '0°';
-  document.getElementById('angleValue').className   = 'angle-value live';
+  document.getElementById('angleValue').className   = 'angle-value measuring';
   refreshSheetUI();
 }
 
-function startMeasurement() {
-  state.active.phase     = 'measuring';
-  state.active.peakDelta = 0;
-  document.getElementById('angleValue').className = 'angle-value measuring';
-  refreshSheetUI();
-}
 
 function startVerticalMeasurement() {
   const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
@@ -481,10 +475,10 @@ function refreshSheetUI() {
   // button visibility
   show('btnCalibrate',      mtype === 'standard' && p === 'idle');
   document.getElementById('btnCalibrate').disabled = tiltInvalid && p === 'idle';
-  show('rowCalibrated',     mtype === 'standard' && p === 'calibrated');
-  document.getElementById('btnStartMeasure').disabled = tiltInvalid && p === 'calibrated';
-  show('btnStopMeasure',    (mtype === 'standard' || mtype === 'gravity-vertical') && p === 'measuring');
+  show('rowMeasuring',      mtype === 'standard' && p === 'measuring');
   document.getElementById('btnStopMeasure').disabled = tiltInvalid && p === 'measuring';
+  show('btnStopVertical',   mtype === 'gravity-vertical' && p === 'measuring');
+  document.getElementById('btnStopVertical').disabled = tiltInvalid && p === 'measuring';
   show('btnCaptureSeg1',    (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'idle');
   show('rowSeg1',           (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'seg1');
   show('btnStartVertical',  mtype === 'gravity-vertical' && p === 'idle');
@@ -501,13 +495,13 @@ function refreshSheetUI() {
     ? [p === 'idle', p === 'seg1', p === 'done']
     : mtype === 'gravity-vertical'
     ? [p === 'idle', p === 'measuring', p === 'done']
-    : [p === 'idle', p === 'calibrated' || p === 'measuring', p === 'done'];
+    : [p === 'idle', p === 'measuring', p === 'done'];
 
   const dones = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
     ? [p === 'seg1' || p === 'done', p === 'done', false]
     : mtype === 'gravity-vertical'
     ? [p === 'measuring' || p === 'done', p === 'done', false]
-    : [p !== 'idle', p === 'done', false];
+    : [p === 'measuring' || p === 'done', p === 'done', false];
 
   [1, 2, 3].forEach((n, i) => {
     const el  = document.getElementById('phaseStep' + n);
@@ -595,12 +589,13 @@ function updateLiveAngle() {
   const warn      = document.getElementById('tiltWarning');
   const angleEl   = document.getElementById('angleValue');
   const displayEl = document.querySelector('.angle-display');
-  const shouldWarn = tiltInvalid && (phase === 'calibrated' || phase === 'measuring');
-  if (phase === 'calibrated') {
-    document.getElementById('btnStartMeasure').disabled = tiltInvalid;
-  }
+  const shouldWarn = tiltInvalid && phase === 'measuring';
   if (phase === 'measuring') {
-    document.getElementById('btnStopMeasure').disabled = tiltInvalid;
+    if (mtype === 'standard') {
+      document.getElementById('btnStopMeasure').disabled = tiltInvalid;
+    } else {
+      document.getElementById('btnStopVertical').disabled = tiltInvalid;
+    }
   }
   if (shouldWarn) {
     warn.textContent = '⚠ fuera de plano';

@@ -307,15 +307,15 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
       <button class="btn-sheet btn-calibrate" id="btnCalibrate" onclick="calibrateNeutral()">
         Calibrar posición neutra
       </button>
-      <div class="sheet-actions-row" id="rowCalibrated" style="display:none">
+      <div class="sheet-actions-row" id="rowMeasuring" style="display:none">
         <button class="btn-sheet btn-redo" onclick="redoMeasurement()">
-          <span class="sheet-lbl-full">↺ Repetir</span><span class="sheet-lbl-short">↺</span>
+          <span class="sheet-lbl-full">↺ Recalibrar</span><span class="sheet-lbl-short">↺</span>
         </button>
-        <button class="btn-sheet btn-start" id="btnStartMeasure" onclick="startMeasurement()">
-          <span class="sheet-lbl-full">Iniciar medición</span><span class="sheet-lbl-short">Iniciar</span>
+        <button class="btn-sheet btn-stop" id="btnStopMeasure" onclick="stopMeasurement()">
+          <span class="sheet-lbl-full">Detener y registrar</span><span class="sheet-lbl-short">Detener</span>
         </button>
       </div>
-      <button class="btn-sheet btn-stop" id="btnStopMeasure" onclick="stopMeasurement()" style="display:none">
+      <button class="btn-sheet btn-stop" id="btnStopVertical" onclick="stopMeasurement()" style="display:none">
         Detener y registrar
       </button>
       <!-- Flujo two-segment -->
