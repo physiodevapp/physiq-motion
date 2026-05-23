@@ -441,10 +441,9 @@ function startVerticalMeasurement() {
   if (useZ) {
     // Eje Z: cero cuando el teléfono está horizontal (cara arriba o cara abajo),
     // aumenta conforme el segmento se aleja de esa posición inicial.
-    const zSign = grav.z >= 0 ? 1 : -1;
-    state.active.gravRef = { x: 0, y: 0, z: zSign };
+    state.active.gravRef = { x: 0, y: 0, z: 1 };
     cfAngle = gTotal > 0.1
-      ? Math.acos(Math.max(-1, Math.min(1, grav.z * zSign / gTotal))) * 180 / Math.PI
+      ? Math.acos(Math.max(-1, Math.min(1, grav.z / gTotal))) * 180 / Math.PI
       : 0;
   } else {
     // Eje Y (defecto): cero cuando el teléfono está vertical con borde superior hacia craneal.
