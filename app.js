@@ -97,7 +97,7 @@ let tiltInvalid   = false;
 let lastDisplayUpdate = 0;
 
 // Suavizado de la visualización
-const EMA_ALPHA  = 0.15;
+const EMA_ALPHA  = 0.5;
 let smoothedDelta = 0;
 
 // Filtro complementario adaptativo para movimientos axis:'gravity'
@@ -524,7 +524,7 @@ function refreshSheetUI() {
 // ── Ángulo en vivo ────────────────────────────────────────────────────────
 function updateLiveAngle() {
   const now = performance.now();
-  if (now - lastDisplayUpdate < 150) return;
+  if (now - lastDisplayUpdate < 50) return;
   lastDisplayUpdate = now;
 
   const { movementId, phase } = state.active;
