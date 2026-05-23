@@ -74,13 +74,13 @@ const REGIONS = {
       },
       rot_ext_supino: {
         label: 'Rot. Externa',
-        axis: 'gamma', phoneOrientation: 'alpha-rotation', ref: 45, icon: '↻',
-        instruction: 'Paciente en supino, cadera y rodilla a 90° (muslo vertical, pierna horizontal). Coloca el teléfono <strong>de canto sobre la cara anterior de la tibia</strong>, pantalla hacia el examinador. Pulsa <em>Calibrar neutro</em> con la pierna en posición neutra y rota externamente hasta el rango máximo.'
+        axis: 'alpha', phoneOrientation: 'horizontal', ref: 45, icon: '↻',
+        instruction: 'Paciente en supino, cadera y rodilla a 90° (muslo vertical, pierna horizontal). Coloca el teléfono <strong>plano sobre la cara anterior de la tibia</strong>, pantalla hacia arriba. Pulsa <em>Calibrar neutro</em> con la pierna en posición neutra y rota externamente hasta el rango máximo. Evita superficies metálicas cercanas.'
       },
       rot_int_supino: {
         label: 'Rot. Interna',
-        axis: 'gamma', phoneOrientation: 'alpha-rotation', ref: 45, icon: '↺',
-        instruction: 'Paciente en supino, cadera y rodilla a 90° (muslo vertical, pierna horizontal). Coloca el teléfono <strong>de canto sobre la cara anterior de la tibia</strong>, pantalla hacia el examinador. Pulsa <em>Calibrar neutro</em> con la pierna en posición neutra y rota internamente hasta el rango máximo.'
+        axis: 'alpha', phoneOrientation: 'horizontal', ref: 45, icon: '↺',
+        instruction: 'Paciente en supino, cadera y rodilla a 90° (muslo vertical, pierna horizontal). Coloca el teléfono <strong>plano sobre la cara anterior de la tibia</strong>, pantalla hacia arriba. Pulsa <em>Calibrar neutro</em> con la pierna en posición neutra y rota internamente hasta el rango máximo. Evita superficies metálicas cercanas.'
       },
       rot_ext_sed: {
         label: 'Rot. Externa',
