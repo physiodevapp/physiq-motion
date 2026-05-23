@@ -452,6 +452,7 @@ function saveResult() {
 }
 
 function redoMeasurement() {
+  tiltInvalid = false;
   Object.assign(state.active, { phase: 'idle', neutralRef: null, gravRef: null, peakDelta: 0, result: null, seg1Value: null });
   resetAngleDisplay();
   refreshSheetUI();
@@ -481,6 +482,7 @@ function refreshSheetUI() {
   show('btnCalibrate',      mtype === 'standard' && p === 'idle');
   document.getElementById('btnCalibrate').disabled = tiltInvalid && p === 'idle';
   show('rowCalibrated',     mtype === 'standard' && p === 'calibrated');
+  document.getElementById('btnStartMeasure').disabled = tiltInvalid && p === 'calibrated';
   show('btnStopMeasure',    (mtype === 'standard' || mtype === 'gravity-vertical') && p === 'measuring');
   document.getElementById('btnStopMeasure').disabled = tiltInvalid && p === 'measuring';
   show('btnCaptureSeg1',    (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'idle');
@@ -594,6 +596,9 @@ function updateLiveAngle() {
   const angleEl   = document.getElementById('angleValue');
   const displayEl = document.querySelector('.angle-display');
   const shouldWarn = tiltInvalid && (phase === 'calibrated' || phase === 'measuring');
+  if (phase === 'calibrated') {
+    document.getElementById('btnStartMeasure').disabled = tiltInvalid;
+  }
   if (phase === 'measuring') {
     document.getElementById('btnStopMeasure').disabled = tiltInvalid;
   }
