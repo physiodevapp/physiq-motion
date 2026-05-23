@@ -18,7 +18,30 @@ const REGIONS = {
       rot_der:   { label: 'Rotación Der.',  axis: 'alpha', phoneOrientation: 'horizontal', ref: 80, icon: '↻', placement: 'flat-right',        instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la derecha hasta su rango máximo.' }
     }
   },
-  hombro:  { label: 'Hombro',  abbr: 'Hb', groups: [], movements: {} },
+  hombro: {
+    label: 'Hombro', abbr: 'Hb',
+    groups: [
+      { label: 'Flexión',  ids: ['flexion']            },
+      { label: 'Rotación', ids: ['rot_ext', 'rot_int'] }
+    ],
+    movements: {
+      flexion:  {
+        label: 'Flexión', measureType: 'gravity-vertical', gravityAxis: 'z',
+        axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 170, icon: '⬆',
+        instruction: 'Paciente en supino. Coloca el teléfono sobre la <strong>cara anterior del brazo</strong>, pantalla mirando al frente (plano coronal), borde superior hacia craneal. El ángulo parte de 0° con el brazo a lo largo del cuerpo. Eleva el brazo hasta el rango máximo y pulsa <em>Detener</em>.'
+      },
+      rot_ext: {
+        label: 'Rot. Externa', measureType: 'beta-zero',
+        axis: 'beta', phoneOrientation: 'beta-rotation', ref: 90, icon: '↻',
+        instruction: 'Paciente en supino, brazo en 90° de abducción y 90° de flexión de codo (antebrazo vertical). Coloca el teléfono sobre la <strong>cara anterior del antebrazo</strong>, pantalla mirando al frente, borde superior hacia la mano. El ángulo parte de 0° con el antebrazo vertical. Rota externamente hasta el rango máximo y pulsa <em>Detener</em>.'
+      },
+      rot_int: {
+        label: 'Rot. Interna', measureType: 'beta-zero',
+        axis: 'beta', phoneOrientation: 'beta-rotation', ref: 80, icon: '↺',
+        instruction: 'Paciente en supino, brazo en 90° de abducción y 90° de flexión de codo (antebrazo vertical). Coloca el teléfono sobre la <strong>cara anterior del antebrazo</strong>, pantalla mirando al frente, borde superior hacia la mano. El ángulo parte de 0° con el antebrazo vertical. Rota internamente hasta el rango máximo y pulsa <em>Detener</em>.'
+      }
+    }
+  },
   codo: {
     label: 'Codo', abbr: 'Co',
     groups: [
@@ -370,6 +393,7 @@ function openMeasurement(id) {
   document.getElementById('sheetInstruction').innerHTML = def.instruction || '';
   resetAngleDisplay();
   if (mtype === 'gravity-vertical') startVerticalMeasurement();
+  else if (mtype === 'beta-zero')   startBetaZeroMeasurement();
   else refreshSheetUI();
   document.getElementById('measureOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -411,21 +435,43 @@ function calibrateNeutral() {
 
 function startVerticalMeasurement() {
   const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
-  // gravRef siempre apunta al vertical físico: dirección del eje Y del móvil
-  const ySign = grav.y >= 0 ? 1 : -1;
-  state.active.gravRef    = { x: 0, y: ySign, z: 0 };
-  state.active.neutralRef = 0;
-  // cfAngle arranca en el ángulo real desde vertical (no necesariamente 0)
-  if (gTotal > 0.1) {
-    const dot = Math.max(-1, Math.min(1, grav.y * ySign / gTotal));
-    cfAngle = Math.acos(dot) * 180 / Math.PI;
+  const mov    = REGIONS[state.regionId].movements[state.active.movementId];
+  const useZ   = mov.gravityAxis === 'z';
+
+  if (useZ) {
+    // Eje Z: cero cuando el teléfono está horizontal (cara arriba o cara abajo),
+    // aumenta conforme el segmento se aleja de esa posición inicial.
+    const zSign = grav.z >= 0 ? 1 : -1;
+    state.active.gravRef = { x: 0, y: 0, z: zSign };
+    cfAngle = gTotal > 0.1
+      ? Math.acos(Math.max(-1, Math.min(1, grav.z * zSign / gTotal))) * 180 / Math.PI
+      : 0;
   } else {
-    cfAngle = 0;
+    // Eje Y (defecto): cero cuando el teléfono está vertical con borde superior hacia craneal.
+    const ySign = grav.y >= 0 ? 1 : -1;
+    state.active.gravRef = { x: 0, y: ySign, z: 0 };
+    cfAngle = gTotal > 0.1
+      ? Math.acos(Math.max(-1, Math.min(1, grav.y * ySign / gTotal))) * 180 / Math.PI
+      : 0;
   }
-  cfLastTime             = null;
-  smoothedDelta          = cfAngle;
-  state.active.phase     = 'measuring';
-  state.active.peakDelta = 0;
+
+  state.active.neutralRef = 0;
+  cfLastTime              = null;
+  smoothedDelta           = cfAngle;
+  state.active.phase      = 'measuring';
+  state.active.peakDelta  = 0;
+  document.getElementById('angleValue').className = 'angle-value measuring';
+  refreshSheetUI();
+}
+
+function startBetaZeroMeasurement() {
+  state.active.neutralRef = 0;
+  state.active.gravRef    = null;
+  state.active.phase      = 'measuring';
+  state.active.peakDelta  = 0;
+  smoothedDelta           = 0;
+  cfAngle                 = 0;
+  cfLastTime              = null;
   document.getElementById('angleValue').className = 'angle-value measuring';
   refreshSheetUI();
 }
@@ -455,6 +501,7 @@ function redoMeasurement() {
     ? (REGIONS[state.regionId].movements[state.active.movementId].measureType || 'standard')
     : 'standard';
   if (mtype === 'gravity-vertical') startVerticalMeasurement();
+  else if (mtype === 'beta-zero')   startBetaZeroMeasurement();
   else refreshSheetUI();
 }
 
@@ -491,7 +538,7 @@ function refreshSheetUI() {
   show('btnStopMeasure',       mtype === 'standard' && p === 'measuring');
   document.getElementById('btnStopMeasure').disabled = tiltInvalid && p === 'measuring';
   show('rowMeasuringActions',  mtype === 'standard' && p === 'measuring');
-  show('rowVertical',       mtype === 'gravity-vertical' && p === 'measuring');
+  show('rowVertical',       (mtype === 'gravity-vertical' || mtype === 'beta-zero') && p === 'measuring');
   document.getElementById('btnStopVertical').disabled = tiltInvalid && p === 'measuring';
   show('btnCaptureSeg1',    (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'idle');
   show('rowSeg1',           (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'seg1');
@@ -500,7 +547,7 @@ function refreshSheetUI() {
   // phase step labels and states
   const labels = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
     ? ['Muslo', 'Tibia', 'Listo']
-    : mtype === 'gravity-vertical'
+    : mtype === 'gravity-vertical' || mtype === 'beta-zero'
     ? ['Medir', 'Midiendo', 'Listo']
     : ['Neutro', 'Midiendo', 'Listo'];
 
@@ -523,7 +570,7 @@ function refreshSheetUI() {
     if (lbl) lbl.textContent = labels[i];
     el.className  = 'phase-step-item' + (actives[i] ? ' active' : '') + (dones[i] ? ' done' : '');
     dot.className = 'phase-dot' + (
-      (mtype === 'standard' || mtype === 'gravity-vertical') && p === 'measuring' && n === 2 ? ' pulsing' : ''
+      (mtype === 'standard' || mtype === 'gravity-vertical' || mtype === 'beta-zero') && p === 'measuring' && n === 2 ? ' pulsing' : ''
     );
   });
 }
