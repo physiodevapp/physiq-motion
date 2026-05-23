@@ -34,9 +34,8 @@ const REGIONS = {
   rodilla: {
     label: 'Rodilla', abbr: 'Rd',
     groups: [
-      { label: 'Extensión', ids: ['extension'] },
-      { label: 'Flexión',   ids: ['flexion']   },
-      { label: 'PKB',       ids: ['pkb']       }
+      { label: 'Flexión',   ids: ['flexion', 'pkb'] },
+      { label: 'Extensión', ids: ['extension']       }
     ],
     movements: {
       extension: {
@@ -59,8 +58,7 @@ const REGIONS = {
   tobillo: {
     label: 'Tobillo', abbr: 'Tb',
     groups: [
-      { label: 'Dorsiflexión',   ids: ['dorsiflexion']   },
-      { label: 'Plantarflexión', ids: ['plantarflexion'] }
+      { label: 'Dorsi / Plantar', ids: ['dorsiflexion', 'plantarflexion'] }
     ],
     movements: {
       dorsiflexion:   { label: 'Dorsiflexión',   measureType: 'gravity-vertical', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 20, icon: '⬆', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador (lateral). Con la tibia a 90° el ángulo es 0°. Pulsa <em>Iniciar</em> y realiza la dorsiflexión hasta el rango máximo.' },
@@ -277,11 +275,17 @@ function renderMovementGrid() {
     label.textContent = group.label;
     grid.appendChild(label);
     group.ids.forEach(id => {
-      const def = region.movements[id];
-      const val = meas[id];
+      const def  = region.movements[id];
+      const val  = meas[id];
       if (val !== null) done++;
       grid.appendChild(buildCard(id, def, val, cardIndex++));
     });
+    if (group.ids.length === 1) {
+      const filler = document.createElement('div');
+      filler.className = 'movement-card-filler';
+      filler.innerHTML = '<span>— sin más —</span>';
+      grid.appendChild(filler);
+    }
   });
 
   const total = Object.keys(region.movements).length;
