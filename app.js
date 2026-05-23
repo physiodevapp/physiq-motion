@@ -545,7 +545,9 @@ function updateLiveAngle() {
   // ── nuevos tipos: two-segment y pkb ──────────────────────────────────
   if (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') {
     if (phase === 'idle' || phase === 'seg1') {
-      const deg = Math.round(segmentInclination());
+      const deg = mtype === 'two-segment-abs'
+        ? Math.round(Math.abs(segmentInclination()))
+        : Math.round(segmentInclination());
       document.getElementById('angleValue').textContent = deg + '°';
       document.getElementById('angleValue').className   = 'angle-value live';
     }
