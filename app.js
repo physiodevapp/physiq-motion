@@ -627,9 +627,9 @@ function updateLiveAngle() {
   const deg  = Math.round(smoothedDelta) + base;
   document.getElementById('angleValue').textContent = deg + '°';
 
-  if (phase === 'measuring' && delta > state.active.peakDelta) {
-    state.active.peakDelta = delta;
-    document.getElementById('peakLabel').textContent = 'Máx: ' + (Math.round(delta) + base) + '°';
+  if (phase === 'measuring' && smoothedDelta > state.active.peakDelta) {
+    state.active.peakDelta = smoothedDelta;
+    document.getElementById('peakLabel').textContent = 'Máx: ' + (Math.round(smoothedDelta) + base) + '°';
   }
 }
 
