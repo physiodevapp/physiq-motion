@@ -84,13 +84,13 @@ const REGIONS = {
       },
       rot_ext_sed: {
         label: 'Rot. Externa',
-        axis: 'gamma', phoneOrientation: 'alpha-rotation', ref: 45, icon: '↻',
-        instruction: 'Paciente sentado al borde de la camilla, rodilla a 90° y pierna colgando. Coloca el teléfono <strong>de canto sobre la cara anterior de la tibia</strong>, pantalla hacia el examinador. Pulsa <em>Calibrar neutro</em> con la pierna en posición neutra y lleva el pie hacia afuera hasta el rango máximo.'
+        axis: 'beta', phoneOrientation: 'beta-rotation', ref: 45, icon: '↻',
+        instruction: 'Paciente sentado al borde de la camilla, rodilla a 90° y pierna colgando. Coloca el teléfono <strong>de canto sobre la cara anterior de la tibia</strong>, paralelo al plano sagital, pantalla hacia el lateral. Pulsa <em>Calibrar neutro</em> con la pierna en posición neutra y lleva el pie hacia afuera hasta el rango máximo.'
       },
       rot_int_sed: {
         label: 'Rot. Interna',
-        axis: 'gamma', phoneOrientation: 'alpha-rotation', ref: 45, icon: '↺',
-        instruction: 'Paciente sentado al borde de la camilla, rodilla a 90° y pierna colgando. Coloca el teléfono <strong>de canto sobre la cara anterior de la tibia</strong>, pantalla hacia el examinador. Pulsa <em>Calibrar neutro</em> con la pierna en posición neutra y lleva el pie hacia adentro hasta el rango máximo.'
+        axis: 'beta', phoneOrientation: 'beta-rotation', ref: 45, icon: '↺',
+        instruction: 'Paciente sentado al borde de la camilla, rodilla a 90° y pierna colgando. Coloca el teléfono <strong>de canto sobre la cara anterior de la tibia</strong>, paralelo al plano sagital, pantalla hacia el lateral. Pulsa <em>Calibrar neutro</em> con la pierna en posición neutra y lleva el pie hacia adentro hasta el rango máximo.'
       }
     }
   },
