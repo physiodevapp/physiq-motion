@@ -472,6 +472,7 @@ function refreshSheetUI() {
 
   // button visibility
   show('btnCalibrate',      mtype === 'standard' && p === 'idle');
+  document.getElementById('btnCalibrate').disabled = tiltInvalid && p === 'idle';
   show('rowCalibrated',     mtype === 'standard' && p === 'calibrated');
   show('btnStopMeasure',    (mtype === 'standard' || mtype === 'gravity-vertical') && p === 'measuring');
   document.getElementById('btnStopMeasure').disabled = tiltInvalid && p === 'measuring';
