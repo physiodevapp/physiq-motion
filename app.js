@@ -179,7 +179,7 @@ function handleMotion(e) {
   if (!sensorSeen) { sensorSeen = true; setSensorBadge('active', 'Sensor activo'); }
 
   const { phase, neutralRef, gravRef, movementId } = state.active;
-  if (phase !== 'idle' && movementId && state.regionId) {
+  if (movementId && state.regionId) {
     const mov = REGIONS[state.regionId].movements[movementId];
     if (mov) {
       const { axis, phoneOrientation } = mov;
@@ -192,7 +192,7 @@ function handleMotion(e) {
           : Math.abs(grav.z) / gTotal > 0.25;
       }
 
-      if (neutralRef !== null && r && r.alpha !== null && cfLastTime !== null) {
+      if (phase !== 'idle' && neutralRef !== null && r && r.alpha !== null && cfLastTime !== null) {
         const dt = (now - cfLastTime) / 1000;
         if (dt > 0 && dt < 0.5) {
           if (axis === 'gravity' && gravRef && gTotal > 0.1) {
@@ -363,6 +363,7 @@ function openMeasurement(id) {
     movementId: id, phase: 'idle',
     neutralRef: null, gravRef: null, peakDelta: 0, result: null, seg1Value: null
   });
+  tiltInvalid = false;
 
   document.getElementById('sheetTitle').textContent = def.label;
   document.getElementById('sheetInstruction').innerHTML = def.instruction || '';
@@ -571,7 +572,22 @@ function updateLiveAngle() {
   }
   // ── tipo estándar ─────────────────────────────────────────────────────
   const { neutralRef } = state.active;
-  if (phase === 'idle' || neutralRef === null) return;
+  if (phase === 'idle') {
+    const warn      = document.getElementById('tiltWarning');
+    const displayEl = document.querySelector('.angle-display');
+    const btnCal    = document.getElementById('btnCalibrate');
+    if (tiltInvalid) {
+      warn.textContent = '⚠ fuera de plano';
+      displayEl.classList.add('tilt-warn');
+      if (btnCal) btnCal.disabled = true;
+    } else {
+      warn.textContent = '';
+      displayEl.classList.remove('tilt-warn');
+      if (btnCal) btnCal.disabled = false;
+    }
+    return;
+  }
+  if (neutralRef === null) return;
 
   const { axis } = def;
   const warn      = document.getElementById('tiltWarning');
