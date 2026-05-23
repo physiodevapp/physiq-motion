@@ -168,7 +168,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .sheet-actions{display:flex;flex-direction:column;gap:8px;}
 .sheet-actions-row{display:flex;gap:8px;}
 .sheet-actions-row .btn-redo{flex:1;}
-.sheet-actions-row .btn-start,.sheet-actions-row .btn-save{flex:2;}
+.sheet-actions-row .btn-start,.sheet-actions-row .btn-save,.sheet-actions-row .btn-stop{flex:2;}
 .btn-sheet{border-radius:12px;padding:15px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:500;cursor:pointer;width:100%;transition:background 0.2s,transform 0.1s;border:none;}
 .btn-sheet:active{transform:scale(0.98);}
 .btn-calibrate{background:var(--surface3);border:1px solid var(--border2);color:var(--text);}
@@ -311,13 +311,22 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
         <button class="btn-sheet btn-redo" onclick="redoMeasurement()">
           <span class="sheet-lbl-full">↺ Recalibrar</span><span class="sheet-lbl-short">↺</span>
         </button>
+        <button class="btn-sheet btn-redo" onclick="resetPeak()">
+          <span class="sheet-lbl-full">↺ Pico</span><span class="sheet-lbl-short">Pico</span>
+        </button>
         <button class="btn-sheet btn-stop" id="btnStopMeasure" onclick="stopMeasurement()">
           <span class="sheet-lbl-full">Detener y registrar</span><span class="sheet-lbl-short">Detener</span>
         </button>
       </div>
-      <button class="btn-sheet btn-stop" id="btnStopVertical" onclick="stopMeasurement()" style="display:none">
-        Detener y registrar
-      </button>
+      <!-- Flujo gravity-vertical -->
+      <div class="sheet-actions-row" id="rowVertical" style="display:none">
+        <button class="btn-sheet btn-redo" onclick="resetPeak()">
+          <span class="sheet-lbl-full">↺ Pico</span><span class="sheet-lbl-short">Pico</span>
+        </button>
+        <button class="btn-sheet btn-stop" id="btnStopVertical" onclick="stopMeasurement()">
+          <span class="sheet-lbl-full">Detener y registrar</span><span class="sheet-lbl-short">Detener</span>
+        </button>
+      </div>
       <!-- Flujo two-segment -->
       <button class="btn-sheet btn-calibrate" id="btnCaptureSeg1" onclick="captureSegment1()" style="display:none">
         Capturar muslo
@@ -330,10 +339,6 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
           <span class="sheet-lbl-full">Capturar tibia</span><span class="sheet-lbl-short">Tibia</span>
         </button>
       </div>
-      <!-- Flujo gravity-vertical (tobillo / PKB sin calibración manual) -->
-      <button class="btn-sheet btn-calibrate" id="btnStartVertical" onclick="startVerticalMeasurement()" style="display:none">
-        Iniciar medición
-      </button>
       <!-- Resultado (todos los flujos) -->
       <div class="sheet-actions-row" id="rowDone" style="display:none">
         <button class="btn-sheet btn-redo" onclick="redoMeasurement()">

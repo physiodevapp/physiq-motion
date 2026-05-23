@@ -358,7 +358,8 @@ function renderSummaryTable() {
 
 // ── Overlay de medición ───────────────────────────────────────────────────
 function openMeasurement(id) {
-  const def = REGIONS[state.regionId].movements[id];
+  const def   = REGIONS[state.regionId].movements[id];
+  const mtype = def.measureType || 'standard';
   Object.assign(state.active, {
     movementId: id, phase: 'idle',
     neutralRef: null, gravRef: null, peakDelta: 0, result: null, seg1Value: null
@@ -368,7 +369,8 @@ function openMeasurement(id) {
   document.getElementById('sheetTitle').textContent = def.label;
   document.getElementById('sheetInstruction').innerHTML = def.instruction || '';
   resetAngleDisplay();
-  refreshSheetUI();
+  if (mtype === 'gravity-vertical') startVerticalMeasurement();
+  else refreshSheetUI();
   document.getElementById('measureOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -449,7 +451,18 @@ function redoMeasurement() {
   tiltInvalid = false;
   Object.assign(state.active, { phase: 'idle', neutralRef: null, gravRef: null, peakDelta: 0, result: null, seg1Value: null });
   resetAngleDisplay();
-  refreshSheetUI();
+  const mtype = state.active.movementId && state.regionId
+    ? (REGIONS[state.regionId].movements[state.active.movementId].measureType || 'standard')
+    : 'standard';
+  if (mtype === 'gravity-vertical') startVerticalMeasurement();
+  else refreshSheetUI();
+}
+
+function resetPeak() {
+  state.active.peakDelta = smoothedDelta;
+  const def  = REGIONS[state.regionId].movements[state.active.movementId];
+  const base = def.baseAngle || 0;
+  document.getElementById('peakLabel').textContent = 'Máx: ' + (Math.round(smoothedDelta) + base) + '°';
 }
 
 function resetAngleDisplay() {
@@ -477,11 +490,10 @@ function refreshSheetUI() {
   document.getElementById('btnCalibrate').disabled = tiltInvalid && p === 'idle';
   show('rowMeasuring',      mtype === 'standard' && p === 'measuring');
   document.getElementById('btnStopMeasure').disabled = tiltInvalid && p === 'measuring';
-  show('btnStopVertical',   mtype === 'gravity-vertical' && p === 'measuring');
+  show('rowVertical',       mtype === 'gravity-vertical' && p === 'measuring');
   document.getElementById('btnStopVertical').disabled = tiltInvalid && p === 'measuring';
   show('btnCaptureSeg1',    (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'idle');
   show('rowSeg1',           (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'seg1');
-  show('btnStartVertical',  mtype === 'gravity-vertical' && p === 'idle');
   show('rowDone',           p === 'done');
 
   // phase step labels and states
