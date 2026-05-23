@@ -474,6 +474,7 @@ function refreshSheetUI() {
   show('btnCalibrate',      mtype === 'standard' && p === 'idle');
   show('rowCalibrated',     mtype === 'standard' && p === 'calibrated');
   show('btnStopMeasure',    (mtype === 'standard' || mtype === 'gravity-vertical') && p === 'measuring');
+  document.getElementById('btnStopMeasure').disabled = tiltInvalid && p === 'measuring';
   show('btnCaptureSeg1',    (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'idle');
   show('rowSeg1',           (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'seg1');
   show('btnStartVertical',  mtype === 'gravity-vertical' && p === 'idle');

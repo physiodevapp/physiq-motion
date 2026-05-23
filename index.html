@@ -174,7 +174,8 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .btn-start{background:var(--accent);color:#0a0d12;}
 .btn-start:hover{background:#a855f7;}
 .btn-stop{background:var(--orange);color:#0a0d12;}
-.btn-stop:hover{background:#e58a38;}
+.btn-stop:hover:not(:disabled){background:#e58a38;}
+.btn-stop:disabled{background:var(--border);color:var(--text3);cursor:not-allowed;}
 .btn-save{background:var(--accent2);color:#0a0d12;}
 .btn-save:hover{background:#a855f7;}
 .btn-redo{background:transparent;border:1px solid var(--border);color:var(--text3);font-family:'DM Mono',monospace;font-size:12px;padding:11px;}
