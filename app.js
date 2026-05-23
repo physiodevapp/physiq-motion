@@ -69,8 +69,8 @@ const REGIONS = {
       },
       abd_supino: {
         label: 'Abducción',
-        axis: 'gravity', phoneOrientation: 'flat-frontal', ref: 45, icon: '↗',
-        instruction: 'Paciente en decúbito supino, pierna en posición neutra. Coloca el teléfono <strong>plano sobre la cara anterior del muslo</strong>, pantalla hacia arriba. Pulsa <em>Calibrar neutro</em> con la pierna alineada y separa lateralmente hasta el rango máximo.'
+        axis: 'alpha', phoneOrientation: 'horizontal', ref: 45, icon: '↗',
+        instruction: 'Paciente en decúbito supino, pierna en posición neutra. Coloca el teléfono <strong>plano sobre la cara anterior del muslo</strong>, pantalla hacia arriba. Pulsa <em>Calibrar neutro</em> con la pierna alineada y separa lateralmente hasta el rango máximo. Evita superficies metálicas cercanas.'
       },
       rot_ext_supino: {
         label: 'Rot. Externa',
