@@ -63,7 +63,7 @@ const REGIONS = {
     ],
     movements: {
       flex_supino: {
-        label: 'Flexión', measureType: 'beta-zero', neutralAngle: -90,
+        label: 'Flexión', measureType: 'beta-zero', neutralAngle: 90,
         axis: 'beta', phoneOrientation: 'beta-rotation', ref: 120, icon: '⬆',
         instruction: 'Paciente en decúbito supino, rodilla flexionada. Coloca el teléfono <strong>plano sobre la cara anterior del muslo</strong>, pantalla hacia arriba. El ángulo parte de 0° con el muslo horizontal. Flexiona la cadera hasta el rango máximo y pulsa <em>Detener</em>.'
       },
