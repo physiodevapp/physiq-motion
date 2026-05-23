@@ -459,6 +459,8 @@ function resetAngleDisplay() {
   document.getElementById('angleValue').textContent = '—';
   document.getElementById('angleValue').className   = 'angle-value';
   document.getElementById('peakLabel').textContent  = '';
+  document.getElementById('tiltWarning').textContent = '';
+  document.querySelector('.angle-display').classList.remove('tilt-warn');
 }
 
 function refreshSheetUI() {
