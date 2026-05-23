@@ -31,12 +31,12 @@ const REGIONS = {
         instruction: 'Paciente en supino. Coloca el teléfono sobre la <strong>cara anterior del brazo</strong>, pantalla mirando al frente (plano coronal), borde superior hacia craneal. El ángulo parte de 0° con el brazo a lo largo del cuerpo (teléfono boca abajo). Eleva el brazo hasta el rango máximo y pulsa <em>Detener</em>.'
       },
       rot_ext: {
-        label: 'Rot. Externa', measureType: 'beta-zero',
+        label: 'Rot. Externa', measureType: 'beta-zero', neutralAngle: 180,
         axis: 'beta', phoneOrientation: 'beta-rotation', ref: 90, icon: '↻',
         instruction: 'Paciente en supino, brazo en 90° de abducción y 90° de flexión de codo (antebrazo vertical). Coloca el teléfono sobre la <strong>cara anterior del antebrazo</strong>, pantalla mirando al frente, borde superior hacia la mano. El ángulo parte de 0° con el antebrazo vertical. Rota externamente hasta el rango máximo y pulsa <em>Detener</em>.'
       },
       rot_int: {
-        label: 'Rot. Interna', measureType: 'beta-zero',
+        label: 'Rot. Interna', measureType: 'beta-zero', neutralAngle: 180,
         axis: 'beta', phoneOrientation: 'beta-rotation', ref: 80, icon: '↺',
         instruction: 'Paciente en supino, brazo en 90° de abducción y 90° de flexión de codo (antebrazo vertical). Coloca el teléfono sobre la <strong>cara anterior del antebrazo</strong>, pantalla mirando al frente, borde superior hacia la mano. El ángulo parte de 0° con el antebrazo vertical. Rota internamente hasta el rango máximo y pulsa <em>Detener</em>.'
       }
