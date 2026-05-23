@@ -187,7 +187,7 @@ function handleMotion(e) {
       const { axis, phoneOrientation } = mov;
 
       if (gTotal > 0.5) {
-        tiltInvalid = phoneOrientation === 'horizontal'
+        tiltInvalid = phoneOrientation === 'horizontal' || phoneOrientation === 'none'
           ? Math.sqrt(grav.x**2 + grav.y**2) / gTotal > 0.25
           : phoneOrientation === 'beta-rotation'
           ? Math.abs(grav.x) / gTotal > 0.25
@@ -544,12 +544,24 @@ function updateLiveAngle() {
 
   // ── nuevos tipos: two-segment y pkb ──────────────────────────────────
   if (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') {
+    const warn      = document.getElementById('tiltWarning');
+    const displayEl = document.querySelector('.angle-display');
+    const angleEl   = document.getElementById('angleValue');
+    if (tiltInvalid) {
+      warn.textContent = '⚠ fuera de plano';
+      displayEl.classList.add('tilt-warn');
+      angleEl.classList.add('tilt');
+    } else {
+      warn.textContent = '';
+      displayEl.classList.remove('tilt-warn');
+      angleEl.classList.remove('tilt');
+    }
     if (phase === 'idle' || phase === 'seg1') {
       const deg = mtype === 'two-segment-abs'
         ? Math.round(Math.abs(segmentInclination()))
         : Math.round(segmentInclination());
-      document.getElementById('angleValue').textContent = deg + '°';
-      document.getElementById('angleValue').className   = 'angle-value live';
+      angleEl.textContent = deg + '°';
+      angleEl.className   = 'angle-value live' + (tiltInvalid ? ' tilt' : '');
     }
     return;
   }
@@ -562,6 +574,9 @@ function updateLiveAngle() {
   const angleEl   = document.getElementById('angleValue');
   const displayEl = document.querySelector('.angle-display');
   const shouldWarn = tiltInvalid && (phase === 'calibrated' || phase === 'measuring');
+  if (phase === 'measuring') {
+    document.getElementById('btnStopMeasure').disabled = tiltInvalid;
+  }
   if (shouldWarn) {
     warn.textContent = '⚠ fuera de plano';
     displayEl.classList.add('tilt-warn');
