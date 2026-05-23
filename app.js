@@ -50,9 +50,9 @@ const REGIONS = {
         instruction: 'Con la rodilla en posición de máxima flexión. <strong>Paso 1</strong> — coloca el teléfono <strong>plano sobre el muslo</strong>, pantalla hacia arriba. Pulsa <em>Capturar muslo</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono <strong>plano sobre la tibia</strong>, pantalla hacia arriba.'
       },
       pkb: {
-        label: 'PKB', measureType: 'pkb-gamma',
-        phoneOrientation: 'none', ref: 135, icon: '↗',
-        instruction: 'Paciente en <strong>decúbito prono</strong>, rodilla en ~90°. Coloca el teléfono <strong>de canto sobre la tibia</strong>, lado largo a lo largo del segmento, pantalla en el plano sagital. El ángulo parte de 90° — el fisio interpreta: <em>valor − 90° = ROM adicional</em>.'
+        label: 'PKB', measureType: 'gravity-vertical', axis: 'gravity',
+        phoneOrientation: 'alpha-rotation', ref: 135, icon: '↗', baseAngle: 90,
+        instruction: 'Paciente en <strong>decúbito prono</strong>, rodilla a 90°. Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador. El ángulo parte de 90°. Pulsa <em>Iniciar</em> y flexiona la rodilla hasta el rango máximo.'
       }
     }
   },
@@ -430,8 +430,10 @@ function startVerticalMeasurement() {
 }
 
 function stopMeasurement() {
+  const def  = REGIONS[state.regionId].movements[state.active.movementId];
+  const base = def.baseAngle || 0;
   state.active.phase  = 'done';
-  state.active.result = Math.round(state.active.peakDelta);
+  state.active.result = Math.round(state.active.peakDelta) + base;
   document.getElementById('angleValue').textContent = state.active.result + '°';
   document.getElementById('angleValue').className   = 'angle-value done';
   document.getElementById('peakLabel').textContent  = '';
@@ -474,31 +476,24 @@ function refreshSheetUI() {
   show('btnStopMeasure',    (mtype === 'standard' || mtype === 'gravity-vertical') && p === 'measuring');
   show('btnCaptureSeg1',    (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'idle');
   show('rowSeg1',           (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'seg1');
-  show('btnCapturePKB',     mtype === 'pkb-gamma' && p === 'idle');
   show('btnStartVertical',  mtype === 'gravity-vertical' && p === 'idle');
   show('rowDone',           p === 'done');
 
   // phase step labels and states
   const labels = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
     ? ['Muslo', 'Tibia', 'Listo']
-    : mtype === 'pkb-gamma'
-    ? ['Posición', 'Listo', '']
     : mtype === 'gravity-vertical'
     ? ['Medir', 'Midiendo', 'Listo']
     : ['Neutro', 'Midiendo', 'Listo'];
 
   const actives = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
     ? [p === 'idle', p === 'seg1', p === 'done']
-    : mtype === 'pkb-gamma'
-    ? [p === 'idle', p === 'done', false]
     : mtype === 'gravity-vertical'
     ? [p === 'idle', p === 'measuring', p === 'done']
     : [p === 'idle', p === 'calibrated' || p === 'measuring', p === 'done'];
 
   const dones = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
     ? [p === 'seg1' || p === 'done', p === 'done', false]
-    : mtype === 'pkb-gamma'
-    ? [p === 'done', false, false]
     : mtype === 'gravity-vertical'
     ? [p === 'measuring' || p === 'done', p === 'done', false]
     : [p !== 'idle', p === 'done', false];
@@ -532,9 +527,10 @@ function updateLiveAngle() {
     if (phase === 'idle') {
       const gT = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
       if (gT > 0.1) {
-        const yS  = grav.y >= 0 ? 1 : -1;
-        const dot = Math.max(-1, Math.min(1, grav.y * yS / gT));
-        document.getElementById('angleValue').textContent = Math.round(Math.acos(dot) * 180 / Math.PI) + '°';
+        const yS   = grav.y >= 0 ? 1 : -1;
+        const dot  = Math.max(-1, Math.min(1, grav.y * yS / gT));
+        const base = def.baseAngle || 0;
+        document.getElementById('angleValue').textContent = (Math.round(Math.acos(dot) * 180 / Math.PI) + base) + '°';
         document.getElementById('angleValue').className   = 'angle-value live';
       }
       return;
@@ -551,15 +547,6 @@ function updateLiveAngle() {
     }
     return;
   }
-  if (mtype === 'pkb-gamma') {
-    if (phase === 'idle') {
-      const deg = Math.round(Math.abs(sensor.gamma));
-      document.getElementById('angleValue').textContent = deg + '°';
-      document.getElementById('angleValue').className   = 'angle-value live';
-    }
-    return;
-  }
-
   // ── tipo estándar ─────────────────────────────────────────────────────
   const { neutralRef } = state.active;
   if (phase === 'idle' || neutralRef === null) return;
@@ -590,12 +577,13 @@ function updateLiveAngle() {
   }
 
   smoothedDelta = EMA_ALPHA * delta + (1 - EMA_ALPHA) * smoothedDelta;
-  const deg = Math.round(smoothedDelta);
+  const base = def.baseAngle || 0;
+  const deg  = Math.round(smoothedDelta) + base;
   document.getElementById('angleValue').textContent = deg + '°';
 
   if (phase === 'measuring' && delta > state.active.peakDelta) {
     state.active.peakDelta = delta;
-    document.getElementById('peakLabel').textContent = 'Máx: ' + Math.round(delta) + '°';
+    document.getElementById('peakLabel').textContent = 'Máx: ' + (Math.round(delta) + base) + '°';
   }
 }
 
@@ -648,14 +636,6 @@ function captureSegment2() {
   refreshSheetUI();
 }
 
-function capturePKB() {
-  const result = Math.round(Math.abs(sensor.gamma));
-  state.active.result = result;
-  state.active.phase  = 'done';
-  document.getElementById('angleValue').textContent = result + '°';
-  document.getElementById('angleValue').className   = 'angle-value done';
-  refreshSheetUI();
-}
 
 // ── Exportar a PhysiQ Report ──────────────────────────────────────────────
 function exportToPhysiQReport() {
