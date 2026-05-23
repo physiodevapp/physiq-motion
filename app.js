@@ -629,7 +629,7 @@ function captureSegment2() {
   const seg2 = segmentInclination();
   const result = measureType === 'two-segment-signed'
     ? Math.round(seg2 - seg1)
-    : Math.round(180 - Math.abs(seg1) - Math.abs(seg2));
+    : Math.round(Math.min(180, Math.abs(seg1) + Math.abs(seg2)));
   state.active.result = result;
   state.active.phase  = 'done';
   document.getElementById('angleValue').textContent = result + '°';
