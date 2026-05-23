@@ -26,9 +26,9 @@ const REGIONS = {
     ],
     movements: {
       flexion:  {
-        label: 'Flexión', measureType: 'gravity-vertical', gravityAxis: 'z',
-        axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 170, icon: '⬆',
-        instruction: 'Paciente en supino. Coloca el teléfono sobre la <strong>cara anterior del brazo</strong>, pantalla mirando al frente (plano coronal), borde superior hacia craneal. El ángulo parte de 0° con el brazo a lo largo del cuerpo. Eleva el brazo hasta el rango máximo y pulsa <em>Detener</em>.'
+        label: 'Flexión', measureType: 'beta-zero', neutralAngle: -90,
+        axis: 'beta', phoneOrientation: 'beta-rotation', ref: 170, icon: '⬆',
+        instruction: 'Paciente en supino. Coloca el teléfono sobre la <strong>cara anterior del brazo</strong>, pantalla mirando al frente (plano coronal), borde superior hacia craneal. El ángulo parte de 0° con el brazo a lo largo del cuerpo (teléfono boca abajo). Eleva el brazo hasta el rango máximo y pulsa <em>Detener</em>.'
       },
       rot_ext: {
         label: 'Rot. Externa', measureType: 'beta-zero',
@@ -435,25 +435,11 @@ function calibrateNeutral() {
 
 function startVerticalMeasurement() {
   const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
-  const mov    = REGIONS[state.regionId].movements[state.active.movementId];
-  const useZ   = mov.gravityAxis === 'z';
-
-  if (useZ) {
-    // Eje Z: cero cuando el teléfono está horizontal (cara arriba o cara abajo),
-    // aumenta conforme el segmento se aleja de esa posición inicial.
-    state.active.gravRef = { x: 0, y: 0, z: -1 };
-    cfAngle = gTotal > 0.1
-      ? Math.acos(Math.max(-1, Math.min(1, -grav.z / gTotal))) * 180 / Math.PI
-      : 0;
-  } else {
-    // Eje Y (defecto): cero cuando el teléfono está vertical con borde superior hacia craneal.
-    const ySign = grav.y >= 0 ? 1 : -1;
-    state.active.gravRef = { x: 0, y: ySign, z: 0 };
-    cfAngle = gTotal > 0.1
-      ? Math.acos(Math.max(-1, Math.min(1, grav.y * ySign / gTotal))) * 180 / Math.PI
-      : 0;
-  }
-
+  const ySign  = grav.y >= 0 ? 1 : -1;
+  state.active.gravRef    = { x: 0, y: ySign, z: 0 };
+  cfAngle = gTotal > 0.1
+    ? Math.acos(Math.max(-1, Math.min(1, grav.y * ySign / gTotal))) * 180 / Math.PI
+    : 0;
   state.active.neutralRef = 0;
   cfLastTime              = null;
   smoothedDelta           = cfAngle;
@@ -464,7 +450,8 @@ function startVerticalMeasurement() {
 }
 
 function startBetaZeroMeasurement() {
-  state.active.neutralRef = 0;
+  const mov = REGIONS[state.regionId].movements[state.active.movementId];
+  state.active.neutralRef = mov.neutralAngle !== undefined ? mov.neutralAngle : 0;
   state.active.gravRef    = null;
   state.active.phase      = 'measuring';
   state.active.peakDelta  = 0;
