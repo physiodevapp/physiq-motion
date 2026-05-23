@@ -10,10 +10,10 @@ const REGIONS = {
       { label: 'Rotación',            ids: ['rot_izq', 'rot_der']   }
     ],
     movements: {
-      flexion:   { label: 'Flexión',        axis: 'gravity',      phoneOrientation: 'vertical', ref: 50, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia adelante hasta su rango máximo.' },
-      extension: { label: 'Extensión',      axis: 'gravity',      phoneOrientation: 'vertical', ref: 60, icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia atrás hasta su rango máximo.' },
-      lat_izq:   { label: 'Lat. Izquierda', axis: 'gravity',      phoneOrientation: 'vertical', ref: 45, icon: '↙', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.' },
-      lat_der:   { label: 'Lat. Derecha',   axis: 'gravity',      phoneOrientation: 'vertical', ref: 45, icon: '↘', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.' },
+      flexion:   { label: 'Flexión',        axis: 'gravity',      phoneOrientation: 'alpha-rotation', ref: 50, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia adelante hasta su rango máximo.' },
+      extension: { label: 'Extensión',      axis: 'gravity',      phoneOrientation: 'alpha-rotation', ref: 60, icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia atrás hasta su rango máximo.' },
+      lat_izq:   { label: 'Lat. Izquierda', axis: 'gravity',      phoneOrientation: 'alpha-rotation', ref: 45, icon: '↙', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.' },
+      lat_der:   { label: 'Lat. Derecha',   axis: 'gravity',      phoneOrientation: 'alpha-rotation', ref: 45, icon: '↘', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.' },
       rot_izq:   { label: 'Rotación Izq.',  axis: 'alpha', phoneOrientation: 'horizontal', ref: 80, icon: '↺', placement: 'flat-left',         instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la izquierda hasta su rango máximo.' },
       rot_der:   { label: 'Rotación Der.',  axis: 'alpha', phoneOrientation: 'horizontal', ref: 80, icon: '↻', placement: 'flat-right',        instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la derecha hasta su rango máximo.' }
     }
@@ -25,8 +25,8 @@ const REGIONS = {
       { label: 'Flexo-extensión', ids: ['flexion', 'extension'] }
     ],
     movements: {
-      flexion:   { label: 'Flexión',   axis: 'gravity', phoneOrientation: 'sagittal-vertical', ref: 145, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en extensión completa y flexiona hasta el rango máximo.' },
-      extension: { label: 'Extensión', axis: 'gravity', phoneOrientation: 'sagittal-vertical', ref: 5,   icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en posición inicial y extiende hasta el rango máximo.' }
+      flexion:   { label: 'Flexión',   axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 145, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en extensión completa y flexiona hasta el rango máximo.' },
+      extension: { label: 'Extensión', axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 5,   icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en posición inicial y extiende hasta el rango máximo.' }
     }
   },
   muneca:  { label: 'Muñeca',  abbr: 'Mn', groups: [], movements: {} },
@@ -63,8 +63,8 @@ const REGIONS = {
       { label: 'Plantarflexión', ids: ['plantarflexion'] }
     ],
     movements: {
-      dorsiflexion:   { label: 'Dorsiflexión',   measureType: 'gravity-vertical', axis: 'gravity', phoneOrientation: 'vertical', ref: 20, icon: '⬆', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador (lateral). Con la tibia a 90° el ángulo es 0°. Pulsa <em>Iniciar</em> y realiza la dorsiflexión hasta el rango máximo.' },
-      plantarflexion: { label: 'Plantarflexión', measureType: 'gravity-vertical', axis: 'gravity', phoneOrientation: 'vertical', ref: 50, icon: '⬇', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador (lateral). Con la tibia a 90° el ángulo es 0°. Pulsa <em>Iniciar</em> y realiza la plantarflexión hasta el rango máximo.' }
+      dorsiflexion:   { label: 'Dorsiflexión',   measureType: 'gravity-vertical', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 20, icon: '⬆', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador (lateral). Con la tibia a 90° el ángulo es 0°. Pulsa <em>Iniciar</em> y realiza la dorsiflexión hasta el rango máximo.' },
+      plantarflexion: { label: 'Plantarflexión', measureType: 'gravity-vertical', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 50, icon: '⬇', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador (lateral). Con la tibia a 90° el ángulo es 0°. Pulsa <em>Iniciar</em> y realiza la plantarflexión hasta el rango máximo.' }
     }
   },
   lumbar:  { label: 'Lumbar',  abbr: 'Lb', groups: [], movements: {} }
@@ -189,7 +189,7 @@ function handleMotion(e) {
       if (gTotal > 0.5) {
         tiltInvalid = phoneOrientation === 'horizontal'
           ? Math.sqrt(grav.x**2 + grav.y**2) / gTotal > 0.25
-          : phoneOrientation === 'sagittal-vertical'
+          : phoneOrientation === 'beta-rotation'
           ? Math.abs(grav.x) / gTotal > 0.25
           : Math.abs(grav.z) / gTotal > 0.25;
       }
