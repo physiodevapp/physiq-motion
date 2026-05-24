@@ -64,7 +64,8 @@ const REGIONS = {
   muneca: {
     label: 'Muñeca', abbr: 'Mn',
     groups: [
-      { label: 'Flexo-extensión', ids: ['flexion', 'extension'] }
+      { label: 'Flexo-extensión', ids: ['flexion', 'extension'] },
+      { label: 'Desviación',      ids: ['desv_rad', 'desv_cub'] }
     ],
     movements: {
       flexion:   {
@@ -74,6 +75,14 @@ const REGIONS = {
       extension: {
         label: 'Extensión', axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 70, icon: '⬆',
         instruction: 'Paciente sentado, antebrazo en pronación apoyado sobre la camilla, mano libre al borde. Coloca el teléfono <strong>de canto sobre el dorso de la mano</strong>, pantalla paralela al plano frontal. Calibra con la muñeca en posición neutra y extiende hasta el rango máximo.'
+      },
+      desv_rad:  {
+        label: 'Desv. Radial',  axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 20, icon: '↗',
+        instruction: 'Paciente sentado, antebrazo en <strong>pronosupinación neutra</strong> (posición de estrechar la mano), apoyado sobre el borde cubital. Apoya el <strong>borde corto inferior del teléfono sobre el borde radial de la mano</strong> (lado del pulgar), con la pantalla en el plano sagital hacia el examinador. Calibra con la muñeca en posición neutra y desviá radialmente hasta el rango máximo.'
+      },
+      desv_cub:  {
+        label: 'Desv. Cubital', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 35, icon: '↙',
+        instruction: 'Paciente sentado, antebrazo en <strong>pronosupinación neutra</strong> (posición de estrechar la mano), apoyado sobre el borde cubital. Apoya el <strong>borde corto inferior del teléfono sobre el borde radial de la mano</strong> (lado del pulgar), con la pantalla en el plano sagital hacia el examinador. Calibra con la muñeca en posición neutra y desviá cubitalmente hasta el rango máximo.'
       }
     }
   },
