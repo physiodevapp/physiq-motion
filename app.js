@@ -61,7 +61,22 @@ const REGIONS = {
       }
     }
   },
-  muneca:  { label: 'Muñeca',  abbr: 'Mn', groups: [], movements: {} },
+  muneca: {
+    label: 'Muñeca', abbr: 'Mn',
+    groups: [
+      { label: 'Flexo-extensión', ids: ['flexion', 'extension'] }
+    ],
+    movements: {
+      flexion:   {
+        label: 'Flexión',   axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 70, icon: '⬇',
+        instruction: 'Paciente sentado, antebrazo en pronación apoyado sobre la camilla, mano libre al borde. Coloca el teléfono <strong>de canto sobre el dorso de la mano</strong>, pantalla paralela al plano frontal. Calibra con la muñeca en posición neutra y flexiona hasta el rango máximo.'
+      },
+      extension: {
+        label: 'Extensión', axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 70, icon: '⬆',
+        instruction: 'Paciente sentado, antebrazo en pronación apoyado sobre la camilla, mano libre al borde. Coloca el teléfono <strong>de canto sobre el dorso de la mano</strong>, pantalla paralela al plano frontal. Calibra con la muñeca en posición neutra y extiende hasta el rango máximo.'
+      }
+    }
+  },
   cadera: {
     label: 'Cadera', abbr: 'Cd',
     groups: [
