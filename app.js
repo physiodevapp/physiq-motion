@@ -45,11 +45,20 @@ const REGIONS = {
   codo: {
     label: 'Codo', abbr: 'Co',
     groups: [
-      { label: 'Flexo-extensión', ids: ['flexion', 'extension'] }
+      { label: 'Flexo-extensión', ids: ['flexion', 'extension']   },
+      { label: 'Pronosupinación', ids: ['pronacion', 'supinacion'] }
     ],
     movements: {
-      flexion:   { label: 'Flexión',   axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 145, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en extensión completa y flexiona hasta el rango máximo.' },
-      extension: { label: 'Extensión', axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 5,   icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en posición inicial y extiende hasta el rango máximo.' }
+      flexion:   { label: 'Flexión',    axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 145, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en extensión completa y flexiona hasta el rango máximo.' },
+      extension: { label: 'Extensión',  axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 5,   icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en posición inicial y extiende hasta el rango máximo.' },
+      pronacion: {
+        label: 'Pronación', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 80, icon: '↻',
+        instruction: 'Paciente sentado, codo a 90°, brazo pegado al cuerpo, posición neutra (pulgar hacia arriba). Apoya el <strong>borde inferior del teléfono sobre el dorso de la mano</strong>, pantalla en el plano frontal. Pulsa <em>Calibrar neutro</em> y lleva la palma hacia abajo (pronación) hasta el rango máximo.'
+      },
+      supinacion: {
+        label: 'Supinación', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 80, icon: '↺',
+        instruction: 'Paciente sentado, codo a 90°, brazo pegado al cuerpo, posición neutra (pulgar hacia arriba). Apoya el <strong>borde inferior del teléfono sobre el dorso de la mano</strong>, pantalla en el plano frontal. Pulsa <em>Calibrar neutro</em> y lleva la palma hacia arriba (supinación) hasta el rango máximo.'
+      }
     }
   },
   muneca:  { label: 'Muñeca',  abbr: 'Mn', groups: [], movements: {} },
