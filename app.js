@@ -430,7 +430,7 @@ function buildCard(id, def, val, i) {
   const segs = val !== null ? state.segmentData[state.regionId]?.[id] : null;
   const isVert = def.measureType === 'two-segment-vertical';
   const segHtml = segs
-    ? `<div class="mov-segments">${isVert ? 'S1' : 'Muslo'} ${segs.seg1}° · ${isVert ? 'T12' : 'Tibia'} ${segs.seg2}°</div>`
+    ? `<div class="mov-segments"><span>${isVert ? 'S1' : 'Muslo'} ${segs.seg1}°</span><span>${isVert ? 'T12' : 'Tibia'} ${segs.seg2}°</span></div>`
     : '';
 
   card.innerHTML = `
@@ -441,8 +441,7 @@ function buildCard(id, def, val, i) {
       </div>
       ${badgeHtml}
     </div>
-    ${valueHtml}
-    ${segHtml}
+    <div class="mov-value-row">${valueHtml}${segHtml}</div>
     <button class="${btnCls}" onclick="openMeasurement('${id}')">${btnLabel}</button>`;
   return card;
 }
