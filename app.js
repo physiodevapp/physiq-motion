@@ -851,9 +851,13 @@ function captureSegment2() {
     result = Math.max(0, Math.round(seg2 - seg1));
     state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
   } else if (measureType === 'two-segment-signed') {
-    result = Math.round(segmentInclination() - seg1);
+    const seg2 = segmentInclination();
+    result = Math.round(seg2 - seg1);
+    state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
   } else {
-    result = Math.round(Math.min(180, Math.abs(seg1) + Math.abs(segmentInclination())));
+    const seg2 = segmentInclination();
+    result = Math.round(Math.min(180, Math.abs(seg1) + Math.abs(seg2)));
+    state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
   }
   state.active.result = result;
   state.active.phase  = 'done';
