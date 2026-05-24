@@ -696,6 +696,14 @@ function updateLiveAngle() {
 
   // ── nuevos tipos: two-segment y pkb ──────────────────────────────────
   if (mtype === 'two-segment-signed' || mtype === 'two-segment-abs' || mtype === 'two-segment-vertical') {
+    // SI LA MEDICIÓN YA TERMINÓ, CONGELA LA PANTALLA CON EL RESULTADO GUARDADO
+    if (phase === 'done') {
+      if (state.active.result !== null) {
+        document.getElementById('angleValue').textContent = state.active.result + '°';
+      }
+      return;
+    }
+    
     const warn      = document.getElementById('tiltWarning');
     const displayEl = document.querySelector('.angle-display');
     const angleEl   = document.getElementById('angleValue');
@@ -835,15 +843,23 @@ function captureSegment2() {
   const { measureType } = REGIONS[state.regionId].movements[state.active.movementId];
   const seg1 = state.active.seg1Value;
   let result;
+  
   if (measureType === 'two-segment-vertical') {
-    result = Math.max(0, Math.round(verticalInclination() - seg1));
+    // Capturamos el valor exacto de T12 en este instante
+    const seg2 = verticalInclination();
+    // Forzamos la diferencia matemática limpia: T12 - S1
+    result = Math.max(0, Math.round(seg2 - seg1));
   } else if (measureType === 'two-segment-signed') {
     result = Math.round(segmentInclination() - seg1);
   } else {
     result = Math.round(Math.min(180, Math.abs(seg1) + Math.abs(segmentInclination())));
   }
+  
+  // Seteamos el resultado ANTES de cambiar la fase para evitar conflictos de hilos
   state.active.result = result;
   state.active.phase  = 'done';
+  
+  // Aseguramos la actualización firme del DOM
   document.getElementById('angleValue').textContent = result + '°';
   document.getElementById('angleValue').className   = 'angle-value done';
   document.getElementById('peakLabel').textContent  = '';
