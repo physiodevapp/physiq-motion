@@ -163,7 +163,19 @@ const REGIONS = {
       plantarflexion: { label: 'Plantarflexión', measureType: 'gravity-vertical', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 50, icon: '⬇', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador (lateral). Con la tibia a 90° el ángulo es 0°. Pulsa <em>Iniciar</em> y realiza la plantarflexión hasta el rango máximo.' }
     }
   },
-  lumbar:  { label: 'Lumbar',  abbr: 'Lb', groups: [], movements: {} }
+  lumbar: {
+    label: 'Lumbar', abbr: 'Lb',
+    groups: [
+      { label: 'Flexión', ids: ['flexion'] }
+    ],
+    movements: {
+      flexion: {
+        label: 'Flexión', measureType: 'two-segment-vertical',
+        phoneOrientation: 'alpha-rotation', ref: 60, icon: '⬇',
+        instruction: 'Paciente de pie, pies a la anchura de los hombros, rodillas en extensión. Se inclina hacia adelante al máximo y <strong>mantiene la posición</strong>.<br><strong>Paso 1</strong> — apoya el borde largo del teléfono sobre <strong>S1</strong> (a nivel de los hoyuelos sacros), pantalla en el plano sagital. Pulsa <em>Capturar S1</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono en <strong>T12/L1</strong> (última costilla → espina), misma orientación. Resultado = ángulo T12 − ángulo S1 (flexión lumbar pura).'
+      }
+    }
+  }
 };
 
 // ── Estado ────────────────────────────────────────────────────────────────
@@ -595,6 +607,9 @@ function refreshSheetUI() {
 
   const show = (id, v) => { document.getElementById(id).style.display = v ? '' : 'none'; };
 
+  const isTwoSeg = mtype === 'two-segment-signed' || mtype === 'two-segment-abs' || mtype === 'two-segment-vertical';
+  const isVert   = mtype === 'two-segment-vertical';
+
   // button visibility
   show('btnCalibrate',      mtype === 'standard' && p === 'idle');
   document.getElementById('btnCalibrate').disabled = tiltInvalid && p === 'idle';
@@ -603,24 +618,33 @@ function refreshSheetUI() {
   show('rowMeasuringActions',  mtype === 'standard' && p === 'measuring');
   show('rowVertical',       (mtype === 'gravity-vertical' || mtype === 'beta-zero') && p === 'measuring');
   document.getElementById('btnStopVertical').disabled = tiltInvalid && p === 'measuring';
-  show('btnCaptureSeg1',    (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'idle');
-  show('rowSeg1',           (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') && p === 'seg1');
+  show('btnCaptureSeg1',    isTwoSeg && p === 'idle');
+  show('rowSeg1',           isTwoSeg && p === 'seg1');
   show('rowDone',           p === 'done');
 
+  // etiquetas dinámicas de botones two-segment
+  if (isTwoSeg) {
+    document.getElementById('btnCaptureSeg1').textContent = isVert ? 'Capturar S1' : 'Capturar muslo';
+    const btn2 = document.getElementById('btnCaptureSeg2');
+    if (btn2) btn2.innerHTML = isVert
+      ? 'Capturar T12'
+      : '<span class="sheet-lbl-full">Capturar tibia</span><span class="sheet-lbl-short">Tibia</span>';
+  }
+
   // phase step labels and states
-  const labels = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
-    ? ['Muslo', 'Tibia', 'Listo']
+  const labels = isTwoSeg
+    ? (isVert ? ['S1', 'T12', 'Listo'] : ['Muslo', 'Tibia', 'Listo'])
     : mtype === 'gravity-vertical' || mtype === 'beta-zero'
     ? ['Medir', 'Midiendo', 'Listo']
     : ['Neutro', 'Midiendo', 'Listo'];
 
-  const actives = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
+  const actives = isTwoSeg
     ? [p === 'idle', p === 'seg1', p === 'done']
     : mtype === 'gravity-vertical'
     ? [p === 'idle', p === 'measuring', p === 'done']
     : [p === 'idle', p === 'measuring', p === 'done'];
 
-  const dones = mtype === 'two-segment-signed' || mtype === 'two-segment-abs'
+  const dones = isTwoSeg
     ? [p === 'seg1' || p === 'done', p === 'done', false]
     : mtype === 'gravity-vertical'
     ? [p === 'measuring' || p === 'done', p === 'done', false]
@@ -667,7 +691,7 @@ function updateLiveAngle() {
   }
 
   // ── nuevos tipos: two-segment y pkb ──────────────────────────────────
-  if (mtype === 'two-segment-signed' || mtype === 'two-segment-abs') {
+  if (mtype === 'two-segment-signed' || mtype === 'two-segment-abs' || mtype === 'two-segment-vertical') {
     const warn      = document.getElementById('tiltWarning');
     const displayEl = document.querySelector('.angle-display');
     const angleEl   = document.getElementById('angleValue');
@@ -681,9 +705,17 @@ function updateLiveAngle() {
       angleEl.classList.remove('tilt');
     }
     if (phase === 'idle' || phase === 'seg1') {
-      const deg = mtype === 'two-segment-abs'
-        ? Math.round(Math.abs(segmentInclination()))
-        : Math.round(segmentInclination());
+      let deg;
+      if (mtype === 'two-segment-vertical') {
+        const cur = verticalInclination();
+        deg = phase === 'seg1'
+          ? Math.max(0, Math.round(cur - state.active.seg1Value))
+          : Math.round(cur);
+      } else {
+        deg = mtype === 'two-segment-abs'
+          ? Math.round(Math.abs(segmentInclination()))
+          : Math.round(segmentInclination());
+      }
       angleEl.textContent = deg + '°';
       angleEl.className   = 'angle-value live' + (tiltInvalid ? ' tilt' : '');
     }
@@ -766,7 +798,7 @@ function angularDiff(a, b) {
 
 // ── Mediciones de dos segmentos y PKB ────────────────────────────────────
 
-// Inclinación del segmento respecto a la horizontal absoluta.
+// Inclinación del segmento respecto a la horizontal absoluta (teléfono plano, pantalla arriba).
 // atan2(grav.y, grav.z): positivo cuando el extremo superior (top) se despega,
 // negativo cuando lo hace el inferior. Rango ±180°; discontinuidad en ±180° (pantalla abajo).
 function segmentInclination() {
@@ -775,23 +807,38 @@ function segmentInclination() {
   return Math.atan2(grav.y, grav.z) * 180 / Math.PI;
 }
 
+// Inclinación del segmento respecto a la vertical absoluta (teléfono de canto, pantalla sagital).
+// acos(|grav.y| / gTotal): 0° cuando el teléfono cuelga vertical, aumenta al inclinar.
+function verticalInclination() {
+  const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
+  if (gTotal < 0.5) return 0;
+  return Math.acos(Math.min(1, Math.abs(grav.y) / gTotal)) * 180 / Math.PI;
+}
+
 function captureSegment1() {
-  state.active.seg1Value = segmentInclination();
+  const mtype = REGIONS[state.regionId].movements[state.active.movementId].measureType;
+  const isVert = mtype === 'two-segment-vertical';
+  state.active.seg1Value = isVert ? verticalInclination() : segmentInclination();
   state.active.phase = 'seg1';
   document.getElementById('angleValue').textContent = '—';
   document.getElementById('angleValue').className = 'angle-value live';
   document.getElementById('peakLabel').textContent =
-    'Muslo: ' + Math.round(state.active.seg1Value) + '°';
+    (isVert ? 'S1' : 'Muslo') + ': ' + Math.round(state.active.seg1Value) + '°';
   refreshSheetUI();
 }
 
 function captureSegment2() {
   const { measureType } = REGIONS[state.regionId].movements[state.active.movementId];
   const seg1 = state.active.seg1Value;
-  const seg2 = segmentInclination();
-  const result = measureType === 'two-segment-signed'
-    ? Math.round(seg2 - seg1)
-    : Math.round(Math.min(180, Math.abs(seg1) + Math.abs(seg2)));
+  let result;
+  if (measureType === 'two-segment-vertical') {
+    result = Math.max(0, Math.round(verticalInclination() - seg1));
+  } else {
+    const seg2 = segmentInclination();
+    result = measureType === 'two-segment-signed'
+      ? Math.round(seg2 - seg1)
+      : Math.round(Math.min(180, Math.abs(seg1) + Math.abs(seg2)));
+  }
   state.active.result = result;
   state.active.phase  = 'done';
   document.getElementById('angleValue').textContent = result + '°';
