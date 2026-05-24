@@ -628,12 +628,10 @@ function refreshSheetUI() {
     const btn2 = document.getElementById('btnCaptureSeg2');
     if (isVert) {
       btn1.textContent = 'Capturar S1';
-      btn1.setAttribute('onclick', 'captureVertical1()');
-      if (btn2) { btn2.textContent = 'Capturar T12'; btn2.setAttribute('onclick', 'captureVertical2()'); }
+      if (btn2) { btn2.textContent = 'Capturar T12'; }
     } else {
       btn1.textContent = 'Capturar muslo';
-      btn1.setAttribute('onclick', 'captureSegment1()');
-      if (btn2) { btn2.innerHTML = '<span class="sheet-lbl-full">Capturar tibia</span><span class="sheet-lbl-short">Tibia</span>'; btn2.setAttribute('onclick', 'captureSegment2()'); }
+      if (btn2) { btn2.innerHTML = '<span class="sheet-lbl-full">Capturar tibia</span><span class="sheet-lbl-short">Tibia</span>'; }
     }
   }
 
@@ -822,43 +820,28 @@ function verticalInclination() {
 }
 
 function captureSegment1() {
-  state.active.seg1Value = segmentInclination();
+  const mtype = REGIONS[state.regionId].movements[state.active.movementId].measureType;
+  const val   = (mtype === 'two-segment-vertical') ? verticalInclination() : segmentInclination();
+  state.active.seg1Value = val;
   state.active.phase = 'seg1';
   document.getElementById('angleValue').textContent = '—';
-  document.getElementById('angleValue').className = 'angle-value live';
-  document.getElementById('peakLabel').textContent = 'Muslo: ' + Math.round(state.active.seg1Value) + '°';
+  document.getElementById('angleValue').className   = 'angle-value live';
+  document.getElementById('peakLabel').textContent  =
+    (mtype === 'two-segment-vertical' ? 'S1: ' : 'Muslo: ') + Math.round(val) + '°';
   refreshSheetUI();
 }
 
 function captureSegment2() {
   const { measureType } = REGIONS[state.regionId].movements[state.active.movementId];
   const seg1 = state.active.seg1Value;
-  const seg2 = segmentInclination();
-  const result = measureType === 'two-segment-signed'
-    ? Math.round(seg2 - seg1)
-    : Math.round(Math.min(180, Math.abs(seg1) + Math.abs(seg2)));
-  state.active.result = result;
-  state.active.phase  = 'done';
-  document.getElementById('angleValue').textContent = result + '°';
-  document.getElementById('angleValue').className   = 'angle-value done';
-  document.getElementById('peakLabel').textContent  = '';
-  refreshSheetUI();
-}
-
-
-// Captura dedicada para two-segment-vertical (lumbar): siempre usa verticalInclination().
-function captureVertical1() {
-  state.active.seg1Value = verticalInclination();
-  state.active.phase = 'seg1';
-  document.getElementById('angleValue').textContent = '—';
-  document.getElementById('angleValue').className = 'angle-value live';
-  document.getElementById('peakLabel').textContent = 'S1: ' + Math.round(state.active.seg1Value) + '°';
-  refreshSheetUI();
-}
-
-function captureVertical2() {
-  const seg1   = state.active.seg1Value;
-  const result = Math.max(0, Math.round(verticalInclination() - seg1));
+  let result;
+  if (measureType === 'two-segment-vertical') {
+    result = Math.max(0, Math.round(verticalInclination() - seg1));
+  } else if (measureType === 'two-segment-signed') {
+    result = Math.round(segmentInclination() - seg1);
+  } else {
+    result = Math.round(Math.min(180, Math.abs(seg1) + Math.abs(segmentInclination())));
+  }
   state.active.result = result;
   state.active.phase  = 'done';
   document.getElementById('angleValue').textContent = result + '°';
