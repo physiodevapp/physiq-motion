@@ -172,7 +172,7 @@ const REGIONS = {
       flexion: {
         label: 'Flexión', measureType: 'two-segment-vertical',
         phoneOrientation: 'alpha-rotation', ref: 60, icon: '⬇',
-        instruction: 'Paciente de pie, pies a la anchura de los hombros, rodillas en extensión. Se inclina hacia adelante al máximo y <strong>mantiene la posición</strong>.<br><strong>Paso 1</strong> — apoya el borde largo del teléfono sobre <strong>S1</strong> (a nivel de los hoyuelos sacros), pantalla en el plano sagital. Pulsa <em>Capturar S1</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono en <strong>T12/L1</strong> (última costilla → espina), misma orientación. Resultado = ángulo T12 − ángulo S1 (flexión lumbar pura).'
+        instruction: 'Paciente de pie, pies a la anchura de los hombros, rodillas en extensión. Se inclina hacia adelante al máximo y <strong>mantiene la posición</strong>.<br><strong>Paso 1</strong> — coloca el teléfono en <strong>modo landscape</strong>, apoya el borde largo sobre <strong>S1</strong> (a nivel de los hoyuelos sacros), pantalla en el plano sagital. Pulsa <em>Capturar S1</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono igual sobre <strong>T12/L1</strong> (última costilla → espina). Resultado = ángulo T12 − ángulo S1 (flexión lumbar pura).'
       }
     }
   }
@@ -807,12 +807,12 @@ function segmentInclination() {
   return Math.atan2(grav.y, grav.z) * 180 / Math.PI;
 }
 
-// Inclinación del segmento respecto a la vertical absoluta (teléfono de canto, pantalla sagital).
-// acos(|grav.y| / gTotal): 0° cuando el teléfono cuelga vertical, aumenta al inclinar.
+// Inclinación del segmento respecto a la vertical absoluta (teléfono de canto en landscape, pantalla sagital).
+// acos(|grav.x| / gTotal): 0° cuando el eje corto del teléfono está vertical (landscape), aumenta al inclinar.
 function verticalInclination() {
   const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
   if (gTotal < 0.5) return 0;
-  return Math.acos(Math.min(1, Math.abs(grav.y) / gTotal)) * 180 / Math.PI;
+  return Math.acos(Math.min(1, Math.abs(grav.x) / gTotal)) * 180 / Math.PI;
 }
 
 function captureSegment1() {
