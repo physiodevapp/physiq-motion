@@ -187,6 +187,12 @@ const state = {
       Object.fromEntries(Object.keys(def.movements).map(k => [k, null]))
     ])
   ),
+  segmentData: Object.fromEntries(
+    Object.entries(REGIONS).map(([id, def]) => [
+      id,
+      Object.fromEntries(Object.keys(def.movements).map(k => [k, null]))
+    ])
+  ),
   active: {
     movementId: null,
     phase: 'idle',      // 'idle' | 'measuring' | 'done' | 'seg1'
@@ -421,6 +427,12 @@ function buildCard(id, def, val, i) {
   const btnCls   = val !== null ? 'btn-measure remeasure' : 'btn-measure';
   const btnLabel = val !== null ? 'Repetir' : 'Medir';
 
+  const segs = val !== null ? state.segmentData[state.regionId]?.[id] : null;
+  const isVert = def.measureType === 'two-segment-vertical';
+  const segHtml = segs
+    ? `<div class="mov-segments">${isVert ? 'S1' : 'Muslo'} ${segs.seg1}° · ${isVert ? 'T12' : 'Tibia'} ${segs.seg2}°</div>`
+    : '';
+
   card.innerHTML = `
     <div class="mov-top">
       <div>
@@ -430,6 +442,7 @@ function buildCard(id, def, val, i) {
       ${badgeHtml}
     </div>
     ${valueHtml}
+    ${segHtml}
     <button class="${btnCls}" onclick="openMeasurement('${id}')">${btnLabel}</button>`;
   return card;
 }
@@ -834,7 +847,9 @@ function captureSegment2() {
   let result;
   
   if (measureType === 'two-segment-vertical') {
-    result = Math.max(0, Math.round(verticalInclination() - seg1));
+    const seg2 = verticalInclination();
+    result = Math.max(0, Math.round(seg2 - seg1));
+    state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
   } else if (measureType === 'two-segment-signed') {
     result = Math.round(segmentInclination() - seg1);
   } else {
@@ -876,6 +891,8 @@ function exportToPhysiQReport() {
 function resetAll() {
   const meas = state.measurements[state.regionId];
   Object.keys(meas).forEach(k => { meas[k] = null; });
+  const segs = state.segmentData[state.regionId];
+  Object.keys(segs).forEach(k => { segs[k] = null; });
   document.getElementById('patientName').value = '';
   renderMovementGrid();
 }
