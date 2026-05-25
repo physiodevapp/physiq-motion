@@ -142,9 +142,10 @@ const REGIONS = {
         instruction: '<strong>Paso 1</strong> — coloca el teléfono <strong>plano sobre el muslo</strong>, pantalla hacia arriba. Pulsa <em>Capturar muslo</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono igual <strong>sobre la tibia</strong>. Resultado: positivo = déficit de extensión; negativo = hiperextensión.'
       },
       flexion: {
-        label: 'Flexión', measureType: 'two-segment-abs',
-        phoneOrientation: 'none', ref: 135, icon: '⬇',
-        instruction: 'Con la rodilla en posición de máxima flexión. <strong>Paso 1</strong> — coloca el teléfono <strong>plano sobre el muslo</strong>, pantalla hacia arriba. Pulsa <em>Capturar muslo</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono <strong>plano sobre la tibia</strong>, pantalla hacia arriba.'
+        label: 'Flexión', measureType: 'two-segment-beta',
+        axis: 'beta', phoneOrientation: 'beta-rotation',
+        ref: 135, icon: '⬇',
+        instruction: 'Rodilla en posición de máxima flexión. <strong>Paso 1</strong> — coloca el teléfono <strong>de canto sobre la cara lateral del muslo</strong>, portrait, pantalla hacia el examinador. Pulsa <em>Capturar muslo</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono igual <strong>de canto sobre la cara lateral de la tibia</strong>. Pulsa <em>Capturar tibia</em>.'
       },
       pkb: {
         label: 'PKB', measureType: 'gravity-vertical', axis: 'gravity',
@@ -619,7 +620,7 @@ function refreshSheetUI() {
 
   const show = (id, v) => { document.getElementById(id).style.display = v ? '' : 'none'; };
 
-  const isTwoSeg = mtype === 'two-segment-signed' || mtype === 'two-segment-abs' || mtype === 'two-segment-vertical';
+  const isTwoSeg = mtype === 'two-segment-signed' || mtype === 'two-segment-abs' || mtype === 'two-segment-vertical' || mtype === 'two-segment-beta';
   const isVert   = mtype === 'two-segment-vertical';
 
   // button visibility
@@ -707,7 +708,7 @@ function updateLiveAngle() {
   }
 
   // ── nuevos tipos: two-segment y pkb ──────────────────────────────────
-  if (mtype === 'two-segment-signed' || mtype === 'two-segment-abs' || mtype === 'two-segment-vertical') {
+  if (mtype === 'two-segment-signed' || mtype === 'two-segment-abs' || mtype === 'two-segment-vertical' || mtype === 'two-segment-beta') {
     const warn      = document.getElementById('tiltWarning');
     const displayEl = document.querySelector('.angle-display');
     const angleEl   = document.getElementById('angleValue');
@@ -724,6 +725,8 @@ function updateLiveAngle() {
       let deg;
       if (mtype === 'two-segment-vertical') {
         deg = Math.round(verticalInclination());
+      } else if (mtype === 'two-segment-beta') {
+        deg = Math.round(Math.abs(angularDiff(sensor.beta, 90)));
       } else {
         deg = mtype === 'two-segment-abs'
           ? Math.round(Math.abs(segmentInclination()))
@@ -830,7 +833,9 @@ function verticalInclination() {
 
 function captureSegment1() {
   const mtype = REGIONS[state.regionId].movements[state.active.movementId].measureType;
-  const val   = (mtype === 'two-segment-vertical') ? verticalInclination() : segmentInclination();
+  const val   = mtype === 'two-segment-vertical' ? verticalInclination()
+              : mtype === 'two-segment-beta'     ? sensor.beta
+              : segmentInclination();
   state.active.seg1Value = val;
   state.active.phase = 'seg1';
   document.getElementById('angleValue').textContent = '—';
@@ -845,7 +850,11 @@ function captureSegment2() {
   const seg1 = state.active.seg1Value;
   let result;
   
-  if (measureType === 'two-segment-vertical') {
+  if (measureType === 'two-segment-beta') {
+    const seg2 = sensor.beta;
+    result = Math.round(Math.abs(angularDiff(seg2, seg1)));
+    state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
+  } else if (measureType === 'two-segment-vertical') {
     const seg2 = verticalInclination();
     result = Math.max(0, Math.round(seg2 - seg1));
     state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
