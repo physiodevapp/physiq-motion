@@ -1,0 +1,26 @@
+{
+  "name": "PhysiQ Motion",
+  "short_name": "PhysiQ-M",
+  "description": "Inclinómetro de rango articular de movimiento",
+  "start_url": "/physiq-motion/",
+  "scope": "/physiq-motion/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0d12",
+  "theme_color": "#0a0d12",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
