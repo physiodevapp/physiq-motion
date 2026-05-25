@@ -834,7 +834,7 @@ function verticalInclination() {
 function captureSegment1() {
   const mtype = REGIONS[state.regionId].movements[state.active.movementId].measureType;
   const val   = mtype === 'two-segment-vertical' ? verticalInclination()
-              : mtype === 'two-segment-beta'     ? sensor.beta
+              : mtype === 'two-segment-beta'     ? Math.abs(angularDiff(sensor.beta, 90))
               : segmentInclination();
   state.active.seg1Value = val;
   state.active.phase = 'seg1';
@@ -851,8 +851,8 @@ function captureSegment2() {
   let result;
   
   if (measureType === 'two-segment-beta') {
-    const seg2 = sensor.beta;
-    result = Math.round(Math.abs(angularDiff(seg2, seg1)));
+    const seg2 = Math.abs(angularDiff(sensor.beta, 90));
+    result = Math.max(0, Math.round(180 - seg1 - seg2));
     state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
   } else if (measureType === 'two-segment-vertical') {
     const seg2 = verticalInclination();
