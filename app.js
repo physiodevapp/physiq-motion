@@ -398,6 +398,7 @@ const state = {
 // Lecturas crudas del sensor
 const sensor = { alpha: 0, beta: 0, gamma: 0 };
 const grav   = { x: 0, y: 0, z: 0 };
+let _popstateLock = false;
 let sensorStarted = false;
 let sensorSeen    = false;
 let motionSeen    = false;
@@ -414,9 +415,19 @@ let cfLastTime = null;
 
 // ── Init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  history.replaceState(null, '');
   document.getElementById('summaryDate').textContent = new Date().toLocaleDateString('es-ES');
   renderRegionGrid();
   initSensor();
+});
+
+window.addEventListener('popstate', () => {
+  if (_popstateLock) { _popstateLock = false; return; }
+  if (document.getElementById('measureOverlay').classList.contains('open')) {
+    closeMeasurement();
+  } else if (state.regionId !== null) {
+    goBackToRegions();
+  }
 });
 
 // ── Sensor ────────────────────────────────────────────────────────────────
@@ -576,6 +587,7 @@ function renderRegionGrid() {
 }
 
 function selectRegion(id) {
+  history.pushState({ view: 'measure' }, '');
   state.regionId = id;
   document.getElementById('regionScreen').style.display = 'none';
   document.getElementById('measureScreen').style.display = '';
@@ -588,6 +600,7 @@ function goBackToRegions() {
   document.getElementById('measureScreen').style.display = 'none';
   document.getElementById('regionScreen').style.display = '';
   renderRegionGrid();
+  if (history.state?.view === 'measure') { _popstateLock = true; history.back(); }
 }
 
 // ── Renderizado de tarjetas de movimiento ─────────────────────────────────
@@ -708,6 +721,7 @@ function openMeasurement(id) {
   refreshSheetUI();
   document.getElementById('measureOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  history.pushState({ view: 'overlay' }, '');
 }
 
 function closeMeasurement() {
@@ -715,6 +729,7 @@ function closeMeasurement() {
   document.body.style.overflow = '';
   state.active.movementId = null;
   state.active.phase = 'idle';
+  if (history.state?.view === 'overlay') { _popstateLock = true; history.back(); }
 }
 
 function handleOverlayClick(e) {
