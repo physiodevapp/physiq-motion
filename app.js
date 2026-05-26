@@ -69,11 +69,11 @@ const REGIONS = {
     ],
     movements: {
       flexion:   {
-        label: 'Flexión',   axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 70, icon: '⬇',
+        label: 'Flexión',   axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 70, icon: '⬇',
         instruction: 'Paciente sentado, antebrazo en pronación apoyado sobre la camilla, mano libre al borde. Coloca el teléfono <strong>de canto sobre el dorso de la mano</strong>, pantalla paralela al plano frontal. Calibra con la muñeca en posición neutra y flexiona hasta el rango máximo.'
       },
       extension: {
-        label: 'Extensión', axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 70, icon: '⬆',
+        label: 'Extensión', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 70, icon: '⬆',
         instruction: 'Paciente sentado, antebrazo en pronación apoyado sobre la camilla, mano libre al borde. Coloca el teléfono <strong>de canto sobre el dorso de la mano</strong>, pantalla paralela al plano frontal. Calibra con la muñeca en posición neutra y extiende hasta el rango máximo.'
       },
       desv_rad:  {
@@ -138,7 +138,7 @@ const REGIONS = {
     movements: {
       extension: {
         label: 'Extensión', measureType: 'two-segment-signed',
-        phoneOrientation: 'none', ref: 0, skipStatus: true, icon: '⬆',
+        axis: 'beta', phoneOrientation: 'beta-rotation', ref: 0, skipStatus: true, icon: '⬆',
         instruction: '<strong>Paso 1</strong> — coloca el teléfono <strong>plano sobre el muslo</strong>, pantalla hacia arriba. Pulsa <em>Capturar muslo</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono igual <strong>sobre la tibia</strong>. Resultado: positivo = déficit de extensión; negativo = hiperextensión.'
       },
       flexion: {
@@ -171,13 +171,203 @@ const REGIONS = {
     ],
     movements: {
       flexion: {
-        label: 'Flexión', measureType: 'two-segment-vertical',
+        label: 'Flexión', measureType: 'two-segment-vertical-signed',
         phoneOrientation: 'alpha-rotation', ref: 60, icon: '⬇',
         instruction: 'Paciente de pie, pies a la anchura de los hombros, rodillas en extensión. Se inclina hacia adelante al máximo y <strong>mantiene la posición</strong>.<br><strong>Paso 1</strong> — coloca el teléfono en <strong>modo landscape</strong>, apoya el borde largo sobre <strong>S1</strong> (a nivel de los hoyuelos sacros), pantalla en el plano sagital. Pulsa <em>Capturar S1</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono igual sobre <strong>T12/L1</strong> (última costilla → espina). Resultado = ángulo T12 − ángulo S1 (flexión lumbar pura).'
       }
     }
   }
 };
+
+// ── Estrategias de medición ───────────────────────────────────────────────
+// Cada entrada encapsula toda la lógica de un measureType:
+//   steps      — etiquetas de los 3 indicadores de fase
+//   pulses     — si el dot de paso 2 pulsa durante 'measuring'
+//   twoSeg     — true para tipos de dos capturas (idle → seg1 → done)
+//   show       — ids DOM visibles por fase
+//   onOpen(def)— se llama al abrir el overlay (y en redo); puede auto-iniciar
+//   liveAngle  — devuelve { deg, isPreview|isLive|isSmoothed, base? } o null
+//   capture1/2 — sólo en tipos twoSeg; capturan y calculan el resultado
+const STRATEGIES = {
+  standard: {
+    steps: ['Neutro', 'Midiendo', 'Listo'], pulses: true, twoSeg: false,
+    show: {
+      idle:      ['btnCalibrate'],
+      measuring: ['btnStopMeasure', 'rowMeasuringActions'],
+      seg1:      [],
+      done:      ['rowDone'],
+    },
+    onOpen(def) {},
+    liveAngle(def) {
+      if (state.active.phase !== 'measuring') return null;
+      const { axis } = def;
+      const delta = axis === 'gravity'
+        ? foldAngle(Math.abs(cfAngle))
+        : foldAngle(Math.abs(
+            (axis === 'alpha' || axis === 'beta')
+              ? angularDiff(sensor[axis], state.active.neutralRef)
+              : sensor[axis] - state.active.neutralRef
+          ));
+      return { delta, isSmoothed: true, base: def.baseAngle || 0 };
+    },
+  },
+
+  'gravity-vertical': {
+    steps: ['Medir', 'Midiendo', 'Listo'], pulses: true, twoSeg: false,
+    show: { idle: [], measuring: ['rowVertical'], seg1: [], done: ['rowDone'] },
+    onOpen(def) {
+      const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
+      const ySign  = grav.y >= 0 ? 1 : -1;
+      state.active.gravRef    = { x: 0, y: ySign, z: 0 };
+      cfAngle = gTotal > 0.1
+        ? Math.acos(Math.max(-1, Math.min(1, grav.y * ySign / gTotal))) * 180 / Math.PI
+        : 0;
+      state.active.neutralRef = 0;
+      cfLastTime   = null;
+      smoothedDelta = cfAngle;
+      state.active.phase     = 'measuring';
+      state.active.peakDelta = 0;
+      document.getElementById('angleValue').className = 'angle-value measuring';
+    },
+    liveAngle(def) {
+      const { phase } = state.active;
+      if (phase === 'idle') {
+        const gT = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
+        if (gT < 0.1) return null;
+        const yS  = grav.y >= 0 ? 1 : -1;
+        const dot = Math.max(-1, Math.min(1, grav.y * yS / gT));
+        return { deg: Math.round(Math.acos(dot) * 180 / Math.PI) + (def.baseAngle || 0), isPreview: true };
+      }
+      return { delta: foldAngle(Math.abs(cfAngle)), isSmoothed: true, base: def.baseAngle || 0 };
+    },
+  },
+
+  'beta-zero': {
+    steps: ['Medir', 'Midiendo', 'Listo'], pulses: true, twoSeg: false,
+    show: { idle: [], measuring: ['rowVertical'], seg1: [], done: ['rowDone'] },
+    onOpen(def) {
+      state.active.neutralRef = def.neutralAngle !== undefined ? def.neutralAngle : 0;
+      state.active.gravRef    = null;
+      state.active.phase      = 'measuring';
+      state.active.peakDelta  = 0;
+      smoothedDelta = 0;
+      cfAngle       = 0;
+      cfLastTime    = null;
+      document.getElementById('angleValue').className = 'angle-value measuring';
+    },
+    liveAngle(def) {
+      if (state.active.phase !== 'measuring') return null;
+      return {
+        delta: foldAngle(Math.abs(angularDiff(sensor.beta, state.active.neutralRef))),
+        isSmoothed: true,
+        base: 0,
+      };
+    },
+  },
+
+  'two-segment-signed': {
+    steps: ['Muslo', 'Pierna', 'Listo'], pulses: false, twoSeg: true,
+    seg1Label: 'Muslo', seg2Label: 'Pierna',
+    btn1: 'Capturar muslo',
+    btn2: '<span class="sheet-lbl-full">Capturar pierna</span><span class="sheet-lbl-short">Pierna</span>',
+    show: { idle: ['btnCaptureSeg1'], measuring: [], seg1: ['rowSeg1'], done: ['rowDone'] },
+    onOpen(def) {},
+    liveAngle(def) {
+      const p = state.active.phase;
+      if (p !== 'idle' && p !== 'seg1') return null;
+      return { deg: Math.round(segmentInclination()), isLive: true };
+    },
+    capture1(def) { return segmentInclination(); },
+    capture2(def, seg1) {
+      const seg2 = segmentInclination();
+      return { result: Math.round(seg1 - seg2), seg1, seg2 };
+    },
+  },
+
+  'two-segment-beta': {
+    steps: ['Muslo', 'Pierna', 'Listo'], pulses: false, twoSeg: true,
+    seg1Label: 'Muslo', seg2Label: 'Pierna',
+    btn1: 'Capturar muslo',
+    btn2: '<span class="sheet-lbl-full">Capturar pierna</span><span class="sheet-lbl-short">Pierna</span>',
+    show: { idle: ['btnCaptureSeg1'], measuring: [], seg1: ['rowSeg1'], done: ['rowDone'] },
+    onOpen(def) {},
+    liveAngle(def) {
+      const p = state.active.phase;
+      if (p !== 'idle' && p !== 'seg1') return null;
+      return { deg: Math.round(Math.abs(angularDiff(sensor.beta, 90))), isLive: true };
+    },
+    capture1(def) { return Math.abs(angularDiff(sensor.beta, 90)); },
+    capture2(def, seg1) {
+      const seg2 = Math.abs(angularDiff(sensor.beta, 90));
+      return { result: Math.max(0, Math.round(180 - seg1 - seg2)), seg1, seg2 };
+    },
+  },
+
+  'two-segment-vertical': {
+    steps: ['S1', 'T12', 'Listo'], pulses: false, twoSeg: true,
+    seg1Label: 'S1', seg2Label: 'T12',
+    btn1: 'Capturar S1',
+    btn2: 'Capturar T12',
+    show: { idle: ['btnCaptureSeg1'], measuring: [], seg1: ['rowSeg1'], done: ['rowDone'] },
+    onOpen(def) {},
+    liveAngle(def) {
+      const p = state.active.phase;
+      if (p !== 'idle' && p !== 'seg1') return null;
+      return { deg: Math.round(verticalInclination()), isLive: true };
+    },
+    capture1(def) { return verticalInclination(); },
+    capture2(def, seg1) {
+      const seg2 = verticalInclination();
+      return { result: Math.max(0, Math.round(seg2 - seg1)), seg1, seg2 };
+    },
+  },
+
+  'two-segment-vertical-signed': {
+    steps: ['S1', 'T12', 'Listo'], pulses: false, twoSeg: true,
+    seg1Label: 'S1', seg2Label: 'T12',
+    btn1: 'Capturar S1',
+    btn2: 'Capturar T12',
+    show: { idle: ['btnCaptureSeg1'], measuring: [], seg1: ['rowSeg1'], done: ['rowDone'] },
+    onOpen(def) {},
+    liveAngle(def) {
+      const p = state.active.phase;
+      if (p !== 'idle' && p !== 'seg1') return null;
+      return { deg: Math.round(signedVerticalInclination()), isLive: true };
+    },
+    capture1(def) { return signedVerticalInclination(); },
+    capture2(def, seg1) {
+      const seg2 = signedVerticalInclination();
+      return { result: Math.round(seg2 - seg1), seg1, seg2 };
+    },
+  },
+
+  'two-segment-abs': {
+    steps: ['Muslo', 'Pierna', 'Listo'], pulses: false, twoSeg: true,
+    seg1Label: 'Muslo', seg2Label: 'Pierna',
+    btn1: 'Capturar muslo',
+    btn2: '<span class="sheet-lbl-full">Capturar pierna</span><span class="sheet-lbl-short">Pierna</span>',
+    show: { idle: ['btnCaptureSeg1'], measuring: [], seg1: ['rowSeg1'], done: ['rowDone'] },
+    onOpen(def) {},
+    liveAngle(def) {
+      const p = state.active.phase;
+      if (p !== 'idle' && p !== 'seg1') return null;
+      return { deg: Math.round(Math.abs(segmentInclination())), isLive: true };
+    },
+    capture1(def) { return segmentInclination(); },
+    capture2(def, seg1) {
+      const seg2 = segmentInclination();
+      return { result: Math.round(Math.min(180, Math.abs(seg1) + Math.abs(seg2))), seg1, seg2 };
+    },
+  },
+};
+
+function getStrategy() {
+  const movId = state.active.movementId;
+  const mtype = movId && state.regionId
+    ? (REGIONS[state.regionId].movements[movId].measureType || 'standard')
+    : 'standard';
+  return STRATEGIES[mtype];
+}
 
 // ── Estado ────────────────────────────────────────────────────────────────
 const state = {
@@ -210,6 +400,7 @@ const sensor = { alpha: 0, beta: 0, gamma: 0 };
 const grav   = { x: 0, y: 0, z: 0 };
 let sensorStarted = false;
 let sensorSeen    = false;
+let motionSeen    = false;
 let tiltInvalid   = false;
 let lastDisplayUpdate = 0;
 
@@ -276,6 +467,24 @@ function attachSensor() {
 function handleOrientation(e) {
   if (e.alpha === null) return;
   sensor.alpha = e.alpha;
+  // Emulator fallback: derive gravity vector and cfAngle from Euler angles when devicemotion never fires
+  if (!motionSeen && e.beta !== null && e.gamma !== null) {
+    const bRad = e.beta  * Math.PI / 180;
+    const gRad = e.gamma * Math.PI / 180;
+    const g    = 9.81;
+    grav.x = g * Math.cos(bRad) * Math.sin(gRad);
+    grav.y = -g * Math.sin(bRad);
+    grav.z = -g * Math.cos(bRad) * Math.cos(gRad);
+    sensor.beta  = Math.atan2(grav.z, -grav.y) * 180 / Math.PI;
+    sensor.gamma = Math.atan2(grav.x, -grav.y) * 180 / Math.PI;
+    const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
+    const { gravRef } = state.active;
+    if (gravRef && gTotal > 0.1) {
+      const gn  = { x: grav.x/gTotal, y: grav.y/gTotal, z: grav.z/gTotal };
+      const dot = Math.max(-1, Math.min(1, gn.x*gravRef.x + gn.y*gravRef.y + gn.z*gravRef.z));
+      cfAngle = Math.acos(dot) * 180 / Math.PI;
+    }
+  }
   if (!sensorSeen) { sensorSeen = true; setSensorBadge('active', 'Sensor activo'); }
   updateLiveAngle();
 }
@@ -285,6 +494,7 @@ function handleMotion(e) {
   const r = e.rotationRate;
   const now = e.timeStamp;
   if (!g || g.x === null) return;
+  motionSeen = true;
   grav.x = g.x; grav.y = g.y; grav.z = g.z;
 
   const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
@@ -424,14 +634,15 @@ function buildCard(id, def, val, i) {
   const valueHtml = val !== null
     ? `<div class="mov-value ${status}">${val}°</div>`
     : `<div class="mov-value">—</div>`;
-  const refHtml  = def.skipStatus ? '' : `<div class="mov-ref">Ref: ${def.ref}°</div>`;
+  const refHtml  = def.ref != null ? `<div class="mov-ref">Ref: ${def.ref}°</div>` : '';
   const btnCls   = val !== null ? 'btn-measure remeasure' : 'btn-measure';
   const btnLabel = val !== null ? 'Repetir' : 'Medir';
 
-  const segs = val !== null ? state.segmentData[state.regionId]?.[id] : null;
-  const isVert = def.measureType === 'two-segment-vertical';
-  const segHtml = segs
-    ? `<div class="mov-segments"><span>${isVert ? 'S1' : 'Muslo'} ${segs.seg1}°</span><span>${isVert ? 'T12' : 'Tibia'} ${segs.seg2}°</span></div>`
+  const segs     = val !== null ? state.segmentData[state.regionId]?.[id] : null;
+  const strategy = STRATEGIES[def.measureType || 'standard'];
+  const abbr = l => l.length <= 3 ? l : l[0];
+  const segHtml  = segs && strategy.twoSeg
+    ? `<div class="mov-segments"><span>${abbr(strategy.seg1Label)}</span><span>${segs.seg1}°</span><span>${abbr(strategy.seg2Label)}</span><span>${segs.seg2}°</span></div>`
     : '';
 
   card.innerHTML = `
@@ -483,20 +694,18 @@ function renderSummaryTable() {
 
 // ── Overlay de medición ───────────────────────────────────────────────────
 function openMeasurement(id) {
-  const def   = REGIONS[state.regionId].movements[id];
-  const mtype = def.measureType || 'standard';
+  const def      = REGIONS[state.regionId].movements[id];
+  const strategy = STRATEGIES[def.measureType || 'standard'];
   Object.assign(state.active, {
     movementId: id, phase: 'idle',
     neutralRef: null, gravRef: null, peakDelta: 0, result: null, seg1Value: null
   });
   tiltInvalid = false;
-
-  document.getElementById('sheetTitle').textContent = def.label;
+  document.getElementById('sheetTitle').textContent    = def.label;
   document.getElementById('sheetInstruction').innerHTML = def.instruction || '';
   resetAngleDisplay();
-  if (mtype === 'gravity-vertical') startVerticalMeasurement();
-  else if (mtype === 'beta-zero')   startBetaZeroMeasurement();
-  else refreshSheetUI();
+  strategy.onOpen(def);
+  refreshSheetUI();
   document.getElementById('measureOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -535,35 +744,6 @@ function calibrateNeutral() {
 }
 
 
-function startVerticalMeasurement() {
-  const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
-  const ySign  = grav.y >= 0 ? 1 : -1;
-  state.active.gravRef    = { x: 0, y: ySign, z: 0 };
-  cfAngle = gTotal > 0.1
-    ? Math.acos(Math.max(-1, Math.min(1, grav.y * ySign / gTotal))) * 180 / Math.PI
-    : 0;
-  state.active.neutralRef = 0;
-  cfLastTime              = null;
-  smoothedDelta           = cfAngle;
-  state.active.phase      = 'measuring';
-  state.active.peakDelta  = 0;
-  document.getElementById('angleValue').className = 'angle-value measuring';
-  refreshSheetUI();
-}
-
-function startBetaZeroMeasurement() {
-  const mov = REGIONS[state.regionId].movements[state.active.movementId];
-  state.active.neutralRef = mov.neutralAngle !== undefined ? mov.neutralAngle : 0;
-  state.active.gravRef    = null;
-  state.active.phase      = 'measuring';
-  state.active.peakDelta  = 0;
-  smoothedDelta           = 0;
-  cfAngle                 = 0;
-  cfLastTime              = null;
-  document.getElementById('angleValue').className = 'angle-value measuring';
-  refreshSheetUI();
-}
-
 function stopMeasurement() {
   const def  = REGIONS[state.regionId].movements[state.active.movementId];
   const base = def.baseAngle || 0;
@@ -582,15 +762,12 @@ function saveResult() {
 }
 
 function redoMeasurement() {
+  const def = REGIONS[state.regionId].movements[state.active.movementId];
   tiltInvalid = false;
   Object.assign(state.active, { phase: 'idle', neutralRef: null, gravRef: null, peakDelta: 0, result: null, seg1Value: null });
   resetAngleDisplay();
-  const mtype = state.active.movementId && state.regionId
-    ? (REGIONS[state.regionId].movements[state.active.movementId].measureType || 'standard')
-    : 'standard';
-  if (mtype === 'gravity-vertical') startVerticalMeasurement();
-  else if (mtype === 'beta-zero')   startBetaZeroMeasurement();
-  else refreshSheetUI();
+  STRATEGIES[def.measureType || 'standard'].onOpen(def);
+  refreshSheetUI();
 }
 
 function resetPeak() {
@@ -612,70 +789,40 @@ function resetAngleDisplay() {
 }
 
 function refreshSheetUI() {
-  const p      = state.active.phase;
-  const movId  = state.active.movementId;
-  const mtype  = movId && state.regionId
-    ? (REGIONS[state.regionId].movements[movId].measureType || 'standard')
-    : 'standard';
+  const p        = state.active.phase;
+  const strategy = getStrategy();
+  const show     = (id, v) => { document.getElementById(id).style.display = v ? '' : 'none'; };
 
-  const show = (id, v) => { document.getElementById(id).style.display = v ? '' : 'none'; };
+  ['btnCalibrate', 'btnStopMeasure', 'rowMeasuringActions', 'rowVertical',
+   'btnCaptureSeg1', 'rowSeg1', 'rowDone'].forEach(id => show(id, false));
+  (strategy.show[p] || []).forEach(id => show(id, true));
 
-  const isTwoSeg = mtype === 'two-segment-signed' || mtype === 'two-segment-abs' || mtype === 'two-segment-vertical' || mtype === 'two-segment-beta';
-  const isVert   = mtype === 'two-segment-vertical';
+  ['btnCalibrate', 'btnStopMeasure', 'btnStopVertical'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = tiltInvalid;
+  });
 
-  // button visibility
-  show('btnCalibrate',      mtype === 'standard' && p === 'idle');
-  document.getElementById('btnCalibrate').disabled = tiltInvalid && p === 'idle';
-  show('btnStopMeasure',       mtype === 'standard' && p === 'measuring');
-  document.getElementById('btnStopMeasure').disabled = tiltInvalid && p === 'measuring';
-  show('rowMeasuringActions',  mtype === 'standard' && p === 'measuring');
-  show('rowVertical',       (mtype === 'gravity-vertical' || mtype === 'beta-zero') && p === 'measuring');
-  document.getElementById('btnStopVertical').disabled = tiltInvalid && p === 'measuring';
-  show('btnCaptureSeg1',    isTwoSeg && p === 'idle');
-  show('rowSeg1',           isTwoSeg && p === 'seg1');
-  show('rowDone',           p === 'done');
-
-  // etiquetas y handlers dinámicos de botones two-segment
-  if (isTwoSeg) {
+  if (strategy.twoSeg) {
     const btn1 = document.getElementById('btnCaptureSeg1');
     const btn2 = document.getElementById('btnCaptureSeg2');
-    if (isVert) {
-      btn1.textContent = 'Capturar S1';
-      if (btn2) { btn2.textContent = 'Capturar T12'; }
-    } else {
-      btn1.textContent = 'Capturar muslo';
-      if (btn2) { btn2.innerHTML = '<span class="sheet-lbl-full">Capturar tibia</span><span class="sheet-lbl-short">Tibia</span>'; }
-    }
+    if (btn1) btn1.textContent = strategy.btn1;
+    if (btn2) btn2.innerHTML   = strategy.btn2;
   }
 
-  // phase step labels and states
-  const labels = isTwoSeg
-    ? (isVert ? ['S1', 'T12', 'Listo'] : ['Muslo', 'Tibia', 'Listo'])
-    : mtype === 'gravity-vertical' || mtype === 'beta-zero'
-    ? ['Medir', 'Midiendo', 'Listo']
-    : ['Neutro', 'Midiendo', 'Listo'];
-
-  const actives = isTwoSeg
+  const actives = strategy.twoSeg
     ? [p === 'idle', p === 'seg1', p === 'done']
-    : mtype === 'gravity-vertical'
-    ? [p === 'idle', p === 'measuring', p === 'done']
     : [p === 'idle', p === 'measuring', p === 'done'];
-
-  const dones = isTwoSeg
+  const dones = strategy.twoSeg
     ? [p === 'seg1' || p === 'done', p === 'done', false]
-    : mtype === 'gravity-vertical'
-    ? [p === 'measuring' || p === 'done', p === 'done', false]
     : [p === 'measuring' || p === 'done', p === 'done', false];
 
   [1, 2, 3].forEach((n, i) => {
-    const el  = document.getElementById('phaseStep' + n);
-    const dot = document.getElementById('phaseDot' + n);
+    document.getElementById('phaseStep' + n).className =
+      'phase-step-item' + (actives[i] ? ' active' : '') + (dones[i] ? ' done' : '');
+    document.getElementById('phaseDot' + n).className =
+      'phase-dot' + (strategy.pulses && p === 'measuring' && n === 2 ? ' pulsing' : '');
     const lbl = document.getElementById('stepLabel' + n);
-    if (lbl) lbl.textContent = labels[i];
-    el.className  = 'phase-step-item' + (actives[i] ? ' active' : '') + (dones[i] ? ' done' : '');
-    dot.className = 'phase-dot' + (
-      (mtype === 'standard' || mtype === 'gravity-vertical' || mtype === 'beta-zero') && p === 'measuring' && n === 2 ? ' pulsing' : ''
-    );
+    if (lbl) lbl.textContent = strategy.steps[i];
   });
 }
 
@@ -688,114 +835,51 @@ function updateLiveAngle() {
   const { movementId, phase } = state.active;
   if (!movementId || !state.regionId || phase === 'done') return;
 
-  const def   = REGIONS[state.regionId].movements[movementId];
-  const mtype = def.measureType || 'standard';
-
-  // ── gravity-vertical: preview en idle, medición en measuring ─────────
-  if (mtype === 'gravity-vertical') {
-    if (phase === 'idle') {
-      const gT = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
-      if (gT > 0.1) {
-        const yS   = grav.y >= 0 ? 1 : -1;
-        const dot  = Math.max(-1, Math.min(1, grav.y * yS / gT));
-        const base = def.baseAngle || 0;
-        document.getElementById('angleValue').textContent = (Math.round(Math.acos(dot) * 180 / Math.PI) + base) + '°';
-        document.getElementById('angleValue').className   = 'angle-value live';
-      }
-      return;
-    }
-    // En measuring/done cae al bloque estándar (usa cfAngle vía axis:'gravity')
-  }
-
-  // ── nuevos tipos: two-segment y pkb ──────────────────────────────────
-  if (mtype === 'two-segment-signed' || mtype === 'two-segment-abs' || mtype === 'two-segment-vertical' || mtype === 'two-segment-beta') {
-    const warn      = document.getElementById('tiltWarning');
-    const displayEl = document.querySelector('.angle-display');
-    const angleEl   = document.getElementById('angleValue');
-    if (tiltInvalid) {
-      warn.textContent = '⚠ fuera de plano';
-      displayEl.classList.add('tilt-warn');
-      angleEl.classList.add('tilt');
-    } else {
-      warn.textContent = '';
-      displayEl.classList.remove('tilt-warn');
-      angleEl.classList.remove('tilt');
-    }
-    if (phase === 'idle' || phase === 'seg1') {
-      let deg;
-      if (mtype === 'two-segment-vertical') {
-        deg = Math.round(verticalInclination());
-      } else if (mtype === 'two-segment-beta') {
-        deg = Math.round(Math.abs(angularDiff(sensor.beta, 90)));
-      } else {
-        deg = mtype === 'two-segment-abs'
-          ? Math.round(Math.abs(segmentInclination()))
-          : Math.round(segmentInclination());
-      }
-      angleEl.textContent = deg + '°';
-      angleEl.className   = 'angle-value live' + (tiltInvalid ? ' tilt' : '');
-    }
-    return;
-  }
-  // ── tipo estándar ─────────────────────────────────────────────────────
-  const { neutralRef } = state.active;
-  if (phase === 'idle') {
-    const warn      = document.getElementById('tiltWarning');
-    const displayEl = document.querySelector('.angle-display');
-    const btnCal    = document.getElementById('btnCalibrate');
-    if (tiltInvalid) {
-      warn.textContent = '⚠ fuera de plano';
-      displayEl.classList.add('tilt-warn');
-      if (btnCal) btnCal.disabled = true;
-    } else {
-      warn.textContent = '';
-      displayEl.classList.remove('tilt-warn');
-      if (btnCal) btnCal.disabled = false;
-    }
-    return;
-  }
-  if (neutralRef === null) return;
-
-  const { axis } = def;
+  const def      = REGIONS[state.regionId].movements[movementId];
+  const strategy = STRATEGIES[def.measureType || 'standard'];
   const warn      = document.getElementById('tiltWarning');
-  const angleEl   = document.getElementById('angleValue');
   const displayEl = document.querySelector('.angle-display');
-  const shouldWarn = tiltInvalid && phase === 'measuring';
-  if (phase === 'measuring') {
-    if (mtype === 'standard') {
-      document.getElementById('btnStopMeasure').disabled = tiltInvalid;
-    } else {
-      document.getElementById('btnStopVertical').disabled = tiltInvalid;
-    }
-  }
-  if (shouldWarn) {
+  const angleEl   = document.getElementById('angleValue');
+
+  if (tiltInvalid) {
     warn.textContent = '⚠ fuera de plano';
     displayEl.classList.add('tilt-warn');
     angleEl.classList.add('tilt');
+  } else {
+    warn.textContent = '';
+    displayEl.classList.remove('tilt-warn');
+    angleEl.classList.remove('tilt');
+  }
+
+  if (phase === 'idle')      { const b = document.getElementById('btnCalibrate');    if (b) b.disabled = tiltInvalid; }
+  if (phase === 'measuring') { const b = document.getElementById('btnStopMeasure');  if (b) b.disabled = tiltInvalid;
+                               const v = document.getElementById('btnStopVertical'); if (v) v.disabled = tiltInvalid; }
+
+  if (tiltInvalid && phase === 'measuring' && !strategy.twoSeg) return;
+
+  const result = strategy.liveAngle(def);
+  if (!result) return;
+
+  if (result.isPreview) {
+    angleEl.textContent = result.deg + '°';
+    angleEl.className   = 'angle-value live';
     return;
   }
-  warn.textContent = '';
-  displayEl.classList.remove('tilt-warn');
-  angleEl.classList.remove('tilt');
-
-  let delta;
-  if (axis === 'gravity' || axis === 'rotationRate') {
-    delta = foldAngle(Math.abs(cfAngle));
-  } else {
-    const raw = (axis === 'alpha' || axis === 'beta')
-      ? Math.abs(angularDiff(sensor[axis], neutralRef))
-      : Math.abs(sensor[axis] - neutralRef);
-    delta = foldAngle(raw);
+  if (result.isLive) {
+    angleEl.textContent = result.deg + '°';
+    angleEl.className   = 'angle-value live' + (tiltInvalid ? ' tilt' : '');
+    return;
   }
-
-  smoothedDelta = EMA_ALPHA * delta + (1 - EMA_ALPHA) * smoothedDelta;
-  const base = def.baseAngle || 0;
-  const deg  = Math.round(smoothedDelta) + base;
-  document.getElementById('angleValue').textContent = deg + '°';
-
-  if (phase === 'measuring' && smoothedDelta > state.active.peakDelta) {
-    state.active.peakDelta = smoothedDelta;
-    document.getElementById('peakLabel').textContent = 'Máx: ' + (Math.round(smoothedDelta) + base) + '°';
+  if (result.isSmoothed) {
+    if (state.active.neutralRef === null) return;
+    const { delta, base } = result;
+    smoothedDelta = EMA_ALPHA * delta + (1 - EMA_ALPHA) * smoothedDelta;
+    const deg = Math.round(smoothedDelta) + base;
+    angleEl.textContent = deg + '°';
+    if (phase === 'measuring' && smoothedDelta > state.active.peakDelta) {
+      state.active.peakDelta = smoothedDelta;
+      document.getElementById('peakLabel').textContent = 'Máx: ' + deg + '°';
+    }
   }
 }
 
@@ -831,42 +915,30 @@ function verticalInclination() {
   return Math.acos(Math.min(1, Math.abs(grav.x) / gTotal)) * 180 / Math.PI;
 }
 
+// Magnitud desde grav.x (0 deg cuando el telefono esta vertical en landscape); signo desde -grav.y (positivo = flexion, negativo = extension).
+function signedVerticalInclination() {
+  const gTotal = Math.sqrt(grav.x**2 + grav.y**2 + grav.z**2);
+  if (gTotal < 0.5) return 0;
+  return Math.acos(Math.min(1, Math.abs(grav.x) / gTotal)) * 180 / Math.PI * -Math.sign(grav.y);
+}
+
 function captureSegment1() {
-  const mtype = REGIONS[state.regionId].movements[state.active.movementId].measureType;
-  const val   = mtype === 'two-segment-vertical' ? verticalInclination()
-              : mtype === 'two-segment-beta'     ? Math.abs(angularDiff(sensor.beta, 90))
-              : segmentInclination();
+  const def      = REGIONS[state.regionId].movements[state.active.movementId];
+  const strategy = STRATEGIES[def.measureType || 'standard'];
+  const val = strategy.capture1(def);
   state.active.seg1Value = val;
   state.active.phase = 'seg1';
   document.getElementById('angleValue').textContent = '—';
   document.getElementById('angleValue').className   = 'angle-value live';
-  document.getElementById('peakLabel').textContent  =
-    (mtype === 'two-segment-vertical' ? 'S1: ' : 'Muslo: ') + Math.round(val) + '°';
+  document.getElementById('peakLabel').textContent  = strategy.seg1Label + ': ' + Math.round(val) + '°';
   refreshSheetUI();
 }
 
 function captureSegment2() {
-  const { measureType } = REGIONS[state.regionId].movements[state.active.movementId];
-  const seg1 = state.active.seg1Value;
-  let result;
-  
-  if (measureType === 'two-segment-beta') {
-    const seg2 = Math.abs(angularDiff(sensor.beta, 90));
-    result = Math.max(0, Math.round(180 - seg1 - seg2));
-    state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
-  } else if (measureType === 'two-segment-vertical') {
-    const seg2 = verticalInclination();
-    result = Math.max(0, Math.round(seg2 - seg1));
-    state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
-  } else if (measureType === 'two-segment-signed') {
-    const seg2 = segmentInclination();
-    result = Math.round(seg2 - seg1);
-    state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
-  } else {
-    const seg2 = segmentInclination();
-    result = Math.round(Math.min(180, Math.abs(seg1) + Math.abs(seg2)));
-    state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
-  }
+  const def      = REGIONS[state.regionId].movements[state.active.movementId];
+  const strategy = STRATEGIES[def.measureType || 'standard'];
+  const { result, seg1, seg2 } = strategy.capture2(def, state.active.seg1Value);
+  state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
   state.active.result = result;
   state.active.phase  = 'done';
   document.getElementById('angleValue').textContent = result + '°';
