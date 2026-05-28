@@ -424,6 +424,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.visibilityState === 'hidden') saveSession();
   });
   restoreSession();
+  readSession().then(session => {
+    if (!session) return;
+    updateSessionChip(session);
+    const el = document.getElementById('patientName');
+    if (session.patient && el && !el.value) el.value = session.patient;
+  });
 });
 
 window.addEventListener('popstate', () => {
@@ -1012,12 +1018,35 @@ function buildROMPayload() {
 }
 
 function exportTo(destination) {
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(buildROMPayload()))));
   const urls = {
-    assessment: 'https://physiodevapp.github.io/physiq-assessment/?rom=' + encoded,
-    report:     'https://physiodevapp.github.io/physiq-report/?rom='     + encoded
+    assessment: 'https://physiodevapp.github.io/physiq-assessment/',
+    report:     'https://physiodevapp.github.io/physiq-report/'
   };
+  // open synchronously (user gesture) then write IDB
   window.open(urls[destination]);
+  const patient = document.getElementById('patientName').value.trim();
+  const date    = new Date().toLocaleDateString('es-ES');
+  writeSession({ rom: buildROMPayload(), patient, date }).then(session => {
+    if (session) updateSessionChip(session);
+  });
+}
+
+// ── Session chip ──────────────────────────────────────────────────────────────
+function updateSessionChip(session) {
+  const chip  = document.getElementById('sessionChip');
+  const label = document.getElementById('sessionChipLabel');
+  if (!chip || !label) return;
+  if (!session) { chip.classList.remove('active'); return; }
+  label.textContent = session.patient
+    ? `${session.patient} · ${session.date || '—'}`
+    : `Sesión · ${session.date || '—'}`;
+  chip.classList.add('active');
+}
+
+function promptClearSession() {
+  if (!confirm('¿Borrar la sesión activa?')) return;
+  clearLocalSession();
+  clearSession().then(() => updateSessionChip(null));
 }
 
 // ── Reset región activa ───────────────────────────────────────────────────
@@ -1044,7 +1073,7 @@ function saveSession() {
   } catch (e) {}
 }
 
-function clearSession() {
+function clearLocalSession() {
   try { localStorage.removeItem('physiq_motion_session'); } catch (e) {}
 }
 
@@ -1072,7 +1101,7 @@ function restoreSession() {
     saved = JSON.parse(raw);
   } catch (e) { return; }
   if (!saved || saved.v !== 1) return;
-  if (Date.now() - saved.savedAt > 86400000) { clearSession(); return; }
+  if (Date.now() - saved.savedAt > 86400000) { clearLocalSession(); return; }
 
   const hasData = Object.values(saved.measurements || {}).some(r =>
     Object.values(r).some(v => v !== null)

@@ -216,6 +216,12 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .restore-btn-dismiss:hover{border-color:var(--text2);}
 .restore-btn-confirm{background:var(--accent);border:none;color:#0a0d12;border-radius:8px;padding:7px 14px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:background 0.2s;}
 .restore-btn-confirm:hover{background:#a855f7;}
+.session-chip{display:none;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent2);background:rgba(56,217,169,0.08);border:1px solid rgba(56,217,169,0.2);border-radius:20px;padding:4px 10px;white-space:nowrap;max-width:200px;overflow:hidden;}
+.session-chip.active{display:flex;}
+.session-chip-dot{font-size:8px;flex-shrink:0;}
+.session-chip-label{overflow:hidden;text-overflow:ellipsis;}
+.session-chip-clear{background:none;border:none;color:var(--text3);cursor:pointer;padding:0 0 0 2px;font-size:14px;line-height:1;flex-shrink:0;}
+.session-chip-clear:hover{color:#ff4757;}
 </style>
 </head>
 <body>
@@ -224,6 +230,11 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
   <div class="logo">
     <span class="logo-main">PhysiQ</span>
     <span class="logo-sub">— <span class="logo-sub-word">Motion</span><span class="logo-sub-initial">M</span></span>
+  </div>
+  <div id="sessionChip" class="session-chip">
+    <span class="session-chip-dot">●</span>
+    <span class="session-chip-label" id="sessionChipLabel"></span>
+    <button class="session-chip-clear" onclick="promptClearSession()" title="Nueva sesión">×</button>
   </div>
   <span class="sensor-badge" id="sensorBadge">Sin sensor</span>
 </header>
@@ -381,6 +392,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
   </div>
 </div>
 
+<script src="lib/session.js"></script>
 <script src="app.js"></script>
 <script>
 if ('serviceWorker' in navigator) {
