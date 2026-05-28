@@ -53,13 +53,7 @@ Identical to `physiq-assessment` and `physiq-report`:
 
 ## Sensor Architecture
 
-Uses `DeviceOrientationEvent` (browser-fused accelerometer + magnetometer — no raw sensor access needed):
-
-| Axis | Movement | Phone placement |
-|------|----------|-----------------|
-| `beta` | Flexion / Extension | Vertical, screen facing examiner, against forehead |
-| `gamma` | Lateral flexion L/R | Vertical, screen facing examiner, against temple |
-| `alpha` | Rotation L/R | **Flat on top of head, screen facing up** |
+Uses `DeviceOrientationEvent` + `DeviceMotionEvent`. Raw gravity vector (`grav.x/y/z`) comes from `accelerationIncludingGravity`; `sensor.beta` and `sensor.gamma` are **derived from the gravity vector** (not taken directly from `e.beta`/`e.gamma`). `sensor.alpha` is the raw compass heading from `DeviceOrientationEvent`.
 
 **iOS 13+** requires `DeviceOrientationEvent.requestPermission()` triggered by a user gesture (button tap). Android grants automatically.
 
@@ -77,94 +71,143 @@ function angularDiff(a, b) {
 
 ### Sensor-to-Anatomy Mapping (General Framework)
 
-**Sensor types**
-
-| Axis | Sensor | Depends on | Range |
-|------|--------|-----------|-------|
-| `beta` | Accelerometer (gravity) | Forward/back tilt | −180° to 180° |
-| `gamma` | Accelerometer (gravity) | Left/right tilt | −90° to 90° |
-| `alpha` | Magnetometer (compass) | Horizontal heading | 0° to 360° |
-
 **Axis selection rule**
-- Movement in a **sagittal or frontal** plane (vertical) → `beta` or `gamma` (gravity-based, reliable indoors)
-- Movement in the **transverse** plane (axial rotation) → `alpha` (compass-based, requires `angularDiff()`, sensitive to magnetic interference)
+- Movement in a **sagittal or frontal** plane (vertical) → `axis: 'gravity'` or `axis: 'beta'` (gravity-based, reliable indoors)
+- Movement in the **transverse** plane (axial rotation) → `axis: 'alpha'` (compass-based, requires `angularDiff()`, sensitive to magnetic interference)
 
 **Phone placement → anatomical plane**
 
 | Phone position | Screen direction | Active axis | Anatomical plane |
 |----------------|-----------------|-------------|-----------------|
-| Vertical on segment, portrait | Toward examiner | `beta` | Sagittal (flexion / extension) |
-| Vertical on segment, portrait | Toward examiner | `gamma` | Frontal (lateral flexion / abduction) |
+| Vertical on segment, portrait | Toward examiner | `gravity` / `beta` | Sagittal or Frontal |
 | Flat on horizontal segment | Facing up | `alpha` | Transverse (axial rotation) |
 
-`beta` = phone pitches like an airplane nose (segment flexes/extends). `gamma` = phone rolls sideways (abduction / lateral tilt). Which one activates depends on how the segment's movement tilts the phone's axes.
-
 **When adding a new body region:** always confirm with the user — patient position, which segment the phone is placed on, placement surface, and screen direction — then derive the axis from first principles. Do not assume from existing mappings.
+
+## Regions
+
+7 regions defined in `REGIONS` (app.js:4). Each has `label`, `abbr`, `groups` (display grouping) and `movements` (keyed by movement ID):
+
+| Region | Key | Movements |
+|--------|-----|-----------|
+| Cervical | `cervical` | flexion, extension, lat_izq, lat_der, rot_izq, rot_der |
+| Hombro | `hombro` | flexion, rot_ext, rot_int |
+| Codo | `codo` | flexion, extension, pronacion, supinacion |
+| Muñeca | `muneca` | flexion, extension, desv_rad, desv_cub |
+| Cadera | `cadera` | flex_supino, abd_supino, rot_ext_supino, rot_int_supino, rot_ext_sed, rot_int_sed |
+| Rodilla | `rodilla` | extension, flexion, pkb |
+| Tobillo | `tobillo` | dorsiflexion, plantarflexion |
+| Lumbar | `lumbar` | flexion |
+
+Each movement definition includes: `label`, `axis`, `phoneOrientation`, `ref` (reference value in degrees), `icon`, `instruction` (HTML), and optionally `measureType` (defaults to `'standard'`).
+
+## Measurement Strategies
+
+`STRATEGIES` (app.js:191) maps `measureType` to a full measurement lifecycle. Each strategy defines `steps`, `show` (which DOM elements are visible per phase), `onOpen`, `liveAngle`, and optionally `capture1`/`capture2` for two-segment types.
+
+| `measureType` | Description | Used by |
+|--------------|-------------|---------|
+| `standard` | Calibrate neutral → measure peak delta | most movements |
+| `gravity-vertical` | Auto-starts; measures angle from vertical | tobillo, rodilla PKB, codo prono/supinación |
+| `beta-zero` | Auto-starts from a fixed `neutralAngle` | hombro, cadera rotaciones en sedestación |
+| `two-segment-signed` | Capture thigh then leg; result = seg1 − seg2 (signed) | rodilla extensión |
+| `two-segment-beta` | Capture thigh then leg via beta; result = 180 − seg1 − seg2 | rodilla flexión |
+| `two-segment-vertical-signed` | Capture S1 then T12; result = T12 − S1 (signed) | lumbar flexión |
 
 ## State Schema
 
 ```js
 const state = {
-  measurements: {
-    flexion:   null,  // number (degrees) or null
-    extension: null,
-    lat_izq:   null,
-    lat_der:   null,
-    rot_izq:   null,
-    rot_der:   null
+  regionId: null,            // string key in REGIONS, or null
+  measurements: {            // nested by region → movement → value (degrees) or null
+    cervical: { flexion: null, extension: null, ... },
+    hombro:   { flexion: null, rot_ext: null, rot_int: null },
+    // ... all 8 regions
+  },
+  segmentData: {             // two-segment results: { seg1, seg2 } per movement, or null
+    rodilla: { extension: null, flexion: null, pkb: null },
+    lumbar:  { flexion: null },
+    // ... mirrored structure for all regions
   },
   active: {
-    movementId: null,     // string key in MOVEMENTS, or null
-    phase: 'idle',        // 'idle' | 'calibrated' | 'measuring' | 'done'
-    neutralRef: null,     // sensor[axis] value at neutral position
-    peakDelta: 0,         // maximum angular delta seen during measurement
-    result: null          // Math.round(peakDelta) saved when phase → 'done'
+    movementId: null,        // string key in current region's movements, or null
+    phase: 'idle',           // 'idle' | 'measuring' | 'seg1' | 'done'
+    neutralRef: null,        // sensor[axis] value at calibrated neutral
+    gravRef: null,           // normalized gravity vector at neutral (for axis:'gravity')
+    peakDelta: 0,            // maximum angular delta seen during measurement
+    result: null,            // final result in degrees
+    seg1Value: null          // first segment capture (two-segment types only)
   }
 };
 
-const sensor = { alpha: 0, beta: 0, gamma: 0 }; // live readings from deviceorientation
+const sensor = { alpha: 0, beta: 0, gamma: 0 }; // beta/gamma derived from grav vector
+const grav   = { x: 0, y: 0, z: 0 };            // raw accelerationIncludingGravity
 ```
 
 ## Measurement State Machine
 
+**Standard / gravity-vertical / beta-zero strategies:**
 ```
-idle ──[calibrateNeutral()]──► calibrated ──[startMeasurement()]──► measuring
-  ▲                                │                                     │
-  └──────────[redoMeasurement()]───┘           [stopMeasurement()]       │
-                                                        ▼                │
-                                                       done ─────────────┘
-                                                        │
-                                               [saveResult()] → card updated, overlay closes
+idle ──[calibrateNeutral() or auto-start]──► measuring ──[stopMeasurement()]──► done
+  ▲                                                                               │
+  └─────────────────────────[redoMeasurement()]──────────────────────────────────┘
+                                                                done ──[saveResult()]──► card updated, overlay closes
 ```
 
-## Reference Values (cervical ROM norms — current defaults)
+**Two-segment strategies (two-segment-*):**
+```
+idle ──[captureSegment1()]──► seg1 ──[captureSegment2()]──► done
+  ▲                                                           │
+  └──────────────[redoMeasurement()]─────────────────────────┘
+                                          done ──[saveResult()]──► card updated, overlay closes
+```
 
-| Movement | Reference |
-|----------|-----------|
-| Flexion | 50° |
-| Extension | 60° |
-| Lateral flexion L/R | 45° |
-| Rotation L/R | 80° |
+## Reference Values
+
+Reference values (`ref`) are defined per movement inside `REGIONS` (app.js:4), not as a separate table. Examples:
+
+| Region | Movement | Reference |
+|--------|----------|-----------|
+| Cervical | Flexión / Extensión | 50° / 60° |
+| Cervical | Lat. Izq/Der | 45° |
+| Cervical | Rotación Izq/Der | 80° |
+| Hombro | Flexión | 170° |
+| Cadera | Flexión | 120° |
+| Rodilla | Flexión | 135° |
+| Tobillo | Dorsiflexión | 20° |
 
 Deficit classification (shown in summary table and card badges):
 - **Normal** (green): ≥ 90% of reference
 - **Borderline** (orange): 75–89%
 - **Deficit** (red): < 75%
 
+Movements with `skipStatus: true` (rodilla extensión) show no badge — the value can be negative (hiperextensión).
+
+## Session Persistence
+
+`saveSession()` / `restoreSession()` use `localStorage` key `'physiq_motion_session'` (v1 schema). Sessions expire after 24 hours. On load, a restore banner appears if recent data exists.
+
+```js
+{ v: 1, savedAt: timestamp, patient: string, measurements: {...}, segmentData: {...} }
+```
+
 ## Export — Option A (implemented)
 
-`exportToPhysiQReport()` encodes a payload as Base64 and opens PhysiQ-Report with `?rom=<base64>`:
+`exportToPhysiQReport()` (app.js:972) exports only the **active region**. Encodes payload as Base64 and opens PhysiQ-Report with `?rom=<base64>`:
 
 ```js
 {
   src: 'physiq-motion',
   patient: string,
   fecha: 'DD/MM/YYYY',
+  region: string,           // e.g. 'cervical', 'rodilla'
   rom: {
-    [movementId]: { label, value, ref, deficit }
+    [movementId]: { label, value, ref, deficit }  // only non-null measurements
   }
 }
 ```
+
+Payload is ~500–700 bytes JSON → ~800–950 bytes Base64. Well within browser URL limits.
 
 ## Integration Roadmap — Option C (not yet implemented)
 

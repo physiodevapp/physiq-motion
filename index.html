@@ -130,6 +130,8 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .export-row{padding:14px 16px;display:flex;gap:8px;border-top:1px solid var(--border);}
 .btn-export{flex:1;background:var(--accent2);color:#0a0d12;border:none;border-radius:10px;padding:13px 16px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.2s;}
 .btn-export:hover{background:#a855f7;}
+.btn-export-hub{background:var(--accent);}
+.btn-export-hub:hover{background:#7ab8fb;}
 .btn-reset{background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:10px;padding:13px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
 .btn-reset:hover{border-color:var(--text2);color:var(--text2);}
 
@@ -279,7 +281,8 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
       </table>
       <div class="export-row">
         <button class="btn-reset" onclick="resetAll()">↺ <span class="btn-label-full">Nueva medición</span><span class="btn-label-short">Nueva</span></button>
-        <button class="btn-export" onclick="exportToPhysiQReport()">📤 <span class="btn-label-full">Exportar a PhysiQ Report</span><span class="btn-label-short">Exportar</span></button>
+        <button class="btn-export btn-export-hub" onclick="exportTo('assessment')">→ <span class="btn-label-full">PhysiQ Assessment</span><span class="btn-label-short">Assessment</span></button>
+        <button class="btn-export" onclick="exportTo('report')">📤 <span class="btn-label-full">PhysiQ Report</span><span class="btn-label-short">Report</span></button>
       </div>
     </div>
   </section>

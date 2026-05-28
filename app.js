@@ -968,15 +968,15 @@ function captureSegment2() {
   refreshSheetUI();
 }
 
-// ── Exportar a PhysiQ Report ──────────────────────────────────────────────
-function exportToPhysiQReport() {
+// ── Export ────────────────────────────────────────────────────────────────
+function buildROMPayload() {
   const region = REGIONS[state.regionId];
   const meas   = state.measurements[state.regionId];
-  const payload = {
-    src: 'physiq-motion',
+  return {
+    src:     'physiq-motion',
     patient: document.getElementById('patientName').value.trim(),
-    fecha: new Date().toLocaleDateString('es-ES'),
-    region: state.regionId,
+    fecha:   new Date().toLocaleDateString('es-ES'),
+    region:  state.regionId,
     rom: Object.fromEntries(
       Object.entries(meas)
         .filter(([, v]) => v !== null)
@@ -988,8 +988,15 @@ function exportToPhysiQReport() {
         }])
     )
   };
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-  window.open('https://physiodevapp.github.io/physiq-report/?rom=' + encoded);
+}
+
+function exportTo(destination) {
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(buildROMPayload()))));
+  const urls = {
+    assessment: 'https://physiodevapp.github.io/physiq-assessment/?rom=' + encoded,
+    report:     'https://physiodevapp.github.io/physiq-report/?rom='     + encoded
+  };
+  window.open(urls[destination]);
 }
 
 // ── Reset región activa ───────────────────────────────────────────────────
