@@ -419,6 +419,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('summaryDate').textContent = new Date().toLocaleDateString('es-ES');
   renderRegionGrid();
   initSensor();
+  document.getElementById('patientName').addEventListener('input', saveSession);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') saveSession();
+  });
+  restoreSession();
 });
 
 window.addEventListener('popstate', () => {
@@ -774,6 +779,7 @@ function saveResult() {
   state.measurements[state.regionId][state.active.movementId] = state.active.result;
   closeMeasurement();
   renderMovementGrid();
+  saveSession();
 }
 
 function redoMeasurement() {
@@ -994,4 +1000,72 @@ function resetAll() {
   Object.keys(segs).forEach(k => { segs[k] = null; });
   document.getElementById('patientName').value = '';
   renderMovementGrid();
+  saveSession();
+}
+
+// ── Session persistence ───────────────────────────────────────────────────
+function saveSession() {
+  try {
+    localStorage.setItem('physiq_motion_session', JSON.stringify({
+      v: 1,
+      savedAt: Date.now(),
+      patient: document.getElementById('patientName')?.value || '',
+      measurements: state.measurements,
+      segmentData: state.segmentData,
+    }));
+  } catch (e) {}
+}
+
+function clearSession() {
+  try { localStorage.removeItem('physiq_motion_session'); } catch (e) {}
+}
+
+function showRestoreBanner(msg, onConfirm) {
+  const existing = document.getElementById('restoreBanner');
+  if (existing) existing.remove();
+  const banner = document.createElement('div');
+  banner.id = 'restoreBanner';
+  banner.innerHTML = `
+    <span class="restore-msg">${msg}</span>
+    <div class="restore-actions">
+      <button class="restore-btn-dismiss" id="restoreDismiss">Descartar</button>
+      <button class="restore-btn-confirm" id="restoreConfirm">Restaurar</button>
+    </div>`;
+  document.body.appendChild(banner);
+  document.getElementById('restoreDismiss').onclick = () => banner.remove();
+  document.getElementById('restoreConfirm').onclick = () => { banner.remove(); onConfirm(); };
+}
+
+function restoreSession() {
+  let saved;
+  try {
+    const raw = localStorage.getItem('physiq_motion_session');
+    if (!raw) return;
+    saved = JSON.parse(raw);
+  } catch (e) { return; }
+  if (!saved || saved.v !== 1) return;
+  if (Date.now() - saved.savedAt > 86400000) { clearSession(); return; }
+
+  const hasData = Object.values(saved.measurements || {}).some(r =>
+    Object.values(r).some(v => v !== null)
+  );
+  if (!hasData && !saved.patient) return;
+
+  const d = new Date(saved.savedAt);
+  const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const dateStr = d.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+  const patientInfo = saved.patient ? ` · ${saved.patient}` : '';
+
+  showRestoreBanner(
+    `↩ Sesión guardada el ${dateStr} a las ${timeStr}${patientInfo}`,
+    () => {
+      Object.assign(state.measurements, saved.measurements || {});
+      Object.assign(state.segmentData, saved.segmentData || {});
+      if (saved.patient) {
+        const el = document.getElementById('patientName');
+        if (el) el.value = saved.patient;
+      }
+      renderRegionGrid();
+    }
+  );
 }
