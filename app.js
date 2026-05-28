@@ -589,6 +589,23 @@ function renderRegionGrid() {
       <div class="region-count">${countText}</div>`;
     grid.appendChild(card);
   });
+  renderGlobalExport();
+}
+
+function renderGlobalExport() {
+  const card  = document.getElementById('globalExportCard');
+  const chips = document.getElementById('globalExportChips');
+  if (!card) return;
+  const measured = Object.entries(REGIONS).filter(([id]) =>
+    Object.values(state.measurements[id] || {}).some(v => v !== null)
+  );
+  if (!measured.length) { card.style.display = 'none'; return; }
+  chips.innerHTML = measured.map(([id, def]) => {
+    const done  = Object.values(state.measurements[id]).filter(v => v !== null).length;
+    const total = Object.keys(def.movements).length;
+    return `<span class="region-chip">${def.label} <span class="chip-count">${done}/${total}</span></span>`;
+  }).join('');
+  card.style.display = 'block';
 }
 
 function selectRegion(id) {
@@ -970,22 +987,26 @@ function captureSegment2() {
 
 // ── Export ────────────────────────────────────────────────────────────────
 function buildROMPayload() {
-  const region = REGIONS[state.regionId];
-  const meas   = state.measurements[state.regionId];
+  const measured = Object.entries(REGIONS)
+    .filter(([id]) => Object.values(state.measurements[id] || {}).some(v => v !== null));
   return {
     src:     'physiq-motion',
     patient: document.getElementById('patientName').value.trim(),
     fecha:   new Date().toLocaleDateString('es-ES'),
-    region:  state.regionId,
-    rom: Object.fromEntries(
-      Object.entries(meas)
-        .filter(([, v]) => v !== null)
-        .map(([id, val]) => [id, {
-          label:   region.movements[id].label,
-          value:   val,
-          ref:     region.movements[id].ref,
-          deficit: val < region.movements[id].ref * 0.9
-        }])
+    regions: Object.fromEntries(
+      measured.map(([id, def]) => [id, {
+        label: def.label,
+        rom: Object.fromEntries(
+          Object.entries(state.measurements[id])
+            .filter(([, v]) => v !== null)
+            .map(([movId, val]) => [movId, {
+              label:   def.movements[movId].label,
+              value:   val,
+              ref:     def.movements[movId].ref,
+              deficit: val < def.movements[movId].ref * 0.9
+            }])
+        )
+      }])
     )
   };
 }

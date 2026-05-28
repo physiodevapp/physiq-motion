@@ -132,6 +132,9 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .btn-export:hover{background:#a855f7;}
 .btn-export-hub{background:var(--accent);}
 .btn-export-hub:hover{background:#7ab8fb;}
+.region-chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px;}
+.region-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);}
+.region-chip .chip-count{color:var(--accent2);}
 .btn-reset{background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:10px;padding:13px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
 .btn-reset:hover{border-color:var(--text2);color:var(--text2);}
 
@@ -254,6 +257,17 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
       <span class="section-label">Región articular</span>
     </div>
     <div class="region-grid" id="regionGrid"></div>
+
+    <div class="summary-card" id="globalExportCard" style="display:none">
+      <div class="summary-header">
+        <span class="summary-title">Resumen global</span>
+      </div>
+      <div class="region-chips" id="globalExportChips"></div>
+      <div class="export-row">
+        <button class="btn-export btn-export-hub" onclick="exportTo('assessment')">→ <span class="btn-label-full">PhysiQ Assessment</span><span class="btn-label-short">Assessment</span></button>
+        <button class="btn-export" onclick="exportTo('report')">📤 <span class="btn-label-full">PhysiQ Report</span><span class="btn-label-short">Report</span></button>
+      </div>
+    </div>
   </section>
 
   <!-- Pantalla 2: Medición de la región seleccionada -->
