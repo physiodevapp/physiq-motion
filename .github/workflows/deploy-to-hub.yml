@@ -20,6 +20,7 @@ jobs:
 
       - name: Copy files to hub
         run: |
+          rm -rf physiq-hub/motion
           mkdir -p physiq-hub/motion/lib physiq-hub/motion/icons
           cp index.html app.js sw.js manifest.json favicon.svg .nojekyll physiq-hub/motion/
           cp icons/icon-192.png icons/icon-512.png physiq-hub/motion/icons/
@@ -30,6 +31,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add motion/
+          git add -A motion/
           git diff --cached --quiet || git commit -m "chore: update motion from physiq-motion@${{ github.sha }}"
           git push
