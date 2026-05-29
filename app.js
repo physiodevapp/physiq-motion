@@ -425,6 +425,16 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSessionChip(session);
     const el = document.getElementById('patientName');
     if (session.patient && el && !el.value) el.value = session.patient;
+    if (session.rom?.regions) {
+      Object.entries(session.rom.regions).forEach(([regionId, regionData]) => {
+        if (!state.measurements[regionId]) return;
+        Object.entries(regionData.rom || {}).forEach(([movId, movData]) => {
+          if (state.measurements[regionId][movId] !== undefined)
+            state.measurements[regionId][movId] = movData.value;
+        });
+      });
+      renderRegionGrid();
+    }
   });
 });
 
@@ -1072,8 +1082,10 @@ function scheduleIDBSync() {
   _idbSyncTimer = setTimeout(() => {
     const patient = document.getElementById('patientName')?.value.trim() || '';
     const date    = new Date().toLocaleDateString('es-ES');
-    if (!patient) return;
-    writeSession({ patient, date }).then(session => { if (session) updateSessionChip(session); });
+    const rom     = buildROMPayload();
+    const hasMeasurements = Object.keys(rom.regions).length > 0;
+    if (!patient && !hasMeasurements) return;
+    writeSession({ patient, date, rom }).then(session => { if (session) updateSessionChip(session); });
   }, 800);
 }
 
