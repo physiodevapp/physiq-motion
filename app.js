@@ -1048,7 +1048,15 @@ function promptClearSession() {
     'Nueva sesión',
     '¿Borrar la sesión activa y empezar de nuevo?',
     'Borrar sesión',
-    () => { clearLocalSession(); clearSession().then(() => updateSessionChip(null)); }
+    () => {
+      Object.values(state.measurements).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
+      Object.values(state.segmentData).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
+      const el = document.getElementById('patientName');
+      if (el) el.value = '';
+      renderRegionGrid();
+      clearLocalSession();
+      clearSession().then(() => updateSessionChip(null));
+    }
   );
 }
 
