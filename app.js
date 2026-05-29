@@ -1044,9 +1044,12 @@ function updateSessionChip(session) {
 }
 
 function promptClearSession() {
-  if (!confirm('¿Borrar la sesión activa?')) return;
-  clearLocalSession();
-  clearSession().then(() => updateSessionChip(null));
+  showConfirmBanner(
+    'Nueva sesión',
+    '¿Borrar la sesión activa y empezar de nuevo?',
+    'Borrar sesión',
+    () => { clearLocalSession(); clearSession().then(() => updateSessionChip(null)); }
+  );
 }
 
 // ── Reset región activa ───────────────────────────────────────────────────
@@ -1077,20 +1080,24 @@ function clearLocalSession() {
   try { localStorage.removeItem('physiq_motion_session'); } catch (e) {}
 }
 
-function showRestoreBanner(msg, onConfirm) {
-  const existing = document.getElementById('restoreBanner');
+function showConfirmBanner(title, text, actionLabel, onConfirm) {
+  const existing = document.getElementById('confirmBanner');
   if (existing) existing.remove();
-  const banner = document.createElement('div');
-  banner.id = 'restoreBanner';
-  banner.innerHTML = `
-    <span class="restore-msg">${msg}</span>
-    <div class="restore-actions">
-      <button class="restore-btn-dismiss" id="restoreDismiss">Descartar</button>
-      <button class="restore-btn-confirm" id="restoreConfirm">Restaurar</button>
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-banner';
+  overlay.id = 'confirmBanner';
+  overlay.innerHTML = `
+    <div class="confirm-box">
+      <div class="confirm-box-title">${title}</div>
+      <div class="confirm-box-text">${text}</div>
+      <div class="confirm-box-btns">
+        <button class="confirm-btn-cancel" id="confirmCancel">Cancelar</button>
+        <button class="confirm-btn-ok" id="confirmAction">${actionLabel}</button>
+      </div>
     </div>`;
-  document.body.appendChild(banner);
-  document.getElementById('restoreDismiss').onclick = () => banner.remove();
-  document.getElementById('restoreConfirm').onclick = () => { banner.remove(); onConfirm(); };
+  document.body.appendChild(overlay);
+  document.getElementById('confirmCancel').onclick = () => overlay.remove();
+  document.getElementById('confirmAction').onclick = () => { overlay.remove(); onConfirm(); };
 }
 
 function restoreSession() {
@@ -1113,8 +1120,10 @@ function restoreSession() {
   const dateStr = d.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
   const patientInfo = saved.patient ? ` · ${saved.patient}` : '';
 
-  showRestoreBanner(
-    `↩ Sesión guardada el ${dateStr} a las ${timeStr}${patientInfo}`,
+  showConfirmBanner(
+    '↩ Sesión anterior encontrada',
+    `Guardado el ${dateStr} a las ${timeStr}${patientInfo}. ¿Restaurar?`,
+    'Restaurar',
     () => {
       Object.assign(state.measurements, saved.measurements || {});
       Object.assign(state.segmentData, saved.segmentData || {});

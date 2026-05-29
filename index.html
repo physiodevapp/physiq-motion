@@ -203,19 +203,20 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 /* ── Animations ──────────────────────────────────────────────────────────── */
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
-@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
 .pulsing{animation:pulse 1s ease-in-out infinite;}
 .btn-label-short{display:none;}
 @media(max-width:480px){.btn-label-full{display:none;}.btn-label-short{display:inline;}}
 
-/* ── Restore banner ──────────────────────────────────────────────────────── */
-#restoreBanner{position:fixed;bottom:0;left:0;right:0;z-index:300;background:var(--surface2);border-top:1px solid rgba(192,132,252,0.3);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;animation:slideUp 0.3s ease;}
-.restore-msg{font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);flex:1;line-height:1.4;}
-.restore-actions{display:flex;gap:8px;flex-shrink:0;}
-.restore-btn-dismiss{background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:8px;padding:7px 12px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:border-color 0.2s;}
-.restore-btn-dismiss:hover{border-color:var(--text2);}
-.restore-btn-confirm{background:var(--accent);border:none;color:#0a0d12;border-radius:8px;padding:7px 14px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:background 0.2s;}
-.restore-btn-confirm:hover{background:#a855f7;}
+/* ── Confirm banner ──────────────────────────────────────────────────────── */
+.confirm-banner{position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:fadeUp 0.2s ease;}
+.confirm-box{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:1.8rem;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+.confirm-box-title{font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--text);margin-bottom:0.5rem;}
+.confirm-box-text{font-size:0.83rem;color:var(--text2);line-height:1.5;margin-bottom:1.4rem;}
+.confirm-box-btns{display:flex;gap:0.75rem;justify-content:flex-end;}
+.confirm-btn-cancel{background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:8px;padding:9px 16px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
+.confirm-btn-cancel:hover{border-color:var(--text2);color:var(--text2);}
+.confirm-btn-ok{background:var(--accent);border:none;color:#0a0d12;border-radius:8px;padding:9px 18px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.2s;}
+.confirm-btn-ok:hover{background:#a855f7;}
 .session-chip{display:none;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent2);background:rgba(56,217,169,0.08);border:1px solid rgba(56,217,169,0.2);border-radius:20px;padding:4px 10px;white-space:nowrap;max-width:200px;overflow:hidden;flex-shrink:1;min-width:0;}
 .session-chip.active{display:flex;}
 .session-chip-dot{font-size:8px;flex-shrink:0;}
