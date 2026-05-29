@@ -38,6 +38,7 @@ git commit -m "short imperative title" -m "description when needed"
 |------|------|
 | `index.html` | DOM structure + all embedded CSS |
 | `app.js` | Sensor logic, state, measurement flow, UI updates, export |
+| `lib/session.js` | Shared IDB session helpers (`openSessionDB`, `readSession`, `writeSession`, `clearSession`) |
 | `favicon.svg` | Protractor/angle icon |
 
 ## Design System
@@ -185,87 +186,55 @@ Movements with `skipStatus: true` (rodilla extensión) show no badge — the val
 
 ## Session Persistence
 
-`saveSession()` / `restoreSession()` use `localStorage` key `'physiq_motion_session'` (v1 schema). Sessions expire after 24 hours. On load, a restore banner appears if recent data exists.
+IDB (`lib/session.js`) is the only persistence layer — no localStorage.
 
+**IDB schema** — DB `'physiq'` v2, store `'session'`, key `'active'`:
 ```js
-{ v: 1, savedAt: timestamp, patient: string, measurements: {...}, segmentData: {...} }
+{
+  sessionId:  timestamp,
+  patient:    string,
+  date:       string,
+  createdAt:  timestamp,
+  updatedAt:  timestamp,
+  rom:        payload | null,       // ROM payload (all measured regions)
+  assessment: payload | null,       // written by physiq-assessment on export
+}
 ```
 
-## Export — Option A (implemented)
+**Session helpers** (`lib/session.js` — same contract in every physiq repo):
+- `openSessionDB()` — opens DB v2, creates `'session'` store on upgrade
+- `readSession()` — reads `'active'`, returns null if expired (TTL 24h)
+- `writeSession(patch)` — merge-writes into `'active'`, creates if absent
+- `clearSession()` — deletes `'active'`
 
-`exportToPhysiQReport()` (app.js:972) exports only the **active region**. Encodes payload as Base64 and opens PhysiQ-Report with `?rom=<base64>`:
+**Write triggers:**
+- Patient name `input` → `scheduleIDBSync()` (debounced 800ms) → writes `{ patient, date, rom: buildROMPayload() }`
+- `saveResult()` → `scheduleIDBSync()` — same patch, captures latest measurements
+- `exportTo()` — also writes immediately before opening the destination app
 
+**On startup:** `readSession()` silently fills the patient field and restores measurements from `session.rom.regions` into `state.measurements`, then re-renders the region grid. No prompt needed.
+
+**Session chip** in the header (`#sessionChip`) shows `● patient · date [×]` when active. `[×]` triggers `promptClearSession()` which shows a `showConfirmBanner` modal, then clears IDB and resets all state and DOM.
+
+## Export
+
+`buildROMPayload()` — collects all regions with at least one measurement:
 ```js
 {
   src: 'physiq-motion',
   patient: string,
   fecha: 'DD/MM/YYYY',
-  region: string,           // e.g. 'cervical', 'rodilla'
-  rom: {
-    [movementId]: { label, value, ref, deficit }  // only non-null measurements
+  regions: {
+    [regionId]: { label, rom: { [movId]: { label, value, ref, deficit } } }
   }
 }
 ```
 
-Payload is ~500–700 bytes JSON → ~800–950 bytes Base64. Well within browser URL limits.
+`exportTo(destination)` — opens `physiq-assessment` or `physiq-report` and writes `{ patient, date, rom }` to IDB. The destination reads from IDB on startup. URL params (`?rom=`) are kept for backward compatibility but IDB is the primary handoff.
 
-## Current Integration (URL params — transitional)
+## Dialogs
 
-Implemented on branch `feat/sensor-architecture`. physiq-motion exports all measured regions to physiq-assessment or physiq-report via `?rom=<base64>`:
-
-- **`buildROMPayload()`** (app.js:989) — collects all regions with data into `{ src, patient, fecha, regions: { [id]: { label, rom } } }`
-- **`exportTo(destination)`** (app.js:1015) — encodes payload and opens assessment or report
-- **Global export card** (`#globalExportCard`) — shown on region grid when any region has data; chips show per-region progress
-
-physiq-report reads `?rom=` via `loadROMDirect()` / `applyROMContext()` and injects into Claude prompt via `buildROMContext()` (lib/payload.js).
-physiq-assessment reads `?rom=` via `loadROMFromURL()` and passes through in `buildPhysiQPayload()`.
-
-## Pending — IDB Session Redesign
-
-**Goal:** replace URL params with a shared IDB session so any number of satellite apps (physiq-motion, physiq-balance, physiq-strength, …) can feed data into physiq-report without coupling.
-
-**IDB schema** — DB `'physiq'` version 2, new store `'session'`, key `'active'`:
-```js
-{
-  sessionId:  timestamp,   // creation time
-  patient:    string,
-  date:       string,
-  createdAt:  timestamp,
-  updatedAt:  timestamp,
-  rom:        payload | null,        // written by physiq-motion
-  assessment: payload | null,        // written by physiq-assessment
-  // audio stays in existing 'audio' store
-}
-```
-
-**Session helpers** (same contract in every repo, file `lib/session.js`):
-- `openSessionDB()` — opens DB at version 2, creates 'session' store on upgrade
-- `readSession()` — reads 'active', returns null if expired (TTL 24h)
-- `writeSession(patch)` — merge-writes into 'active', creates if absent
-- `clearSession()` — deletes 'active'
-
-**Per-app changes:**
-
-| App | On startup | On export |
-|-----|-----------|-----------|
-| physiq-motion | `readSession()` → fill patient + restore measurements | `writeSession({ rom })` → open destination (no `?rom=`) |
-| physiq-assessment | `readSession()` → fill patient + rom if present | `writeSession({ assessment })` → open physiq-report |
-| physiq-report | `readSession()` → load all available data | reads IDB, no URL params needed |
-| physiq-balance (future) | `readSession()` → fill patient | `writeSession({ balance })` → open physiq-report |
-
-**Visual feedback** — session chip in each app's header when a session is active:
-`● Juan García · 28/05/2026  [×]`  — `[×]` triggers "Nueva sesión" confirm → `clearSession()`
-
-**What disappears when redesign is complete:**
-- `?rom=` URL params in physiq-motion
-- `loadROMDirect()` / `loadROMFromURL()` in physiq-report and physiq-assessment
-- `buildROMPayload()` encoding to Base64 (replaced by `writeSession`)
-
-**Implementation order:**
-1. Create `lib/session.js` in each repo (same helpers)
-2. physiq-report: read session on startup, session summary UI, "Nueva sesión" button
-3. physiq-motion: write session on export, read on startup
-4. physiq-assessment: write session on export, read on startup
+All confirmations use `showConfirmBanner(title, text, actionLabel, onConfirm)` — never use the native `confirm()` or `alert()`.
 
 ## Sibling repos
 

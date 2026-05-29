@@ -51,17 +51,22 @@ npx serve .
 
 Then open the URL shown in the terminal on your phone (same Wi-Fi network required).
 
-## Export format
+## Session & export
 
-Tapping **Export to PhysiQ Report** encodes the session as Base64 and opens PhysiQ Report with a `?rom=` query parameter:
+Measurements and the patient name are saved to a shared IndexedDB session (`physiq` DB) as you work — no manual save required. A session chip in the header shows the active patient. The session is shared across the PhysiQ ecosystem so any app can pick it up on startup.
+
+Tapping **Export** opens PhysiQ Assessment or PhysiQ Report and writes the ROM payload to the shared session:
 
 ```json
 {
   "src": "physiq-motion",
   "patient": "...",
   "fecha": "DD/MM/YYYY",
-  "rom": {
-    "<movementId>": { "label": "...", "value": 45, "ref": 50, "deficit": false }
+  "regions": {
+    "<regionId>": {
+      "label": "...",
+      "rom": { "<movementId>": { "label": "...", "value": 45, "ref": 50, "deficit": false } }
+    }
   }
 }
 ```
