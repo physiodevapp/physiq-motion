@@ -419,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('summaryDate').textContent = new Date().toLocaleDateString('es-ES');
   renderRegionGrid();
   initSensor();
-  document.getElementById('patientName').addEventListener('input', saveSession);
+  document.getElementById('patientName').addEventListener('input', () => { saveSession(); scheduleIDBSync(); });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') saveSession();
   });
@@ -803,6 +803,7 @@ function saveResult() {
   closeMeasurement();
   renderMovementGrid();
   saveSession();
+  scheduleIDBSync();
 }
 
 function redoMeasurement() {
@@ -1086,6 +1087,18 @@ function saveSession() {
 
 function clearLocalSession() {
   try { localStorage.removeItem('physiq_motion_session'); } catch (e) {}
+}
+
+// ── IDB sync ─────────────────────────────────────────────────────────────────
+let _idbSyncTimer = null;
+function scheduleIDBSync() {
+  clearTimeout(_idbSyncTimer);
+  _idbSyncTimer = setTimeout(() => {
+    const patient = document.getElementById('patientName')?.value.trim() || '';
+    const date    = new Date().toLocaleDateString('es-ES');
+    if (!patient) return;
+    writeSession({ patient, date }).then(session => { if (session) updateSessionChip(session); });
+  }, 800);
 }
 
 function showConfirmBanner(title, text, actionLabel, onConfirm) {
