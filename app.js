@@ -1038,29 +1038,22 @@ function exportTo(destination) {
 }
 
 // ── Session chip ──────────────────────────────────────────────────────────────
+let _sessionLabel = '';
+
 function updateSessionChip(session) {
-  const btn   = document.getElementById('sessionBtn');
-  const label = document.getElementById('sessionSheetLabel');
+  const btn = document.getElementById('sessionBtn');
   if (!btn) return;
-  if (!session) { btn.classList.remove('active'); return; }
-  if (label) label.textContent = session.patient
+  if (!session) { _sessionLabel = ''; btn.classList.remove('active'); return; }
+  _sessionLabel = session.patient
     ? `${session.patient} · ${session.date || '—'}`
     : `Sesión · ${session.date || '—'}`;
   btn.classList.add('active');
 }
 
-function openSessionSheet() {
-  document.getElementById('sessionSheet')?.classList.add('open');
-}
-
-function closeSessionSheet() {
-  document.getElementById('sessionSheet')?.classList.remove('open');
-}
-
 function promptClearSession() {
   showConfirmBanner(
     'Nueva sesión',
-    '¿Borrar la sesión activa y empezar de nuevo?',
+    `● ${_sessionLabel}<br>¿Borrar y empezar de nuevo?`,
     'Borrar sesión',
     () => {
       Object.values(state.measurements).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
