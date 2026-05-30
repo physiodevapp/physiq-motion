@@ -217,13 +217,18 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .confirm-btn-cancel:hover{border-color:var(--text2);color:var(--text2);}
 .confirm-btn-ok{background:var(--accent);border:none;color:#0a0d12;border-radius:8px;padding:9px 18px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.2s;}
 .confirm-btn-ok:hover{background:#a855f7;}
-.session-chip{display:none;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent2);background:rgba(56,217,169,0.08);border:1px solid rgba(56,217,169,0.2);border-radius:20px;padding:4px 10px;white-space:nowrap;max-width:200px;overflow:hidden;flex-shrink:1;min-width:0;}
-.session-chip.active{display:flex;}
-.session-chip-dot{font-size:8px;flex-shrink:0;}
-.session-chip-label{overflow:hidden;text-overflow:ellipsis;min-width:0;flex-shrink:1;}
-.session-chip-clear{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 2px 4px 4px;font-size:14px;line-height:1;flex-shrink:0;}
-.session-chip-clear:hover{color:#ff4757;}
-@media(max-width:360px){.session-chip-label{display:none;}.session-chip{padding:4px 8px;gap:4px;}}
+.session-btn{display:none;background:none;border:none;cursor:pointer;font-size:11px;color:var(--accent2);padding:6px;line-height:1;flex-shrink:0;}
+.session-btn.active{display:block;}
+.session-sheet{display:none;position:fixed;inset:0;z-index:500;flex-direction:column;justify-content:flex-end;}
+.session-sheet.open{display:flex;}
+.session-sheet-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.5);}
+.session-sheet-card{position:relative;background:var(--surface);border-radius:16px 16px 0 0;padding:24px 20px 32px;display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--border);}
+.session-sheet-info{display:flex;align-items:center;gap:10px;}
+.session-sheet-dot{font-size:10px;color:var(--accent2);}
+.session-sheet-label{font-family:'DM Mono',monospace;font-size:14px;color:var(--text);}
+.session-sheet-clear{background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 16px;font-family:'Outfit',sans-serif;font-size:14px;cursor:pointer;text-align:left;transition:border-color 0.2s,color 0.2s;}
+.session-sheet-clear:hover{border-color:#ff4757;color:#ff4757;}
+.session-sheet-close{background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;padding:4px 0;text-align:center;}
 </style>
 </head>
 <body>
@@ -233,11 +238,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
     <span class="logo-main">PhysiQ</span>
     <span class="logo-sub">— <span class="logo-sub-word">Motion</span><span class="logo-sub-initial">M</span></span>
   </div>
-  <div id="sessionChip" class="session-chip">
-    <span class="session-chip-dot">●</span>
-    <span class="session-chip-label" id="sessionChipLabel"></span>
-    <button class="session-chip-clear" onclick="promptClearSession()" title="Nueva sesión">×</button>
-  </div>
+  <button id="sessionBtn" class="session-btn" onclick="openSessionSheet()" aria-label="Sesión activa" title="Sesión activa">●</button>
   <span class="sensor-badge" id="sensorBadge">Sin sensor</span>
 </header>
 
@@ -391,6 +392,18 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
         </button>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="sessionSheet" class="session-sheet">
+  <div class="session-sheet-backdrop" onclick="closeSessionSheet()"></div>
+  <div class="session-sheet-card">
+    <div class="session-sheet-info">
+      <span class="session-sheet-dot">●</span>
+      <span id="sessionSheetLabel" class="session-sheet-label"></span>
+    </div>
+    <button class="session-sheet-clear" onclick="closeSessionSheet(); promptClearSession()">↺ Nueva sesión</button>
+    <button class="session-sheet-close" onclick="closeSessionSheet()">Cerrar</button>
   </div>
 </div>
 
