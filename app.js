@@ -1023,18 +1023,28 @@ function buildROMPayload() {
   };
 }
 
-function exportTo(destination) {
-  const urls = {
-    assessment: 'https://physiodevapp.github.io/physiq-assessment/',
-    report:     'https://physiodevapp.github.io/physiq-report/'
-  };
-  // open synchronously (user gesture) then write IDB
-  window.open(urls[destination]);
-  const patient = document.getElementById('patientName').value.trim();
-  const date    = new Date().toLocaleDateString('es-ES');
-  writeSession({ rom: buildROMPayload(), patient, date }).then(session => {
-    if (session) updateSessionChip(session);
-  });
+function copyContextToClipboard() {
+  const rom = buildROMPayload();
+  const patient = rom.patient ? `\nPaciente: ${rom.patient}` : '';
+  const regions = Object.values(rom.regions).map(r => {
+    const movements = Object.values(r.rom).map(m =>
+      `  ${m.label}: ${m.value}°  (ref ${m.ref}°)${m.deficit ? ' ⚠' : ''}`
+    ).join('\n');
+    return `${r.label}:\n${movements}`;
+  }).join('\n\n');
+  const text = `MEDICIÓN PhysiQ-Motion${patient}\nFecha: ${rom.fecha}\n\n${regions}`;
+  navigator.clipboard.writeText(text).then(() => showCopyFeedback());
+}
+
+function showCopyFeedback() {
+  const existing = document.getElementById('copyFeedback');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'copyFeedback';
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--accent2);color:var(--accent2);font-size:0.8rem;font-family:\'Outfit\',sans-serif;padding:10px 20px;border-radius:8px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.4);';
+  toast.textContent = '✓ Mediciones copiadas al portapapeles';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
 }
 
 // ── Session chip ──────────────────────────────────────────────────────────────
@@ -1052,8 +1062,8 @@ function updateSessionChip(session) {
 
 function promptClearSession() {
   showConfirmBanner(
-    'Nueva sesión',
-    `● ${_sessionLabel}<br>¿Borrar y empezar de nuevo?`,
+    '◉ Sesión en curso',
+    `${_sessionLabel}<br>¿Borrar y empezar de nuevo?`,
     'Borrar sesión',
     () => {
       Object.values(state.measurements).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));

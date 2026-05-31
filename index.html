@@ -134,11 +134,6 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .rom-table td{padding:9px 14px;border-bottom:1px solid rgba(35,45,69,0.5);font-family:'DM Mono',monospace;color:var(--text);}
 .rom-table td:first-child{color:var(--text2);}
 .rom-table tr:last-child td{border-bottom:none;}
-.export-row{padding:14px 16px;display:flex;gap:8px;border-top:1px solid var(--border);}
-.btn-export{flex:1;background:var(--accent2);color:#0a0d12;border:none;border-radius:10px;padding:13px 16px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.2s;}
-.btn-export:hover{background:#a855f7;}
-.btn-export-hub{background:var(--accent);}
-.btn-export-hub:hover{background:#7ab8fb;}
 .region-chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px;}
 .region-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);}
 .region-chip .chip-count{color:var(--accent2);}
@@ -211,8 +206,6 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
 .pulsing{animation:pulse 1s ease-in-out infinite;}
-.btn-label-short{display:none;}
-@media(max-width:480px){.btn-label-full{display:none;}.btn-label-short{display:inline;}}
 
 /* ── Confirm banner ──────────────────────────────────────────────────────── */
 .confirm-banner{position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:fadeUp 0.2s ease;}
@@ -235,7 +228,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
     <span class="logo-main">PhysiQ</span>
     <span class="logo-sub">— <span class="logo-sub-word">Motion</span><span class="logo-sub-initial">M</span></span>
   </div>
-  <button id="sessionBtn" class="session-btn" onclick="promptClearSession()" aria-label="Sesión activa" title="Sesión activa">●</button>
+  <button id="sessionBtn" class="session-btn" onclick="promptClearSession()" aria-label="Sesión activa" title="Sesión activa">◉</button>
   <span class="sensor-badge" id="sensorBadge">Sin sensor</span>
 </header>
 
@@ -272,12 +265,9 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
     <div class="summary-card" id="globalExportCard" style="display:none">
       <div class="summary-header">
         <span class="summary-title">Resumen global</span>
+        <button onclick="copyContextToClipboard()" title="Copiar mediciones" style="background:none;border:1px solid var(--border2);border-radius:8px;padding:5px 10px;font-size:0.75rem;color:var(--text2);cursor:pointer;font-family:'DM Mono',monospace;">📋 Copiar</button>
       </div>
       <div class="region-chips" id="globalExportChips"></div>
-      <div class="export-row">
-        <button class="btn-export btn-export-hub" onclick="exportTo('assessment')">→ <span class="btn-label-full">PhysiQ Assessment</span><span class="btn-label-short">Assessment</span></button>
-        <button class="btn-export" onclick="exportTo('report')">📤 <span class="btn-label-full">PhysiQ Report</span><span class="btn-label-short">Report</span></button>
-      </div>
     </div>
   </section>
 
