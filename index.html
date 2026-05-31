@@ -217,8 +217,8 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .confirm-btn-cancel:hover{border-color:var(--text2);color:var(--text2);}
 .confirm-btn-ok{background:var(--accent);border:none;color:#0a0d12;border-radius:8px;padding:9px 18px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.2s;}
 .confirm-btn-ok:hover{background:#a855f7;}
-.session-btn{display:none;background:none;border:none;cursor:pointer;font-size:11px;color:var(--accent2);padding:6px;line-height:1;flex-shrink:0;}
-.session-btn.active{display:block;}
+.session-btn{display:none;background:none;border:none;cursor:pointer;color:var(--accent2);padding:6px;flex-shrink:0;}
+.session-btn.active{display:flex;align-items:center;justify-content:center;}
 </style>
 </head>
 <body>
@@ -228,7 +228,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
     <span class="logo-main">PhysiQ</span>
     <span class="logo-sub">— <span class="logo-sub-word">Motion</span><span class="logo-sub-initial">M</span></span>
   </div>
-  <button id="sessionBtn" class="session-btn" onclick="promptClearSession()" aria-label="Sesión activa" title="Sesión activa">◉</button>
+  <button id="sessionBtn" class="session-btn" onclick="promptClearSession()" aria-label="Sesión activa" title="Sesión activa"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg></button>
   <span class="sensor-badge" id="sensorBadge">Sin sensor</span>
 </header>
 
