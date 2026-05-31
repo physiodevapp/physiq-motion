@@ -59,6 +59,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .field-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;}
 .field-input{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:border-color 0.2s;width:100%;}
 .field-input:focus{border-color:var(--accent);}
+.field-input:-webkit-autofill,.field-input:-webkit-autofill:hover,.field-input:-webkit-autofill:focus{-webkit-box-shadow:0 0 0px 1000px var(--surface) inset;-webkit-text-fill-color:var(--text);transition:background-color 5000s ease-in-out 0s;}
 
 /* ── Section header ──────────────────────────────────────────────────────── */
 .section-header{display:flex;justify-content:space-between;align-items:center;gap:8px;}
