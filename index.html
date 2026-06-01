@@ -84,6 +84,18 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .btn-back{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:5px 10px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:border-color 0.2s,color 0.2s;white-space:nowrap;flex-shrink:0;}
 .btn-back:hover{border-color:var(--text2);color:var(--text);}
 .active-region-badge{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);border:1px solid rgba(192,132,252,0.3);background:rgba(192,132,252,0.08);padding:5px 10px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-left:auto;}
+.header-right{display:flex;align-items:center;gap:0.75rem;}
+.btn-translate{position:relative;background:transparent;border:none;color:var(--text3);font-size:1rem;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color 0.2s;line-height:1;}
+.btn-translate:hover{color:var(--text2);}
+.translate-tooltip{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;white-space:nowrap;font-size:0.75rem;color:var(--text2);font-family:'Outfit',sans-serif;font-weight:300;line-height:1.6;opacity:0;pointer-events:none;transition:opacity 0.2s;z-index:200;}
+.btn-translate:hover .translate-tooltip{opacity:1;}
+.translate-banner{position:fixed;top:64px;left:0;right:0;z-index:210;background:var(--surface2);border-bottom:1px solid var(--border);padding:9px 1rem;display:flex;align-items:center;gap:8px;font-size:0.78rem;color:var(--text2);font-family:'Outfit',sans-serif;opacity:0;pointer-events:none;transition:opacity 0.25s ease;}
+.translate-banner.visible{opacity:1;pointer-events:auto;}
+.translate-banner-close{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:1rem;padding:0 4px;line-height:1;}
+@media(min-width:769px){.translate-banner{display:none;}}
+@media(max-width:768px){.translate-tooltip{display:none;}.translate-banner{top:52px;}}
+@media(max-width:480px){.translate-banner{top:48px;}}
+@media(max-height:500px) and (max-width:900px){.translate-banner{top:44px;}}
 
 /* ── Movement grid ───────────────────────────────────────────────────────── */
 .movement-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -229,9 +241,16 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
     <span class="logo-main">PhysiQ</span>
     <span class="logo-sub">— <span class="logo-sub-word">Motion</span><span class="logo-sub-initial">M</span></span>
   </div>
-  <button id="sessionBtn" class="session-btn" onclick="promptClearSession()" aria-label="Sesión activa" title="Sesión activa"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg></button>
-  <span class="sensor-badge" id="sensorBadge">Sin sensor</span>
+  <div class="header-right">
+    <button id="sessionBtn" class="session-btn" onclick="promptClearSession()" aria-label="Sesión activa" title="Sesión activa"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg></button>
+    <button class="btn-translate" onclick="handleTranslateClick()" aria-label="View in English">🌐<span class="translate-tooltip">View in English<br>Right-click → Translate to English</span></button>
+    <span class="sensor-badge" id="sensorBadge">Sin sensor</span>
+  </div>
 </header>
+<div class="translate-banner" id="translateBanner">
+  🌐 <span>Long-press or right-click → Translate to English</span>
+  <button class="translate-banner-close" onclick="hideTranslateBanner()">✕</button>
+</div>
 
 <main>
 

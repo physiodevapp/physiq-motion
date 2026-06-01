@@ -1122,3 +1122,19 @@ function showConfirmBanner(title, text, actionLabel, onConfirm) {
   document.getElementById('confirmAction').onclick = () => { dismiss(); onConfirm(); };
 }
 
+// ─── TRANSLATE BANNER ────────────────────────────────────
+let _translateTimer = null;
+function handleTranslateClick() {
+  if (window.innerWidth > 768) return;
+  const banner = document.getElementById('translateBanner');
+  if (!banner) return;
+  banner.classList.add('visible');
+  clearTimeout(_translateTimer);
+  _translateTimer = setTimeout(hideTranslateBanner, 4000);
+}
+function hideTranslateBanner() {
+  clearTimeout(_translateTimer);
+  const banner = document.getElementById('translateBanner');
+  if (banner) banner.classList.remove('visible');
+}
+
