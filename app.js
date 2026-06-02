@@ -1088,6 +1088,15 @@ function resetAll() {
 
 // ── IDB sync ─────────────────────────────────────────────────────────────────
 let _idbSyncTimer = null;
+
+const _sessionCh = new BroadcastChannel('physiq-session');
+_sessionCh.onmessage = ({ data }) => {
+  if (data.type !== 'SESSION_PATIENT') return;
+  const el = document.getElementById('patientName');
+  if (!el || document.activeElement === el) return;
+  el.value = data.patient || '';
+};
+
 function scheduleIDBSync() {
   clearTimeout(_idbSyncTimer);
   _idbSyncTimer = setTimeout(() => {
@@ -1096,7 +1105,10 @@ function scheduleIDBSync() {
     const rom     = buildROMPayload();
     const hasMeasurements = Object.keys(rom.regions).length > 0;
     if (!patient && !hasMeasurements) return;
-    writeSession({ patient, date, rom }).then(session => { if (session) updateSessionChip(session); });
+    writeSession({ patient, date, rom }).then(session => {
+      if (session) updateSessionChip(session);
+      if (patient) _sessionCh.postMessage({ type: 'SESSION_PATIENT', patient });
+    });
   }, 800);
 }
 
