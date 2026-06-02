@@ -1084,6 +1084,12 @@ function resetAll() {
   Object.keys(segs).forEach(k => { segs[k] = null; });
   document.getElementById('patientName').value = '';
   renderMovementGrid();
+  const rom = buildROMPayload();
+  if (Object.keys(rom.regions).length > 0) {
+    writeSession({ patient: '', rom }).then(session => updateSessionChip(session));
+  } else {
+    clearSession().then(() => updateSessionChip(null));
+  }
 }
 
 // ── IDB sync ─────────────────────────────────────────────────────────────────
@@ -1095,6 +1101,7 @@ _sessionCh.onmessage = ({ data }) => {
   const el = document.getElementById('patientName');
   if (!el || document.activeElement === el) return;
   el.value = data.patient || '';
+  writeSession({ patient: data.patient || '' });
 };
 
 function scheduleIDBSync() {
