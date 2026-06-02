@@ -1086,9 +1086,15 @@ function resetAll() {
   renderMovementGrid();
   const rom = buildROMPayload();
   if (Object.keys(rom.regions).length > 0) {
-    writeSession({ patient: '', rom }).then(session => updateSessionChip(session));
+    writeSession({ patient: '', rom }).then(session => {
+      updateSessionChip(session);
+      _sessionCh.postMessage({ type: 'SESSION_ROM', rom });
+    });
   } else {
-    clearSession().then(() => updateSessionChip(null));
+    clearSession().then(() => {
+      updateSessionChip(null);
+      _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });
+    });
   }
 }
 
@@ -1115,6 +1121,7 @@ function scheduleIDBSync() {
     writeSession({ patient, date, rom }).then(session => {
       if (session) updateSessionChip(session);
       if (patient) _sessionCh.postMessage({ type: 'SESSION_PATIENT', patient });
+      _sessionCh.postMessage({ type: 'SESSION_ROM', rom });
     });
   }, 800);
 }
