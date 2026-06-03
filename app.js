@@ -399,6 +399,11 @@ const state = {
 const sensor = { alpha: 0, beta: 0, gamma: 0 };
 const grav   = { x: 0, y: 0, z: 0 };
 let _popstateLock = false;
+const _inFrame = window !== window.parent;
+function _pushState(state) {
+  history.pushState(state, '');
+  if (_inFrame) window.parent.postMessage({ type: 'PHYSIQ_HISTORY_PUSH' }, '*');
+}
 let sensorStarted = false;
 let sensorSeen    = false;
 let motionSeen    = false;
@@ -445,6 +450,10 @@ window.addEventListener('popstate', () => {
   } else if (state.regionId !== null) {
     goBackToRegions();
   }
+});
+
+window.addEventListener('message', e => {
+  if (e.data?.type === 'PHYSIQ_INTERNAL_BACK') history.back();
 });
 
 // ── Sensor ────────────────────────────────────────────────────────────────
@@ -621,7 +630,7 @@ function renderGlobalExport() {
 }
 
 function selectRegion(id) {
-  history.pushState({ view: 'measure' }, '');
+  _pushState({ view: 'measure' });
   state.regionId = id;
   document.getElementById('regionScreen').style.display = 'none';
   document.getElementById('measureScreen').style.display = '';
@@ -634,7 +643,7 @@ function goBackToRegions() {
   document.getElementById('measureScreen').style.display = 'none';
   document.getElementById('regionScreen').style.display = '';
   renderRegionGrid();
-  if (history.state?.view === 'measure') { _popstateLock = true; history.back(); }
+  if (history.state?.view === 'measure') { _popstateLock = true; if (_inFrame) window.parent.postMessage({ type: 'PHYSIQ_HISTORY_POP' }, '*'); history.back(); }
 }
 
 // ── Renderizado de tarjetas de movimiento ─────────────────────────────────
@@ -755,7 +764,7 @@ function openMeasurement(id) {
   refreshSheetUI();
   document.getElementById('measureOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
-  history.pushState({ view: 'overlay' }, '');
+  _pushState({ view: 'overlay' });
 }
 
 function closeMeasurement() {
@@ -763,7 +772,7 @@ function closeMeasurement() {
   document.body.style.overflow = '';
   state.active.movementId = null;
   state.active.phase = 'idle';
-  if (history.state?.view === 'overlay') { _popstateLock = true; history.back(); }
+  if (history.state?.view === 'overlay') { _popstateLock = true; if (_inFrame) window.parent.postMessage({ type: 'PHYSIQ_HISTORY_POP' }, '*'); history.back(); }
 }
 
 function handleOverlayClick(e) {
@@ -1070,8 +1079,17 @@ function promptClearSession() {
       Object.values(state.segmentData).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
       const el = document.getElementById('patientName');
       if (el) el.value = '';
+      if (state.regionId !== null) {
+        state.regionId = null;
+        document.getElementById('measureScreen').style.display = 'none';
+        document.getElementById('regionScreen').style.display = '';
+        if (history.state?.view === 'measure') { _popstateLock = true; if (_inFrame) window.parent.postMessage({ type: 'PHYSIQ_HISTORY_POP' }, '*'); history.back(); }
+      }
       renderRegionGrid();
-      clearSession().then(() => updateSessionChip(null));
+      clearSession().then(() => {
+        updateSessionChip(null);
+        _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });
+      });
     }
   );
 }

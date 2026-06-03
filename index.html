@@ -286,7 +286,10 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
     <div class="summary-card" id="globalExportCard" style="display:none">
       <div class="summary-header">
         <span class="summary-title">Resumen global</span>
-        <button onclick="copyContextToClipboard()" title="Copiar mediciones" style="background:none;border:1px solid var(--border2);border-radius:8px;padding:5px 10px;font-size:0.75rem;color:var(--text2);cursor:pointer;font-family:'DM Mono',monospace;">📋 Copiar</button>
+        <div style="display:flex;gap:8px;">
+          <button onclick="copyContextToClipboard()" title="Copiar mediciones" style="background:none;border:1px solid var(--border2);border-radius:8px;padding:5px 10px;font-size:0.75rem;color:var(--text2);cursor:pointer;font-family:'DM Mono',monospace;">📋 Copiar</button>
+          <button onclick="promptClearSession()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:0.75rem;color:var(--text3);cursor:pointer;font-family:'DM Mono',monospace;">↺ Nueva sesión</button>
+        </div>
       </div>
       <div class="region-chips" id="globalExportChips"></div>
     </div>
@@ -316,7 +319,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
         <tbody id="romTableBody"></tbody>
       </table>
       <div class="export-row">
-        <button class="btn-reset" onclick="resetAll()">↺ <span class="btn-label-full">Nueva medición</span><span class="btn-label-short">Nueva</span></button>
+        <button class="btn-reset" onclick="resetAll()">↺ <span class="btn-label-full">Reiniciar región</span><span class="btn-label-short">Reiniciar</span></button>
       </div>
     </div>
   </section>
