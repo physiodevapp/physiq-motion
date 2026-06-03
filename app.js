@@ -453,7 +453,7 @@ window.addEventListener('popstate', () => {
 });
 
 window.addEventListener('message', e => {
-  if (e.data?.type === 'PHYSIQ_INTERNAL_BACK') history.back();
+  if (e.data?.type === 'PHYSIQ_INTERNAL_BACK' && history.state?.view) history.back();
 });
 
 // ── Sensor ────────────────────────────────────────────────────────────────
@@ -1094,26 +1094,22 @@ function promptClearSession() {
   );
 }
 
-// ── Reset región activa ───────────────────────────────────────────────────
+// ── Reset todas las mediciones ────────────────────────────────────────────
 function resetAll() {
-  const meas = state.measurements[state.regionId];
-  Object.keys(meas).forEach(k => { meas[k] = null; });
-  const segs = state.segmentData[state.regionId];
-  Object.keys(segs).forEach(k => { segs[k] = null; });
-  document.getElementById('patientName').value = '';
-  renderMovementGrid();
-  const rom = buildROMPayload();
-  if (Object.keys(rom.regions).length > 0) {
-    writeSession({ patient: '', rom }).then(session => {
-      updateSessionChip(session);
-      _sessionCh.postMessage({ type: 'SESSION_ROM', rom });
-    });
-  } else {
-    clearSession().then(() => {
-      updateSessionChip(null);
-      _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });
-    });
-  }
+  showConfirmBanner(
+    '¿Vaciar todas las mediciones?',
+    'Se eliminarán las mediciones de todas las regiones. La sesión y el nombre del paciente se conservarán.',
+    'Vaciar mediciones',
+    () => {
+      Object.values(state.measurements).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
+      Object.values(state.segmentData).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
+      renderMovementGrid();
+      writeSession({ rom: null }).then(session => {
+        updateSessionChip(session);
+        _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });
+      });
+    }
+  );
 }
 
 // ── IDB sync ─────────────────────────────────────────────────────────────────
