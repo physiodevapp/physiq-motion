@@ -1223,7 +1223,7 @@ function promptClearSession() {
 
 function promptSoftResetMotion() {
   showConfirmBanner(
-    '↺ Reiniciar Motion',
+    '↺ Reiniciar ROM completo',
     'Se eliminarán las mediciones y el nombre del paciente. Los datos de otros satélites se conservarán.',
     'Reiniciar',
     () => {
