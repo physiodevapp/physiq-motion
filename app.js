@@ -6,16 +6,14 @@ const REGIONS = {
     label: 'Cervical', abbr: 'Cx',
     groups: [
       { label: 'Flexo-extensión',     ids: ['flexion', 'extension'] },
-      { label: 'Inclinación lateral', ids: ['lat_izq', 'lat_der']   },
-      { label: 'Rotación',            ids: ['rot_izq', 'rot_der']   }
+      { label: 'Inclinación lateral', ids: ['lat']                  },
+      { label: 'Rotación',            ids: ['rot']                  }
     ],
     movements: {
-      flexion:   { label: 'Flexión',        axis: 'gravity',      phoneOrientation: 'alpha-rotation', ref: 50, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia adelante hasta su rango máximo.' },
-      extension: { label: 'Extensión',      axis: 'gravity',      phoneOrientation: 'alpha-rotation', ref: 60, icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia atrás hasta su rango máximo.' },
-      lat_izq:   { label: 'Lat. Izquierda', axis: 'gravity',      phoneOrientation: 'alpha-rotation', ref: 45, icon: '↙', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la izquierda hasta su rango máximo.' },
-      lat_der:   { label: 'Lat. Derecha',   axis: 'gravity',      phoneOrientation: 'alpha-rotation', ref: 45, icon: '↘', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia la derecha hasta su rango máximo.' },
-      rot_izq:   { label: 'Rotación Izq.',  axis: 'alpha', phoneOrientation: 'horizontal', ref: 80, icon: '↺', placement: 'flat-left',         instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la izquierda hasta su rango máximo.' },
-      rot_der:   { label: 'Rotación Der.',  axis: 'alpha', phoneOrientation: 'horizontal', ref: 80, icon: '↻', placement: 'flat-right',        instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia la derecha hasta su rango máximo.' }
+      flexion:   { label: 'Flexión',      bilateral: false, modes: ['activa'], axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 50, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia adelante hasta su rango máximo.' },
+      extension: { label: 'Extensión',    bilateral: false, modes: ['activa'], axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 60, icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia atrás hasta su rango máximo.' },
+      lat:       { label: 'Inc. Lateral', bilateral: true,  modes: ['activa'], axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 45, icon: '↔', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia el <strong>lado seleccionado</strong> hasta su rango máximo.' },
+      rot:       { label: 'Rotación',     bilateral: true,  modes: ['activa'], axis: 'alpha',   phoneOrientation: 'horizontal',     ref: 80, icon: '↺', placement: 'flat-left',         instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia el <strong>lado seleccionado</strong> hasta su rango máximo.' }
     }
   },
   hombro: {
@@ -25,18 +23,21 @@ const REGIONS = {
       { label: 'Rotación', ids: ['rot_ext', 'rot_int'] }
     ],
     movements: {
-      flexion:  {
-        label: 'Flexión', measureType: 'beta-zero', neutralAngle: -90,
+      flexion: {
+        label: 'Flexión', bilateral: true, modes: ['activa', 'pasiva'],
+        measureType: 'beta-zero', neutralAngle: -90,
         axis: 'beta', phoneOrientation: 'beta-rotation', ref: 170, icon: '⬆',
         instruction: 'Paciente en supino. Coloca el teléfono sobre la <strong>cara anterior del brazo</strong>, pantalla mirando al frente (plano coronal), borde superior hacia craneal. El ángulo parte de 0° con el brazo a lo largo del cuerpo (teléfono boca abajo). Eleva el brazo hasta el rango máximo y pulsa <em>Detener</em>.'
       },
       rot_ext: {
-        label: 'Rot. Externa', measureType: 'beta-zero', neutralAngle: 180,
+        label: 'Rot. Externa', bilateral: true, modes: ['activa', 'pasiva'],
+        measureType: 'beta-zero', neutralAngle: 180,
         axis: 'beta', phoneOrientation: 'beta-rotation', ref: 90, icon: '↻',
         instruction: 'Paciente en supino, brazo en 90° de abducción y 90° de flexión de codo (antebrazo vertical). Coloca el teléfono sobre la <strong>cara anterior del antebrazo</strong>, pantalla mirando al frente, borde superior hacia la mano. El ángulo parte de 0° con el antebrazo vertical. Rota externamente hasta el rango máximo y pulsa <em>Detener</em>.'
       },
       rot_int: {
-        label: 'Rot. Interna', measureType: 'beta-zero', neutralAngle: 180,
+        label: 'Rot. Interna', bilateral: true, modes: ['activa', 'pasiva'],
+        measureType: 'beta-zero', neutralAngle: 180,
         axis: 'beta', phoneOrientation: 'beta-rotation', ref: 80, icon: '↺',
         instruction: 'Paciente en supino, brazo en 90° de abducción y 90° de flexión de codo (antebrazo vertical). Coloca el teléfono sobre la <strong>cara anterior del antebrazo</strong>, pantalla mirando al frente, borde superior hacia la mano. El ángulo parte de 0° con el antebrazo vertical. Rota internamente hasta el rango máximo y pulsa <em>Detener</em>.'
       }
@@ -49,14 +50,16 @@ const REGIONS = {
       { label: 'Pronosupinación', ids: ['pronacion', 'supinacion'] }
     ],
     movements: {
-      flexion:   { label: 'Flexión',    axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 145, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en extensión completa y flexiona hasta el rango máximo.' },
-      extension: { label: 'Extensión',  axis: 'gravity', phoneOrientation: 'beta-rotation', ref: 5,   icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en posición inicial y extiende hasta el rango máximo.' },
+      flexion:    { label: 'Flexión',    bilateral: true, modes: ['activa', 'pasiva'], axis: 'gravity', phoneOrientation: 'beta-rotation',   ref: 145, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en extensión completa y flexiona hasta el rango máximo.' },
+      extension:  { label: 'Extensión',  bilateral: true, modes: ['activa', 'pasiva'], axis: 'gravity', phoneOrientation: 'beta-rotation',   ref: 5,   icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono sobre el antebrazo con la <strong>pantalla paralela al plano frontal</strong>. Calibra con el codo en posición inicial y extiende hasta el rango máximo.' },
       pronacion: {
-        label: 'Pronación', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 80, icon: '↻',
+        label: 'Pronación', bilateral: true, modes: ['activa'],
+        axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 80, icon: '↻',
         instruction: 'Paciente sentado, codo a 90°, brazo pegado al cuerpo, posición neutra (pulgar hacia arriba). Apoya el <strong>borde inferior del teléfono sobre el dorso de la mano</strong>, pantalla en el plano frontal. Pulsa <em>Calibrar neutro</em> y lleva la palma hacia abajo (pronación) hasta el rango máximo.'
       },
       supinacion: {
-        label: 'Supinación', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 80, icon: '↺',
+        label: 'Supinación', bilateral: true, modes: ['activa'],
+        axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 80, icon: '↺',
         instruction: 'Paciente sentado, codo a 90°, brazo pegado al cuerpo, posición neutra (pulgar hacia arriba). Apoya el <strong>borde inferior del teléfono sobre el dorso de la mano</strong>, pantalla en el plano frontal. Pulsa <em>Calibrar neutro</em> y lleva la palma hacia arriba (supinación) hasta el rango máximo.'
       }
     }
@@ -68,20 +71,24 @@ const REGIONS = {
       { label: 'Desviación',      ids: ['desv_rad', 'desv_cub'] }
     ],
     movements: {
-      flexion:   {
-        label: 'Flexión',   axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 70, icon: '⬇',
+      flexion: {
+        label: 'Flexión', bilateral: true, modes: ['activa'],
+        axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 70, icon: '⬇',
         instruction: 'Paciente sentado, antebrazo en pronación apoyado sobre la camilla, mano libre al borde. Coloca el teléfono <strong>de canto sobre el dorso de la mano</strong>, pantalla paralela al plano frontal. Calibra con la muñeca en posición neutra y flexiona hasta el rango máximo.'
       },
       extension: {
-        label: 'Extensión', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 70, icon: '⬆',
+        label: 'Extensión', bilateral: true, modes: ['activa'],
+        axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 70, icon: '⬆',
         instruction: 'Paciente sentado, antebrazo en pronación apoyado sobre la camilla, mano libre al borde. Coloca el teléfono <strong>de canto sobre el dorso de la mano</strong>, pantalla paralela al plano frontal. Calibra con la muñeca en posición neutra y extiende hasta el rango máximo.'
       },
-      desv_rad:  {
-        label: 'Desv. Radial',  axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 20, icon: '↗',
+      desv_rad: {
+        label: 'Desv. Radial', bilateral: true, modes: ['activa'],
+        axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 20, icon: '↗',
         instruction: 'Paciente sentado, antebrazo en <strong>pronosupinación neutra</strong> (posición de estrechar la mano), apoyado sobre el borde cubital. Apoya el <strong>borde corto inferior del teléfono sobre el borde radial de la mano</strong> (lado del pulgar), con la pantalla en el plano sagital hacia el examinador. Calibra con la muñeca en posición neutra y desviá radialmente hasta el rango máximo.'
       },
-      desv_cub:  {
-        label: 'Desv. Cubital', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 35, icon: '↙',
+      desv_cub: {
+        label: 'Desv. Cubital', bilateral: true, modes: ['activa'],
+        axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 35, icon: '↙',
         instruction: 'Paciente sentado, antebrazo en <strong>pronosupinación neutra</strong> (posición de estrechar la mano), apoyado sobre el borde cubital. Apoya el <strong>borde corto inferior del teléfono sobre el borde radial de la mano</strong> (lado del pulgar), con la pantalla en el plano sagital hacia el examinador. Calibra con la muñeca en posición neutra y desviá cubitalmente hasta el rango máximo.'
       }
     }
@@ -96,33 +103,34 @@ const REGIONS = {
     ],
     movements: {
       flex_supino: {
-        label: 'Flexión', measureType: 'beta-zero', neutralAngle: 90,
+        label: 'Flexión', bilateral: true, modes: ['activa', 'pasiva'],
+        measureType: 'beta-zero', neutralAngle: 90,
         axis: 'beta', phoneOrientation: 'beta-rotation', ref: 120, icon: '⬆',
         instruction: 'Paciente en decúbito supino, rodilla flexionada. Coloca el teléfono <strong>plano sobre la cara anterior del muslo</strong>, pantalla hacia arriba. El ángulo parte de 0° con el muslo horizontal. Flexiona la cadera hasta el rango máximo y pulsa <em>Detener</em>.'
       },
       abd_supino: {
-        label: 'Abducción',
+        label: 'Abducción', bilateral: true, modes: ['activa'],
         axis: 'alpha', phoneOrientation: 'horizontal', ref: 45, icon: '↗',
         instruction: 'Paciente en decúbito supino, pierna en posición neutra. Coloca el teléfono <strong>plano sobre la cara anterior del muslo</strong>, pantalla hacia arriba. Pulsa <em>Calibrar neutro</em> con la pierna alineada y separa lateralmente hasta el rango máximo. Evita superficies metálicas cercanas.'
       },
       rot_ext_supino: {
-        label: 'Rot. Externa',
+        label: 'Rot. Externa', bilateral: true, modes: ['activa', 'pasiva'],
         axis: 'alpha', phoneOrientation: 'horizontal', ref: 45, icon: '↻',
         instruction: 'Paciente en supino, cadera y rodilla a 90° (muslo vertical, pierna horizontal). Coloca el teléfono <strong>plano sobre la cara anterior de la tibia</strong>, pantalla hacia arriba. Pulsa <em>Calibrar neutro</em> con la pierna en posición neutra y rota externamente hasta el rango máximo. Evita superficies metálicas cercanas.'
       },
       rot_int_supino: {
-        label: 'Rot. Interna',
+        label: 'Rot. Interna', bilateral: true, modes: ['activa', 'pasiva'],
         axis: 'alpha', phoneOrientation: 'horizontal', ref: 45, icon: '↺',
         instruction: 'Paciente en supino, cadera y rodilla a 90° (muslo vertical, pierna horizontal). Coloca el teléfono <strong>plano sobre la cara anterior de la tibia</strong>, pantalla hacia arriba. Pulsa <em>Calibrar neutro</em> con la pierna en posición neutra y rota internamente hasta el rango máximo. Evita superficies metálicas cercanas.'
       },
       rot_ext_sed: {
-        label: 'Rot. Externa',
+        label: 'Rot. Externa', bilateral: true, modes: ['activa', 'pasiva'],
         measureType: 'beta-zero', neutralAngle: 180,
         axis: 'beta', phoneOrientation: 'beta-rotation', ref: 45, icon: '↻',
         instruction: 'Paciente sentado al borde de la camilla, rodilla a 90° y pierna colgando. Coloca el teléfono <strong>de canto sobre la cara anterior de la tibia</strong>, paralelo al plano sagital, pantalla hacia el lateral. Pulsa <em>Calibrar neutro</em> con la pierna en posición neutra y lleva el pie hacia afuera hasta el rango máximo.'
       },
       rot_int_sed: {
-        label: 'Rot. Interna',
+        label: 'Rot. Interna', bilateral: true, modes: ['activa', 'pasiva'],
         measureType: 'beta-zero', neutralAngle: 180,
         axis: 'beta', phoneOrientation: 'beta-rotation', ref: 45, icon: '↺',
         instruction: 'Paciente sentado al borde de la camilla, rodilla a 90° y pierna colgando. Coloca el teléfono <strong>de canto sobre la cara anterior de la tibia</strong>, paralelo al plano sagital, pantalla hacia el lateral. Pulsa <em>Calibrar neutro</em> con la pierna en posición neutra y lleva el pie hacia adentro hasta el rango máximo.'
@@ -137,18 +145,20 @@ const REGIONS = {
     ],
     movements: {
       extension: {
-        label: 'Extensión', measureType: 'two-segment-signed',
+        label: 'Extensión', bilateral: true, modes: ['activa'],
+        measureType: 'two-segment-signed',
         axis: 'beta', phoneOrientation: 'beta-rotation', ref: 0, skipStatus: true, icon: '⬆',
         instruction: '<strong>Paso 1</strong> — coloca el teléfono <strong>plano sobre el muslo</strong>, pantalla hacia arriba. Pulsa <em>Capturar muslo</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono igual <strong>sobre la tibia</strong>. Resultado: positivo = déficit de extensión; negativo = hiperextensión.'
       },
       flexion: {
-        label: 'Flexión', measureType: 'two-segment-beta',
-        axis: 'beta', phoneOrientation: 'beta-rotation',
-        ref: 135, icon: '⬇',
+        label: 'Flexión', bilateral: true, modes: ['activa', 'pasiva'],
+        measureType: 'two-segment-beta',
+        axis: 'beta', phoneOrientation: 'beta-rotation', ref: 135, icon: '⬇',
         instruction: 'Rodilla en posición de máxima flexión. <strong>Paso 1</strong> — coloca el teléfono <strong>de canto sobre la cara lateral del muslo</strong>, portrait, pantalla hacia el examinador. Pulsa <em>Capturar muslo</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono igual <strong>de canto sobre la cara lateral de la tibia</strong>. Pulsa <em>Capturar tibia</em>.'
       },
       pkb: {
-        label: 'PKB', measureType: 'gravity-vertical', axis: 'gravity',
+        label: 'PKB', bilateral: true, modes: ['activa'],
+        measureType: 'gravity-vertical', axis: 'gravity',
         phoneOrientation: 'alpha-rotation', ref: 135, icon: '↗', baseAngle: 90,
         instruction: 'Paciente en <strong>decúbito prono</strong>, rodilla a 90°. Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador. El ángulo parte de 90°. Pulsa <em>Iniciar</em> y flexiona la rodilla hasta el rango máximo.'
       }
@@ -160,8 +170,8 @@ const REGIONS = {
       { label: 'Dorsi / Plantar', ids: ['dorsiflexion', 'plantarflexion'] }
     ],
     movements: {
-      dorsiflexion:   { label: 'Dorsiflexión',   measureType: 'gravity-vertical', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 20, icon: '⬆', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador (lateral). Con la tibia a 90° el ángulo es 0°. Pulsa <em>Iniciar</em> y realiza la dorsiflexión hasta el rango máximo.' },
-      plantarflexion: { label: 'Plantarflexión', measureType: 'gravity-vertical', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 50, icon: '⬇', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador (lateral). Con la tibia a 90° el ángulo es 0°. Pulsa <em>Iniciar</em> y realiza la plantarflexión hasta el rango máximo.' }
+      dorsiflexion:   { label: 'Dorsiflexión',   bilateral: true, modes: ['activa', 'pasiva'], measureType: 'gravity-vertical', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 20, icon: '⬆', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador (lateral). Con la tibia a 90° el ángulo es 0°. Pulsa <em>Iniciar</em> y realiza la dorsiflexión hasta el rango máximo.' },
+      plantarflexion: { label: 'Plantarflexión', bilateral: true, modes: ['activa'],           measureType: 'gravity-vertical', axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 50, icon: '⬇', instruction: 'Coloca el teléfono <strong>de canto sobre la tibia</strong>, pantalla hacia el examinador (lateral). Con la tibia a 90° el ángulo es 0°. Pulsa <em>Iniciar</em> y realiza la plantarflexión hasta el rango máximo.' }
     }
   },
   lumbar: {
@@ -171,7 +181,8 @@ const REGIONS = {
     ],
     movements: {
       flexion: {
-        label: 'Flexión', measureType: 'two-segment-vertical-signed',
+        label: 'Flexión', bilateral: false, modes: ['activa'],
+        measureType: 'two-segment-vertical-signed',
         phoneOrientation: 'alpha-rotation', ref: 60, icon: '⬇',
         instruction: 'Paciente de pie, pies a la anchura de los hombros, rodillas en extensión. Se inclina hacia adelante al máximo y <strong>mantiene la posición</strong>.<br><strong>Paso 1</strong> — coloca el teléfono en <strong>modo landscape</strong>, apoya el borde largo sobre <strong>S1</strong> (a nivel de los hoyuelos sacros), pantalla en el plano sagital. Pulsa <em>Capturar S1</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono igual sobre <strong>T12/L1</strong> (última costilla → espina). Resultado = ángulo T12 − ángulo S1 (flexión lumbar pura).'
       }
@@ -369,19 +380,60 @@ function getStrategy() {
   return STRATEGIES[mtype];
 }
 
+// ── Helpers de slots ──────────────────────────────────────────────────────
+function initSlots(def) {
+  const sides = def.bilateral ? ['izquierda', 'derecha'] : ['centro'];
+  return Object.fromEntries(sides.map(s => [
+    s, Object.fromEntries(def.modes.map(m => [m, null]))
+  ]));
+}
+
+function effectiveSide(def) {
+  return def.bilateral ? state.context.side : 'centro';
+}
+
+function effectiveMode(def) {
+  return def.modes.includes(state.context.mode) ? state.context.mode : def.modes[0];
+}
+
+function clearAllSlots(store) {
+  Object.values(store).forEach(region =>
+    Object.values(region).forEach(mov =>
+      Object.values(mov).forEach(sideSlots =>
+        Object.keys(sideSlots).forEach(mode => { sideSlots[mode] = null; })
+      )
+    )
+  );
+}
+
+function countSlots(regionId) {
+  const region = REGIONS[regionId];
+  const meas   = state.measurements[regionId];
+  let done = 0, total = 0;
+  Object.entries(region.movements).forEach(([movId, def]) => {
+    const sides = def.bilateral ? ['izquierda', 'derecha'] : ['centro'];
+    sides.forEach(side => def.modes.forEach(mode => {
+      total++;
+      if (meas[movId]?.[side]?.[mode] !== null) done++;
+    }));
+  });
+  return { done, total };
+}
+
 // ── Estado ────────────────────────────────────────────────────────────────
 const state = {
   regionId: null,
+  context: { side: 'izquierda', mode: 'activa' },
   measurements: Object.fromEntries(
     Object.entries(REGIONS).map(([id, def]) => [
       id,
-      Object.fromEntries(Object.keys(def.movements).map(k => [k, null]))
+      Object.fromEntries(Object.keys(def.movements).map(k => [k, initSlots(def.movements[k])]))
     ])
   ),
   segmentData: Object.fromEntries(
     Object.entries(REGIONS).map(([id, def]) => [
       id,
-      Object.fromEntries(Object.keys(def.movements).map(k => [k, null]))
+      Object.fromEntries(Object.keys(def.movements).map(k => [k, initSlots(def.movements[k])]))
     ])
   ),
   active: {
@@ -432,8 +484,14 @@ document.addEventListener('DOMContentLoaded', () => {
       Object.entries(session.rom.regions).forEach(([regionId, regionData]) => {
         if (!state.measurements[regionId]) return;
         Object.entries(regionData.rom || {}).forEach(([movId, movData]) => {
-          if (state.measurements[regionId][movId] !== undefined)
-            state.measurements[regionId][movId] = movData.value;
+          if (!movData || !state.measurements[regionId][movId]) return;
+          Object.entries(movData.slots || {}).forEach(([side, sideSlots]) => {
+            if (!state.measurements[regionId][movId][side]) return;
+            Object.entries(sideSlots || {}).forEach(([mode, slotData]) => {
+              if (slotData?.value != null)
+                state.measurements[regionId][movId][side][mode] = slotData.value;
+            });
+          });
         });
       });
       renderRegionGrid();
@@ -580,9 +638,7 @@ function renderRegionGrid() {
   grid.innerHTML = '';
   Object.entries(REGIONS).forEach(([id, def], i) => {
     const hasMovements = Object.keys(def.movements).length > 0;
-    const meas    = state.measurements[id] || {};
-    const done    = Object.values(meas).filter(v => v !== null).length;
-    const total   = Object.keys(def.movements).length;
+    const { done, total } = countSlots(id);
     const hasData = done > 0;
 
     const card = document.createElement('div');
@@ -594,7 +650,7 @@ function renderRegionGrid() {
 
     const countText = !hasMovements
       ? 'Por configurar'
-      : hasData ? `${done} / ${total}` : `${total} movimientos`;
+      : hasData ? `${done} / ${total}` : `${total} mediciones`;
 
     card.innerHTML = `
       <div class="region-abbr">${def.abbr}</div>
@@ -609,13 +665,10 @@ function renderGlobalExport() {
   const card  = document.getElementById('globalExportCard');
   const chips = document.getElementById('globalExportChips');
   if (!card) return;
-  const measured = Object.entries(REGIONS).filter(([id]) =>
-    Object.values(state.measurements[id] || {}).some(v => v !== null)
-  );
+  const measured = Object.entries(REGIONS).filter(([id]) => hasAnySlot(id));
   if (!measured.length) { card.style.display = 'none'; return; }
   chips.innerHTML = measured.map(([id, def]) => {
-    const done  = Object.values(state.measurements[id]).filter(v => v !== null).length;
-    const total = Object.keys(def.movements).length;
+    const { done, total } = countSlots(id);
     return `<span class="region-chip">${def.label} <span class="chip-count">${done}/${total}</span></span>`;
   }).join('');
   card.style.display = 'block';
@@ -638,13 +691,41 @@ function goBackToRegions(fromPopstate = false) {
   if (!fromPopstate && history.state?.view === 'measure') history.back();
 }
 
+// ── Barra de contexto ─────────────────────────────────────────────────────
+function renderContextBar() {
+  const region      = REGIONS[state.regionId];
+  const hasBilateral = Object.values(region.movements).some(m => m.bilateral);
+  const hasPassive   = Object.values(region.movements).some(m => m.modes.includes('pasiva'));
+
+  const bar = document.getElementById('contextBar');
+  bar.style.display = (hasBilateral || hasPassive) ? '' : 'none';
+  document.getElementById('ctxSideGroup').style.display = hasBilateral ? '' : 'none';
+  document.getElementById('ctxModeGroup').style.display = hasPassive   ? '' : 'none';
+
+  document.getElementById('ctxBtnIzq').classList.toggle('active', state.context.side === 'izquierda');
+  document.getElementById('ctxBtnDer').classList.toggle('active', state.context.side === 'derecha');
+  document.getElementById('ctxBtnAct').classList.toggle('active', state.context.mode === 'activa');
+  document.getElementById('ctxBtnPas').classList.toggle('active', state.context.mode === 'pasiva');
+}
+
+function setContextSide(side) {
+  state.context.side = side;
+  renderContextBar();
+  renderMovementGrid();
+}
+
+function setContextMode(mode) {
+  state.context.mode = mode;
+  renderContextBar();
+  renderMovementGrid();
+}
+
 // ── Renderizado de tarjetas de movimiento ─────────────────────────────────
 function renderMovementGrid() {
   const region = REGIONS[state.regionId];
-  const meas   = state.measurements[state.regionId];
   const grid   = document.getElementById('movementGrid');
   grid.innerHTML = '';
-  let done = 0, cardIndex = 0;
+  let cardIndex = 0;
 
   region.groups.forEach(group => {
     const label = document.createElement('span');
@@ -652,10 +733,7 @@ function renderMovementGrid() {
     label.textContent = group.label;
     grid.appendChild(label);
     group.ids.forEach(id => {
-      const def  = region.movements[id];
-      const val  = meas[id];
-      if (val !== null) done++;
-      grid.appendChild(buildCard(id, def, val, cardIndex++));
+      grid.appendChild(buildCard(id, region.movements[id], cardIndex++));
     });
     if (group.ids.length === 1) {
       const filler = document.createElement('div');
@@ -665,14 +743,25 @@ function renderMovementGrid() {
     }
   });
 
-  const total = Object.keys(region.movements).length;
+  renderContextBar();
+
+  const { done, total } = countSlots(state.regionId);
   document.getElementById('completionBadge').textContent = `${done} / ${total}`;
-  const any = Object.values(meas).some(v => v !== null);
+  const meas = state.measurements[state.regionId];
+  const any  = Object.values(meas).some(mov =>
+    Object.values(mov).some(sideSlots => Object.values(sideSlots).some(v => v !== null))
+  );
   document.getElementById('summaryCard').style.display = any ? 'block' : 'none';
   if (any) renderSummaryTable();
 }
 
-function buildCard(id, def, val, i) {
+function buildCard(id, def, i) {
+  const side   = effectiveSide(def);
+  const mode   = effectiveMode(def);
+  const meas   = state.measurements[state.regionId][id];
+  const val    = meas?.[side]?.[mode] ?? null;
+  const segsRaw = state.segmentData[state.regionId]?.[id]?.[side]?.[mode] ?? null;
+
   const card = document.createElement('div');
   const status = def.skipStatus ? '' : statusFor(val, def.ref);
   card.className = 'movement-card' + (val !== null && status ? ' ' + status : '');
@@ -686,12 +775,18 @@ function buildCard(id, def, val, i) {
   const btnCls   = val !== null ? 'btn-measure remeasure' : 'btn-measure';
   const btnLabel = val !== null ? 'Repetir' : 'Medir';
 
-  const segs     = val !== null ? state.segmentData[state.regionId]?.[id] : null;
   const strategy = STRATEGIES[def.measureType || 'standard'];
   const abbr = l => l.length <= 3 ? l : l[0];
-  const segHtml  = segs && strategy.twoSeg
-    ? `<div class="mov-segments"><span>${abbr(strategy.seg1Label)}</span><span>${segs.seg1}°</span><span>${abbr(strategy.seg2Label)}</span><span>${segs.seg2}°</span></div>`
+  const segHtml  = segsRaw && strategy.twoSeg
+    ? `<div class="mov-segments"><span>${abbr(strategy.seg1Label)}</span><span>${segsRaw.seg1}°</span><span>${abbr(strategy.seg2Label)}</span><span>${segsRaw.seg2}°</span></div>`
     : '';
+
+  const sides = def.bilateral ? ['izquierda', 'derecha'] : ['centro'];
+  const dotsHtml = sides.flatMap(s => def.modes.map(m => {
+    const v = meas?.[s]?.[m] ?? null;
+    const isCurrent = s === side && m === mode;
+    return `<span class="slot-dot${v !== null ? ' filled' : ''}${isCurrent ? ' current' : ''}"></span>`;
+  })).join('');
 
   card.innerHTML = `
     <div class="mov-top">
@@ -702,6 +797,7 @@ function buildCard(id, def, val, i) {
       ${badgeHtml}
     </div>
     <div class="mov-value-row">${valueHtml}${segHtml}</div>
+    <div class="slot-dots">${dotsHtml}</div>
     <button class="${btnCls}" onclick="openMeasurement('${id}')">${btnLabel}</button>`;
   return card;
 }
@@ -727,16 +823,22 @@ function renderSummaryTable() {
   const meas   = state.measurements[state.regionId];
   const tbody  = document.getElementById('romTableBody');
   tbody.innerHTML = '';
+  const sLabel = { izquierda: 'Izq.', derecha: 'Der.', centro: '' };
+  const mLabel = { activa: 'Act.', pasiva: 'Pas.' };
   Object.entries(region.movements).forEach(([id, def]) => {
-    const val = meas[id];
-    if (val === null) return;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${def.label}</td>
-      <td style="font-weight:500">${val}°</td>
-      <td>${def.skipStatus ? '—' : def.ref + '°'}</td>
-      <td>${def.skipStatus ? '' : badgeFor(val, def.ref)}</td>`;
-    tbody.appendChild(tr);
+    const sides = def.bilateral ? ['izquierda', 'derecha'] : ['centro'];
+    sides.forEach(side => def.modes.forEach(mode => {
+      const val = meas[id]?.[side]?.[mode];
+      if (val === null || val == null) return;
+      const parts = [def.label, def.bilateral ? sLabel[side] : '', def.modes.length > 1 ? mLabel[mode] : ''].filter(Boolean);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${parts.join(' ')}</td>
+        <td style="font-weight:500">${val}°</td>
+        <td>${def.skipStatus ? '—' : def.ref + '°'}</td>
+        <td>${def.skipStatus ? '' : badgeFor(val, def.ref)}</td>`;
+      tbody.appendChild(tr);
+    }));
   });
 }
 
@@ -749,7 +851,12 @@ function openMeasurement(id) {
     neutralRef: null, gravRef: null, peakDelta: 0, result: null, seg1Value: null
   });
   tiltInvalid = false;
-  document.getElementById('sheetTitle').textContent    = def.label;
+  const sideLabel = { izquierda: 'Izq.', derecha: 'Der.' };
+  const ctxParts  = [
+    def.bilateral             ? sideLabel[state.context.side]  : null,
+    def.modes.length > 1      ? state.context.mode             : null
+  ].filter(Boolean);
+  document.getElementById('sheetTitle').textContent     = def.label + (ctxParts.length ? ' · ' + ctxParts.join(' · ') : '');
   document.getElementById('sheetInstruction').innerHTML = def.instruction || '';
   resetAngleDisplay();
   strategy.onOpen(def);
@@ -806,7 +913,10 @@ function stopMeasurement() {
 }
 
 function saveResult() {
-  state.measurements[state.regionId][state.active.movementId] = state.active.result;
+  const def  = REGIONS[state.regionId].movements[state.active.movementId];
+  const side = effectiveSide(def);
+  const mode = effectiveMode(def);
+  state.measurements[state.regionId][state.active.movementId][side][mode] = state.active.result;
   closeMeasurement();
   renderMovementGrid();
   scheduleIDBSync();
@@ -989,7 +1099,9 @@ function captureSegment2() {
   const def      = REGIONS[state.regionId].movements[state.active.movementId];
   const strategy = STRATEGIES[def.measureType || 'standard'];
   const { result, seg1, seg2 } = strategy.capture2(def, state.active.seg1Value);
-  state.segmentData[state.regionId][state.active.movementId] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
+  const side = effectiveSide(def);
+  const mode = effectiveMode(def);
+  state.segmentData[state.regionId][state.active.movementId][side][mode] = { seg1: Math.round(seg1), seg2: Math.round(seg2) };
   state.active.result = result;
   state.active.phase  = 'done';
   document.getElementById('angleValue').textContent = result + '°';
@@ -999,27 +1111,36 @@ function captureSegment2() {
 }
 
 // ── Export ────────────────────────────────────────────────────────────────
+function hasAnySlot(regionId) {
+  return Object.values(state.measurements[regionId] || {}).some(mov =>
+    Object.values(mov).some(sideSlots => Object.values(sideSlots).some(v => v !== null))
+  );
+}
+
 function buildROMPayload() {
-  const measured = Object.entries(REGIONS)
-    .filter(([id]) => Object.values(state.measurements[id] || {}).some(v => v !== null));
+  const measured = Object.entries(REGIONS).filter(([id]) => hasAnySlot(id));
   return {
     src:     'physiq-motion',
     patient: document.getElementById('patientName').value.trim(),
     fecha:   new Date().toLocaleDateString('es-ES'),
     regions: Object.fromEntries(
-      measured.map(([id, def]) => [id, {
-        label: def.label,
-        rom: Object.fromEntries(
-          Object.entries(state.measurements[id])
-            .filter(([, v]) => v !== null)
-            .map(([movId, val]) => [movId, {
-              label:   def.movements[movId].label,
-              value:   val,
-              ref:     def.movements[movId].ref,
-              deficit: val < def.movements[movId].ref * 0.9
-            }])
-        )
-      }])
+      measured.map(([id, def]) => {
+        const movEntries = Object.entries(def.movements).map(([movId, movDef]) => {
+          const meas  = state.measurements[id][movId];
+          const sides = movDef.bilateral ? ['izquierda', 'derecha'] : ['centro'];
+          const slots = Object.fromEntries(sides.map(side => [
+            side,
+            Object.fromEntries(movDef.modes.map(mode => {
+              const v = meas[side][mode];
+              return [mode, v !== null ? { value: v, deficit: v < movDef.ref * 0.9 } : null];
+            }))
+          ]));
+          const hasValue = sides.some(s => movDef.modes.some(m => meas[s][m] !== null));
+          if (!hasValue) return null;
+          return [movId, { label: movDef.label, ref: movDef.ref, bilateral: movDef.bilateral, modes: movDef.modes, slots }];
+        }).filter(Boolean);
+        return [id, { label: def.label, rom: Object.fromEntries(movEntries) }];
+      })
     )
   };
 }
@@ -1027,11 +1148,20 @@ function buildROMPayload() {
 function copyContextToClipboard() {
   const rom = buildROMPayload();
   const patient = rom.patient ? `\nPaciente: ${rom.patient}` : '';
+  const sideLabel = { izquierda: 'Izq.', derecha: 'Der.', centro: '' };
+  const modeLabel = { activa: 'Act.', pasiva: 'Pas.' };
   const regions = Object.values(rom.regions).map(r => {
-    const movements = Object.values(r.rom).map(m =>
-      `  ${m.label}: ${m.value}°  (ref ${m.ref}°)${m.deficit ? ' ⚠' : ''}`
-    ).join('\n');
-    return `${r.label}:\n${movements}`;
+    const lines = [];
+    Object.values(r.rom).forEach(m => {
+      const sides = m.bilateral ? ['izquierda', 'derecha'] : ['centro'];
+      sides.forEach(side => m.modes.forEach(mode => {
+        const slot = m.slots[side]?.[mode];
+        if (!slot) return;
+        const parts = [m.label, m.bilateral ? sideLabel[side] : '', m.modes.length > 1 ? modeLabel[mode] : ''].filter(Boolean);
+        lines.push(`  ${parts.join(' ')}: ${slot.value}°  (ref ${m.ref}°)${slot.deficit ? ' ⚠' : ''}`);
+      }));
+    });
+    return `${r.label}:\n${lines.join('\n')}`;
   }).join('\n\n');
   const text = `MEDICIÓN PhysiQ-Motion${patient}\nFecha: ${rom.fecha}\n\n${regions}`;
   navigator.clipboard.writeText(text).then(() => showCopyFeedback());
@@ -1067,8 +1197,8 @@ function promptClearSession() {
     `${_sessionLabel}<br>¿Borrar y empezar de nuevo?`,
     'Borrar sesión',
     () => {
-      Object.values(state.measurements).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
-      Object.values(state.segmentData).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
+      clearAllSlots(state.measurements);
+      clearAllSlots(state.segmentData);
       const el = document.getElementById('patientName');
       if (el) el.value = '';
       if (state.regionId !== null) {
@@ -1093,8 +1223,8 @@ function promptSoftResetMotion() {
     'Se eliminarán las mediciones y el nombre del paciente. Los datos de otros satélites se conservarán.',
     'Reiniciar',
     () => {
-      Object.values(state.measurements).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
-      Object.values(state.segmentData).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
+      clearAllSlots(state.measurements);
+      clearAllSlots(state.segmentData);
       const el = document.getElementById('patientName');
       if (el) el.value = '';
       if (state.regionId !== null) {
@@ -1120,8 +1250,8 @@ function resetAll() {
     'Se eliminarán las mediciones de todas las regiones. La sesión y el nombre del paciente se conservarán.',
     'Vaciar mediciones',
     () => {
-      Object.values(state.measurements).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
-      Object.values(state.segmentData).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
+      clearAllSlots(state.measurements);
+      clearAllSlots(state.segmentData);
       renderMovementGrid();
       writeSession({ rom: null }).then(session => {
         updateSessionChip(session);
