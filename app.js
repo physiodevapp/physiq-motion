@@ -1089,6 +1089,7 @@ function promptClearSession() {
       clearSession().then(() => {
         updateSessionChip(null);
         _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });
+        _sessionCh.postMessage({ type: 'SESSION_CLEAR' });
       });
     }
   );
