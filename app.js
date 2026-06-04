@@ -398,6 +398,7 @@ const state = {
 // Lecturas crudas del sensor
 const sensor = { alpha: 0, beta: 0, gamma: 0 };
 const grav   = { x: 0, y: 0, z: 0 };
+let _popstateLock = false;
 function _pushState(state) {
   history.pushState(state, '');
 }
@@ -441,6 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('popstate', () => {
+  if (_popstateLock) { _popstateLock = false; return; }
   if (document.getElementById('measureOverlay').classList.contains('open')) {
     closeMeasurement(true);
   } else if (state.regionId !== null) {
@@ -764,7 +766,7 @@ function closeMeasurement(fromPopstate = false) {
   document.body.style.overflow = '';
   state.active.movementId = null;
   state.active.phase = 'idle';
-  if (!fromPopstate && history.state?.view === 'overlay') history.back();
+  if (!fromPopstate && history.state?.view === 'overlay') { _popstateLock = true; history.back(); }
 }
 
 function handleOverlayClick(e) {
