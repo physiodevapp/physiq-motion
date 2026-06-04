@@ -10,10 +10,10 @@ const REGIONS = {
       { label: 'Rotación',            ids: ['rot']                  }
     ],
     movements: {
-      flexion:   { label: 'Flexión',      bilateral: false, modes: ['activa'], axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 50, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia adelante hasta su rango máximo.' },
-      extension: { label: 'Extensión',    bilateral: false, modes: ['activa'], axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 60, icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia atrás hasta su rango máximo.' },
-      lat:       { label: 'Inc. Lateral', bilateral: true,  modes: ['activa'], axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 45, icon: '↔', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia el <strong>lado seleccionado</strong> hasta su rango máximo.' },
-      rot:       { label: 'Rotación',     bilateral: true,  modes: ['activa'], axis: 'alpha',   phoneOrientation: 'horizontal',     ref: 80, icon: '↺', placement: 'flat-left',         instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia el <strong>lado seleccionado</strong> hasta su rango máximo.' }
+      flexion:   { label: 'Flexión',      bilateral: false, modes: ['activa', 'pasiva'], axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 50, icon: '⬇', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia adelante hasta su rango máximo.' },
+      extension: { label: 'Extensión',    bilateral: false, modes: ['activa', 'pasiva'], axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 60, icon: '⬆', placement: 'sagittal-vertical', instruction: 'Coloca el teléfono <strong>de canto contra la sien</strong>, pantalla hacia fuera. El paciente parte de posición neutra e inclina la cabeza hacia atrás hasta su rango máximo.' },
+      lat:       { label: 'Inc. Lateral', bilateral: true,  modes: ['activa', 'pasiva'], axis: 'gravity', phoneOrientation: 'alpha-rotation', ref: 45, icon: '↔', placement: 'frontal-vertical',  instruction: 'Coloca el teléfono <strong>contra la frente</strong>, pantalla hacia el examinador. El paciente inclina la cabeza lateralmente hacia el <strong>lado seleccionado</strong> hasta su rango máximo.' },
+      rot:       { label: 'Rotación',     bilateral: true,  modes: ['activa', 'pasiva'], axis: 'alpha',   phoneOrientation: 'horizontal',     ref: 80, icon: '↺', placement: 'flat-left',         instruction: 'Coloca el teléfono <strong>plano sobre la cabeza del paciente con la pantalla hacia arriba</strong>. El paciente rota lentamente la cabeza hacia el <strong>lado seleccionado</strong> hasta su rango máximo.' }
     }
   },
   hombro: {
@@ -181,7 +181,7 @@ const REGIONS = {
     ],
     movements: {
       flexion: {
-        label: 'Flexión', bilateral: false, modes: ['activa'],
+        label: 'Flexión', bilateral: false, modes: ['activa', 'pasiva'],
         measureType: 'two-segment-vertical-signed',
         phoneOrientation: 'alpha-rotation', ref: 60, icon: '⬇',
         instruction: 'Paciente de pie, pies a la anchura de los hombros, rodillas en extensión. Se inclina hacia adelante al máximo y <strong>mantiene la posición</strong>.<br><strong>Paso 1</strong> — coloca el teléfono en <strong>modo landscape</strong>, apoya el borde largo sobre <strong>S1</strong> (a nivel de los hoyuelos sacros), pantalla en el plano sagital. Pulsa <em>Capturar S1</em>.<br><strong>Paso 2</strong> — sin mover al paciente, coloca el teléfono igual sobre <strong>T12/L1</strong> (última costilla → espina). Resultado = ángulo T12 − ángulo S1 (flexión lumbar pura).'
