@@ -697,10 +697,14 @@ function renderContextBar() {
   const hasBilateral = Object.values(region.movements).some(m => m.bilateral);
   const hasPassive   = Object.values(region.movements).some(m => m.modes.includes('pasiva'));
 
-  const bar = document.getElementById('contextBar');
-  bar.style.display = (hasBilateral || hasPassive) ? '' : 'none';
-  document.getElementById('ctxSideGroup').style.display = hasBilateral ? '' : 'none';
-  document.getElementById('ctxModeGroup').style.display = hasPassive   ? '' : 'none';
+  const bar    = document.getElementById('contextBar');
+  const sideEl = document.getElementById('ctxSideGroup');
+  const modeEl = document.getElementById('ctxModeGroup');
+  bar.style.display    = (hasBilateral || hasPassive) ? '' : 'none';
+  sideEl.style.display = hasBilateral ? '' : 'none';
+  modeEl.style.display = hasPassive   ? '' : 'none';
+  sideEl.style.gridColumn = '1';
+  modeEl.style.gridColumn = '2';
 
   document.getElementById('ctxBtnIzq').classList.toggle('active', state.context.side === 'izquierda');
   document.getElementById('ctxBtnDer').classList.toggle('active', state.context.side === 'derecha');
