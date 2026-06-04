@@ -398,11 +398,8 @@ const state = {
 // Lecturas crudas del sensor
 const sensor = { alpha: 0, beta: 0, gamma: 0 };
 const grav   = { x: 0, y: 0, z: 0 };
-let _popstateLock = false;
-const _inFrame = window !== window.parent;
 function _pushState(state) {
   history.pushState(state, '');
-  if (_inFrame) window.parent.postMessage({ type: 'PHYSIQ_HISTORY_PUSH' }, '*');
 }
 let sensorStarted = false;
 let sensorSeen    = false;
@@ -444,16 +441,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('popstate', () => {
-  if (_popstateLock) { _popstateLock = false; return; }
   if (document.getElementById('measureOverlay').classList.contains('open')) {
-    closeMeasurement();
+    closeMeasurement(true);
   } else if (state.regionId !== null) {
-    goBackToRegions();
+    goBackToRegions(true);
   }
-});
-
-window.addEventListener('message', e => {
-  if (e.data?.type === 'PHYSIQ_INTERNAL_BACK' && history.state?.view) history.back();
 });
 
 // ── Sensor ────────────────────────────────────────────────────────────────
@@ -638,12 +630,12 @@ function selectRegion(id) {
   renderMovementGrid();
 }
 
-function goBackToRegions() {
+function goBackToRegions(fromPopstate = false) {
   state.regionId = null;
   document.getElementById('measureScreen').style.display = 'none';
   document.getElementById('regionScreen').style.display = '';
   renderRegionGrid();
-  if (history.state?.view === 'measure') { _popstateLock = true; if (_inFrame) window.parent.postMessage({ type: 'PHYSIQ_HISTORY_POP' }, '*'); history.back(); }
+  if (!fromPopstate && history.state?.view === 'measure') history.back();
 }
 
 // ── Renderizado de tarjetas de movimiento ─────────────────────────────────
@@ -767,12 +759,12 @@ function openMeasurement(id) {
   _pushState({ view: 'overlay' });
 }
 
-function closeMeasurement() {
+function closeMeasurement(fromPopstate = false) {
   document.getElementById('measureOverlay').classList.remove('open');
   document.body.style.overflow = '';
   state.active.movementId = null;
   state.active.phase = 'idle';
-  if (history.state?.view === 'overlay') { _popstateLock = true; if (_inFrame) window.parent.postMessage({ type: 'PHYSIQ_HISTORY_POP' }, '*'); history.back(); }
+  if (!fromPopstate && history.state?.view === 'overlay') history.back();
 }
 
 function handleOverlayClick(e) {
@@ -1083,7 +1075,7 @@ function promptClearSession() {
         state.regionId = null;
         document.getElementById('measureScreen').style.display = 'none';
         document.getElementById('regionScreen').style.display = '';
-        if (history.state?.view === 'measure') { _popstateLock = true; if (_inFrame) window.parent.postMessage({ type: 'PHYSIQ_HISTORY_POP' }, '*'); history.back(); }
+        if (history.state?.view === 'measure') history.back();
       }
       renderRegionGrid();
       clearSession().then(() => {
