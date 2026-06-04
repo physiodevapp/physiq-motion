@@ -1080,10 +1080,10 @@ function promptClearSession() {
         if (history.state?.view === 'measure') history.back();
       }
       renderRegionGrid();
-      clearSession().then(() => {
-        updateSessionChip(null);
+      writeSession({ rom: null, patient: '' }).then(session => {
+        updateSessionChip(session);
         _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });
-        _sessionCh.postMessage({ type: 'SESSION_CLEAR' });
+        _sessionCh.postMessage({ type: 'SESSION_PATIENT', patient: '' });
       });
     }
   );
