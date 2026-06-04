@@ -1080,6 +1080,32 @@ function promptClearSession() {
         if (history.state?.view === 'measure') history.back();
       }
       renderRegionGrid();
+      clearSession().then(() => {
+        updateSessionChip(null);
+        _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });
+        _sessionCh.postMessage({ type: 'SESSION_CLEAR' });
+      });
+    }
+  );
+}
+
+function promptSoftResetMotion() {
+  showConfirmBanner(
+    '↺ Reiniciar Motion',
+    'Se eliminarán las mediciones y el nombre del paciente. Los datos de otros satélites se conservarán.',
+    'Reiniciar',
+    () => {
+      Object.values(state.measurements).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
+      Object.values(state.segmentData).forEach(r => Object.keys(r).forEach(k => { r[k] = null; }));
+      const el = document.getElementById('patientName');
+      if (el) el.value = '';
+      if (state.regionId !== null) {
+        state.regionId = null;
+        document.getElementById('measureScreen').style.display = 'none';
+        document.getElementById('regionScreen').style.display = '';
+        if (history.state?.view === 'measure') history.back();
+      }
+      renderRegionGrid();
       writeSession({ rom: null, patient: '' }).then(session => {
         updateSessionChip(session);
         _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });

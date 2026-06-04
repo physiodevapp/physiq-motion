@@ -40,6 +40,11 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 .sensor-badge.active{color:var(--green);border-color:rgba(56,217,169,0.35);background:rgba(56,217,169,0.08);}
 .sensor-badge.pending{color:var(--orange);border-color:rgba(255,159,67,0.35);background:rgba(255,159,67,0.08);}
 .sensor-badge.error{color:var(--red);border-color:rgba(255,107,107,0.35);background:rgba(255,107,107,0.08);}
+@media(max-width:480px){.sensor-badge{width:10px;height:10px;padding:0;border-radius:50%;font-size:0;letter-spacing:0;flex-shrink:0;}.sensor-badge.active{background:var(--green);border-color:var(--green);}.sensor-badge.pending{background:var(--orange);border-color:var(--orange);}.sensor-badge.error{background:var(--red);border-color:var(--red);}}
+/* ── Btn reset ───────────────────────────────────────────────────────────── */
+.btn-reset{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:6px 14px;border-radius:6px;font-family:'Outfit',sans-serif;font-size:0.8rem;cursor:pointer;transition:all 0.2s;}
+.btn-reset:hover{border-color:var(--accent);color:var(--accent);}
+@media(max-width:768px){.btn-reset-text{display:none;}}
 
 /* ── Main ────────────────────────────────────────────────────────────────── */
 main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px;transition:padding-top 0.25s ease;}
@@ -244,6 +249,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
   </div>
   <div class="header-right">
     <button id="sessionBtn" class="session-btn" onclick="promptClearSession()" aria-label="Sesión activa" title="Sesión activa"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg></button>
+    <button class="btn-reset" onclick="promptSoftResetMotion()">↺ <span class="btn-reset-text">Reiniciar</span></button>
     <button class="btn-translate" onclick="handleTranslateClick()" aria-label="View in English">🌐<span class="translate-tooltip">View in English<br>Right-click → Translate to English</span></button>
     <span class="sensor-badge" id="sensorBadge">Sin sensor</span>
   </div>
@@ -288,7 +294,6 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
         <span class="summary-title">Resumen global</span>
         <div style="display:flex;gap:8px;">
           <button onclick="copyContextToClipboard()" title="Copiar mediciones" style="background:none;border:1px solid var(--border2);border-radius:8px;padding:5px 10px;font-size:0.75rem;color:var(--text2);cursor:pointer;font-family:'DM Mono',monospace;">📋 Copiar</button>
-          <button onclick="promptClearSession()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:0.75rem;color:var(--text3);cursor:pointer;font-family:'DM Mono',monospace;">↺ Nueva sesión</button>
         </div>
       </div>
       <div class="region-chips" id="globalExportChips"></div>
