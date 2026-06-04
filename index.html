@@ -157,8 +157,8 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .region-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);}
 .region-chip .chip-count{color:var(--accent2);}
 .export-row{padding:10px 14px 14px;}
-.btn-reset{background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:10px;padding:13px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
-.btn-reset:hover{border-color:var(--text2);color:var(--text2);}
+.btn-measure-reset{background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:10px;padding:13px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
+.btn-measure-reset:hover{border-color:var(--text2);color:var(--text2);}
 
 /* ── Measurement overlay ─────────────────────────────────────────────────── */
 .measure-overlay{position:fixed;inset:0;z-index:200;background:rgba(10,13,18,0.75);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
@@ -325,7 +325,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
         <tbody id="romTableBody"></tbody>
       </table>
       <div class="export-row">
-        <button class="btn-reset" onclick="resetAll()">↺ <span class="btn-label-full">Reiniciar región</span><span class="btn-label-short">Reiniciar</span></button>
+        <button class="btn-measure-reset" onclick="resetAll()">↺ <span class="btn-label-full">Reiniciar región</span><span class="btn-label-short">Reiniciar</span></button>
       </div>
     </div>
   </section>
