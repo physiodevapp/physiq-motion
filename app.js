@@ -453,7 +453,7 @@ window.addEventListener('popstate', () => {
 // ── Sensor ────────────────────────────────────────────────────────────────
 function initSensor() {
   if (!window.DeviceOrientationEvent) {
-    setSensorBadge('error', 'Sin sensor');
+    setSensorBadge('error');
     document.getElementById('noSensorBanner').style.display = 'block';
     return;
   }
@@ -461,7 +461,7 @@ function initSensor() {
     typeof DeviceOrientationEvent?.requestPermission === 'function' ||
     typeof DeviceMotionEvent?.requestPermission     === 'function';
   if (needsPermission) {
-    setSensorBadge('pending', 'Requiere permiso');
+    setSensorBadge('pending');
     document.getElementById('permissionCard').style.display = 'block';
   } else {
     attachSensor();
@@ -477,7 +477,7 @@ async function requestPermission() {
       requests.push(DeviceMotionEvent.requestPermission());
     const results = await Promise.all(requests);
     if (results.some(r => r !== 'granted')) {
-      setSensorBadge('error', 'Permiso denegado');
+      setSensorBadge('error');
       return;
     }
     document.getElementById('permissionCard').style.display = 'none';
@@ -490,7 +490,7 @@ async function requestPermission() {
 function attachSensor() {
   if (sensorStarted) return;
   sensorStarted = true;
-  setSensorBadge('pending', 'Esperando...');
+  setSensorBadge('pending');
   window.addEventListener('deviceorientation', handleOrientation, true);
   window.addEventListener('devicemotion',      handleMotion,      true);
 }
@@ -516,7 +516,7 @@ function handleOrientation(e) {
       cfAngle = Math.acos(dot) * 180 / Math.PI;
     }
   }
-  if (!sensorSeen) { sensorSeen = true; setSensorBadge('active', 'Sensor activo'); }
+  if (!sensorSeen) { sensorSeen = true; setSensorBadge('active'); }
   updateLiveAngle();
 }
 
@@ -534,7 +534,7 @@ function handleMotion(e) {
     sensor.gamma = Math.atan2(grav.x, -grav.y) * 180 / Math.PI;
   }
 
-  if (!sensorSeen) { sensorSeen = true; setSensorBadge('active', 'Sensor activo'); }
+  if (!sensorSeen) { sensorSeen = true; setSensorBadge('active'); }
 
   const { phase, neutralRef, gravRef, movementId } = state.active;
   if (movementId && state.regionId) {
@@ -570,10 +570,8 @@ function handleMotion(e) {
   updateLiveAngle();
 }
 
-function setSensorBadge(cls, text) {
-  const b = document.getElementById('sensorBadge');
-  b.className = 'sensor-badge ' + cls;
-  b.textContent = text;
+function setSensorBadge(cls) {
+  document.getElementById('sensorBadge').className = 'sensor-badge ' + cls;
 }
 
 // ── Pantalla de regiones ──────────────────────────────────────────────────
