@@ -786,6 +786,19 @@ function buildCard(id, def, i) {
 
   const refHtml = def.ref != null ? `<div class="mov-ref">Ref: ${def.ref}°</div>` : '';
 
+  // Asymmetry index chips (bilateral only)
+  const iaHtml = (() => {
+    if (!def.bilateral) return '';
+    const chips = def.modes.map(mode => {
+      const ia = asymmetryFor(meas?.izquierda?.[mode] ?? null, meas?.derecha?.[mode] ?? null);
+      if (ia === null) return '';
+      const cls    = ia < 10 ? 'ia-sym' : ia <= 20 ? 'ia-mod' : 'ia-asym';
+      const prefix = def.modes.length > 1 ? (mode === 'activa' ? 'A ' : 'P ') : '';
+      return `<span class="ia-chip ${cls}">${prefix}${ia}%</span>`;
+    }).filter(Boolean).join('');
+    return chips ? `<div class="mov-ia-chips">${chips}</div>` : '';
+  })();
+
   // Grid rows always cover both modes; columns always Izq + Der
   const dataRows = ['activa', 'pasiva'].map(mode => {
     const cells = ['izquierda', 'derecha'].map(gridSide => {
@@ -825,6 +838,7 @@ function buildCard(id, def, i) {
         <div class="mov-label">${def.label}</div>
         ${refHtml}
       </div>
+      ${iaHtml}
     </div>
     <table class="mov-grid">
       <thead><tr><th></th><th>Izq</th><th>Der</th></tr></thead>
@@ -872,6 +886,13 @@ function badgeFor(val, ref) {
   return `<span class="badge badge-${s}">${labels[s]}</span>`;
 }
 
+function asymmetryFor(l, r) {
+  if (l === null || r === null) return null;
+  const avg = (l + r) / 2;
+  if (avg === 0) return null;
+  return Math.round(Math.abs(l - r) / avg * 100);
+}
+
 // ── Tabla resumen ─────────────────────────────────────────────────────────
 function renderSummaryTable() {
   const region = REGIONS[state.regionId];
@@ -890,8 +911,7 @@ function renderSummaryTable() {
       tr.innerHTML = `
         <td>${parts.join(' ')}</td>
         <td style="font-weight:500">${val}°</td>
-        <td>${def.skipStatus ? '—' : def.ref + '°'}</td>
-        <td>${def.skipStatus ? '' : badgeFor(val, def.ref)}</td>`;
+        <td>${def.skipStatus ? '—' : def.ref + '°'}</td>`;
       tbody.appendChild(tr);
     }));
   });
