@@ -471,7 +471,6 @@ let cfLastTime = null;
 // ── Init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   history.replaceState(null, '');
-  document.getElementById('summaryDate').textContent = new Date().toLocaleDateString('es-ES');
   renderRegionGrid();
   initSensor();
   document.getElementById('patientName').addEventListener('input', scheduleIDBSync);
@@ -755,8 +754,7 @@ function renderMovementGrid() {
   const any  = Object.values(meas).some(mov =>
     Object.values(mov).some(sideSlots => Object.values(sideSlots).some(v => v !== null))
   );
-  document.getElementById('summaryCard').style.display = any ? 'block' : 'none';
-  if (any) renderSummaryTable();
+  document.getElementById('btnRegionReset').style.display = any ? '' : 'none';
 }
 
 function buildCard(id, def, i) {
@@ -893,29 +891,6 @@ function asymmetryFor(l, r) {
   return Math.round(Math.abs(l - r) / avg * 100);
 }
 
-// ── Tabla resumen ─────────────────────────────────────────────────────────
-function renderSummaryTable() {
-  const region = REGIONS[state.regionId];
-  const meas   = state.measurements[state.regionId];
-  const tbody  = document.getElementById('romTableBody');
-  tbody.innerHTML = '';
-  const sLabel = { izquierda: 'Izq.', derecha: 'Der.', centro: '' };
-  const mLabel = { activa: 'Act.', pasiva: 'Pas.' };
-  Object.entries(region.movements).forEach(([id, def]) => {
-    const sides = def.bilateral ? ['izquierda', 'derecha'] : ['centro'];
-    sides.forEach(side => def.modes.forEach(mode => {
-      const val = meas[id]?.[side]?.[mode];
-      if (val === null || val == null) return;
-      const parts = [def.label, def.bilateral ? sLabel[side] : '', def.modes.length > 1 ? mLabel[mode] : ''].filter(Boolean);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${parts.join(' ')}</td>
-        <td style="font-weight:500">${val}°</td>
-        <td>${def.skipStatus ? '—' : def.ref + '°'}</td>`;
-      tbody.appendChild(tr);
-    }));
-  });
-}
 
 // ── Overlay de medición ───────────────────────────────────────────────────
 function openMeasurement(id) {

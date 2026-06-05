@@ -70,7 +70,10 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 /* ── Section header ──────────────────────────────────────────────────────── */
 .section-header{display:flex;justify-content:space-between;align-items:center;gap:8px;}
 .section-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;}
-.section-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);}
+.measure-subheader{display:flex;justify-content:space-between;align-items:center;padding:0 2px;}
+.completion-chip{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);}
+.btn-region-reset{background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:6px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:border-color 0.2s,color 0.2s;white-space:nowrap;}
+.btn-region-reset:hover{border-color:rgba(255,107,107,0.5);color:var(--red);}
 
 /* ── Screens ─────────────────────────────────────────────────────────────── */
 #regionScreen,#measureScreen{display:flex;flex-direction:column;gap:10px;}
@@ -168,18 +171,9 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
 .summary-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
 .summary-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--accent2);}
-.summary-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);}
-.rom-table{width:100%;border-collapse:collapse;font-size:12px;}
-.rom-table th{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:8px 14px;text-align:left;border-bottom:1px solid var(--border);}
-.rom-table td{padding:9px 14px;border-bottom:1px solid rgba(35,45,69,0.5);font-family:'DM Mono',monospace;color:var(--text);}
-.rom-table td:first-child{color:var(--text2);}
-.rom-table tr:last-child td{border-bottom:none;}
 .region-chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px;}
 .region-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);}
 .region-chip .chip-count{color:var(--accent2);}
-.export-row{padding:10px 14px 14px;}
-.btn-measure-reset{background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:10px;padding:13px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
-.btn-measure-reset:hover{border-color:var(--text2);color:var(--text2);}
 
 /* ── Measurement overlay ─────────────────────────────────────────────────── */
 .measure-overlay{position:fixed;inset:0;z-index:200;background:rgba(10,13,18,0.75);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
@@ -327,7 +321,10 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
     <div class="section-header">
       <button class="btn-back" onclick="goBackToRegions()">← Regiones</button>
       <span class="active-region-badge" id="activeRegionLabel"></span>
-      <span class="section-sub" id="completionBadge">0 / 0</span>
+    </div>
+    <div class="measure-subheader">
+      <span class="completion-chip" id="completionBadge">0 / 0</span>
+      <button class="btn-region-reset" id="btnRegionReset" onclick="resetAll()" style="display:none">↺ Vaciar mediciones</button>
     </div>
 
     <!-- Barra de contexto (lado / modo) -->
@@ -345,22 +342,6 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
     <!-- Tarjetas de movimiento -->
     <div class="movement-grid" id="movementGrid"></div>
 
-    <!-- Resumen -->
-    <div class="summary-card" id="summaryCard" style="display:none">
-      <div class="summary-header">
-        <span class="summary-title">Resumen</span>
-        <span class="summary-sub" id="summaryDate"></span>
-      </div>
-      <table class="rom-table">
-        <thead>
-          <tr><th>Movimiento</th><th>Medido</th><th>Ref.</th></tr>
-        </thead>
-        <tbody id="romTableBody"></tbody>
-      </table>
-      <div class="export-row">
-        <button class="btn-measure-reset" onclick="resetAll()">↺ Reiniciar región</button>
-      </div>
-    </div>
   </section>
 
 </main>
