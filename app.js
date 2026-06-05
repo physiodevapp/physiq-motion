@@ -796,7 +796,7 @@ function buildCard(id, def, i) {
       const prefix = def.modes.length > 1 ? (mode === 'activa' ? 'A ' : 'P ') : '';
       return `<span class="ia-chip ${cls}">${prefix}${ia}%</span>`;
     }).filter(Boolean).join('');
-    return chips ? `<div class="mov-ia-chips">${chips}</div>` : '';
+    return `<div class="mov-ia-chips">${chips}</div>`;
   })();
 
   // Grid rows always cover both modes; columns always Izq + Der
