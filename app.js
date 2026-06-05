@@ -982,6 +982,10 @@ function saveResult() {
   closeMeasurement();
   renderMovementGrid();
   scheduleIDBSync();
+  updateSessionChip({
+    patient: document.getElementById('patientName')?.value.trim() || '',
+    date: new Date().toLocaleDateString('es-ES')
+  });
 }
 
 function redoMeasurement() {
