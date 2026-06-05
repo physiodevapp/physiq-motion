@@ -73,6 +73,10 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .badge-count{color:var(--text3);font-size:10px;flex-shrink:0;}
 .btn-region-reset{background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:6px;padding:4px 8px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:border-color 0.2s,color 0.2s;flex-shrink:0;}
 .btn-region-reset:hover{border-color:rgba(255,107,107,0.5);color:var(--red);}
+.measure-sticky-header{position:sticky;top:64px;z-index:10;background:var(--bg);display:flex;flex-direction:column;gap:10px;padding-bottom:4px;box-shadow:0 8px 12px 4px var(--bg);}
+@media(max-width:768px){.measure-sticky-header{top:52px;}}
+@media(max-width:480px){.measure-sticky-header{top:48px;}}
+@media(max-height:500px) and (max-width:900px){.measure-sticky-header{top:44px;}}
 
 /* ── Screens ─────────────────────────────────────────────────────────────── */
 #regionScreen,#measureScreen{display:flex;flex-direction:column;gap:10px;}
@@ -321,14 +325,15 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 
   <!-- Pantalla 2: Medición de la región seleccionada -->
   <section id="measureScreen" style="display:none">
-    <div class="section-header">
-      <button class="btn-back" onclick="goBackToRegions()">← Regiones</button>
-      <span class="active-region-badge" id="activeRegionLabel"></span>
-      <button class="btn-region-reset" id="btnRegionReset" onclick="resetAll()" style="display:none">↺</button>
-    </div>
+    <div class="measure-sticky-header">
+      <div class="section-header">
+        <button class="btn-back" onclick="goBackToRegions()">← Regiones</button>
+        <span class="active-region-badge" id="activeRegionLabel"></span>
+        <button class="btn-region-reset" id="btnRegionReset" onclick="resetAll()" style="display:none">↺</button>
+      </div>
 
-    <!-- Barra de contexto (lado / modo) -->
-    <div class="context-bar" id="contextBar" style="display:none">
+      <!-- Barra de contexto (lado / modo) -->
+      <div class="context-bar" id="contextBar" style="display:none">
       <div class="ctx-group" id="ctxSideGroup">
         <button class="ctx-btn active" id="ctxBtnIzq" onclick="setContextSide('izquierda')">Izquierda</button>
         <button class="ctx-btn"        id="ctxBtnDer" onclick="setContextSide('derecha')">Derecha</button>
@@ -338,6 +343,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
         <button class="ctx-btn"        id="ctxBtnPas" onclick="setContextMode('pasiva')">Pasiva</button>
       </div>
     </div>
+    </div><!-- /.measure-sticky-header -->
 
     <!-- Tarjetas de movimiento -->
     <div class="movement-grid" id="movementGrid"></div>
