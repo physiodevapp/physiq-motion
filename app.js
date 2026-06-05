@@ -760,37 +760,64 @@ function renderMovementGrid() {
 }
 
 function buildCard(id, def, i) {
-  const side   = effectiveSide(def);
-  const mode   = effectiveMode(def);
-  const meas   = state.measurements[state.regionId][id];
-  const val    = meas?.[side]?.[mode] ?? null;
-  const segsRaw = state.segmentData[state.regionId]?.[id]?.[side]?.[mode] ?? null;
+  const meas     = state.measurements[state.regionId][id];
+  const segStore = state.segmentData[state.regionId];
+  const strategy = STRATEGIES[def.measureType || 'standard'];
+
+  const currentDataSide = effectiveSide(def);   // 'izquierda'|'derecha'|'centro'
+  const currentMode     = effectiveMode(def);
+
+  // Card border = worst status across all measured slots
+  let worstStatus = '';
+  if (!def.skipStatus) {
+    const rank = { ok: 1, borderline: 2, deficit: 3 };
+    const dataSides = def.bilateral ? ['izquierda', 'derecha'] : ['centro'];
+    dataSides.forEach(s => def.modes.forEach(m => {
+      const v = meas?.[s]?.[m] ?? null;
+      if (v === null) return;
+      const s2 = statusFor(v, def.ref);
+      if (!worstStatus || (rank[s2] || 0) > (rank[worstStatus] || 0)) worstStatus = s2;
+    }));
+  }
 
   const card = document.createElement('div');
-  const status = def.skipStatus ? '' : statusFor(val, def.ref);
-  card.className = 'movement-card' + (val !== null && status ? ' ' + status : '');
+  card.className = 'movement-card' + (worstStatus ? ' ' + worstStatus : '');
   card.style.animationDelay = (i * 0.05) + 's';
 
-  const badgeHtml = val !== null && !def.skipStatus ? badgeFor(val, def.ref) : '';
-  const valueHtml = val !== null
-    ? `<div class="mov-value ${status}">${val}°</div>`
-    : `<div class="mov-value">—</div>`;
-  const refHtml  = def.ref != null ? `<div class="mov-ref">Ref: ${def.ref}°</div>` : '';
-  const btnCls   = val !== null ? 'btn-measure remeasure' : 'btn-measure';
-  const btnLabel = val !== null ? 'Repetir' : 'Medir';
+  const refHtml = def.ref != null ? `<div class="mov-ref">Ref: ${def.ref}°</div>` : '';
 
-  const strategy = STRATEGIES[def.measureType || 'standard'];
-  const abbr = l => l.length <= 3 ? l : l[0];
-  const segHtml  = segsRaw && strategy.twoSeg
-    ? `<div class="mov-segments"><span>${abbr(strategy.seg1Label)}</span><span>${segsRaw.seg1}°</span><span>${abbr(strategy.seg2Label)}</span><span>${segsRaw.seg2}°</span></div>`
+  // Grid rows always cover both modes; columns always Izq + Der
+  const dataRows = ['activa', 'pasiva'].map(mode => {
+    const cells = ['izquierda', 'derecha'].map(gridSide => {
+      // map grid column to actual data key
+      const dataSide = def.bilateral ? gridSide : (gridSide === 'izquierda' ? 'centro' : null);
+      if (dataSide === null || !def.modes.includes(mode))
+        return `<td class="na">N/A</td>`;
+
+      const v    = meas?.[dataSide]?.[mode] ?? null;
+      const segs = strategy.twoSeg ? (segStore[state.regionId]?.[id]?.[dataSide]?.[mode] ?? null) : null;
+      const isCurrent = dataSide === currentDataSide && mode === currentMode;
+      const curCls    = isCurrent ? ' cur' : '';
+
+      if (v !== null) {
+        const sc     = def.skipStatus ? '' : statusFor(v, def.ref);
+        const segBtn = segs
+          ? ` <button class="seg-expand" onclick="toggleSegDetail('${id}','${dataSide}','${mode}',event)">▸</button>`
+          : '';
+        return `<td class="${sc}${curCls}">${v}°${segBtn}</td>`;
+      }
+      return `<td class="empty${curCls}">—</td>`;
+    }).join('');
+    return `<tr><th>${mode === 'activa' ? 'Act' : 'Pas'}</th>${cells}</tr>`;
+  }).join('');
+
+  const segDetailHtml = strategy.twoSeg
+    ? `<div class="mov-segs-detail" id="segs-${id}"></div>`
     : '';
 
-  const sides = def.bilateral ? ['izquierda', 'derecha'] : ['centro'];
-  const dotsHtml = sides.flatMap(s => def.modes.map(m => {
-    const v = meas?.[s]?.[m] ?? null;
-    const isCurrent = s === side && m === mode;
-    return `<span class="slot-dot${v !== null ? ' filled' : ''}${isCurrent ? ' current' : ''}"></span>`;
-  })).join('');
+  const currentVal = meas?.[currentDataSide]?.[currentMode] ?? null;
+  const btnCls     = currentVal !== null ? 'btn-measure remeasure' : 'btn-measure';
+  const btnLabel   = currentVal !== null ? 'Repetir' : 'Medir';
 
   card.innerHTML = `
     <div class="mov-top">
@@ -798,12 +825,36 @@ function buildCard(id, def, i) {
         <div class="mov-label">${def.label}</div>
         ${refHtml}
       </div>
-      ${badgeHtml}
     </div>
-    <div class="mov-value-row">${valueHtml}${segHtml}</div>
-    <div class="slot-dots">${dotsHtml}</div>
+    <table class="mov-grid">
+      <thead><tr><th></th><th>Izq</th><th>Der</th></tr></thead>
+      <tbody>${dataRows}</tbody>
+    </table>
+    ${segDetailHtml}
     <button class="${btnCls}" onclick="openMeasurement('${id}')">${btnLabel}</button>`;
   return card;
+}
+
+function toggleSegDetail(movId, side, mode, event) {
+  event.stopPropagation();
+  const detail = document.getElementById('segs-' + movId);
+  if (!detail) return;
+  const segs = state.segmentData[state.regionId]?.[movId]?.[side]?.[mode];
+  if (!segs) return;
+  const strategy = STRATEGIES[REGIONS[state.regionId].movements[movId].measureType || 'standard'];
+  const abbr = l => l.length <= 3 ? l : l[0];
+  const isSame = detail.dataset.side === side && detail.dataset.mode === mode && detail.classList.contains('open');
+  if (isSame) {
+    detail.classList.remove('open');
+    detail.innerHTML = '';
+    delete detail.dataset.side;
+    delete detail.dataset.mode;
+  } else {
+    detail.dataset.side = side;
+    detail.dataset.mode = mode;
+    detail.classList.add('open');
+    detail.innerHTML = `<span>${abbr(strategy.seg1Label)}: ${segs.seg1}°</span><span>${abbr(strategy.seg2Label)}: ${segs.seg2}°</span>`;
+  }
 }
 
 function statusFor(val, ref) {
