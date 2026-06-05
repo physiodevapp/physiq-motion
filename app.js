@@ -827,8 +827,12 @@ function buildCard(id, def, i) {
     : '';
 
   const currentVal = meas?.[currentDataSide]?.[currentMode] ?? null;
-  const btnCls     = currentVal !== null ? 'btn-measure remeasure' : 'btn-measure';
-  const btnLabel   = currentVal !== null ? 'Repetir' : 'Medir';
+  const btnHtml    = currentVal !== null
+    ? `<div class="btn-measure-row">
+         <button class="btn-clear" onclick="clearMeasurement('${id}','${currentDataSide}','${currentMode}')">✕</button>
+         <button class="btn-measure remeasure" onclick="openMeasurement('${id}')">Repetir</button>
+       </div>`
+    : `<button class="btn-measure" onclick="openMeasurement('${id}')">Medir</button>`;
 
   card.innerHTML = `
     <div class="mov-top">
@@ -843,8 +847,16 @@ function buildCard(id, def, i) {
       <tbody>${dataRows}</tbody>
     </table>
     ${segDetailHtml}
-    <button class="${btnCls}" onclick="openMeasurement('${id}')">${btnLabel}</button>`;
+    ${btnHtml}`;
   return card;
+}
+
+function clearMeasurement(movId, side, mode) {
+  state.measurements[state.regionId][movId][side][mode] = null;
+  const seg = state.segmentData[state.regionId]?.[movId]?.[side];
+  if (seg) seg[mode] = null;
+  scheduleIDBSync();
+  renderMovementGrid();
 }
 
 function toggleSegDetail(movId, side, mode, event) {
