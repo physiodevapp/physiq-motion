@@ -70,9 +70,8 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 /* ── Section header ──────────────────────────────────────────────────────── */
 .section-header{display:flex;justify-content:space-between;align-items:center;gap:8px;}
 .section-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;}
-.measure-subheader{display:flex;justify-content:space-between;align-items:center;padding:0 2px;}
-.completion-chip{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);}
-.btn-region-reset{background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:6px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:border-color 0.2s,color 0.2s;white-space:nowrap;}
+.badge-count{color:var(--text3);font-size:10px;flex-shrink:0;}
+.btn-region-reset{background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:6px;padding:4px 8px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:border-color 0.2s,color 0.2s;flex-shrink:0;}
 .btn-region-reset:hover{border-color:rgba(255,107,107,0.5);color:var(--red);}
 
 /* ── Screens ─────────────────────────────────────────────────────────────── */
@@ -92,7 +91,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 /* ── Back button ─────────────────────────────────────────────────────────── */
 .btn-back{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:5px 10px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:border-color 0.2s,color 0.2s;white-space:nowrap;flex-shrink:0;}
 .btn-back:hover{border-color:var(--text2);color:var(--text);}
-.active-region-badge{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);border:1px solid rgba(192,132,252,0.3);background:rgba(192,132,252,0.08);padding:5px 10px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-left:auto;}
+.active-region-badge{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);border:1px solid rgba(192,132,252,0.3);background:rgba(192,132,252,0.08);padding:5px 10px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-left:auto;display:flex;align-items:center;gap:6px;}
 .header-right{display:flex;align-items:center;gap:0.75rem;}
 .btn-translate{position:relative;background:transparent;border:none;color:var(--text3);font-size:1rem;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color 0.2s;line-height:1;}
 .btn-translate:hover{color:var(--text2);}
@@ -321,10 +320,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
     <div class="section-header">
       <button class="btn-back" onclick="goBackToRegions()">← Regiones</button>
       <span class="active-region-badge" id="activeRegionLabel"></span>
-    </div>
-    <div class="measure-subheader">
-      <span class="completion-chip" id="completionBadge">0 / 0</span>
-      <button class="btn-region-reset" id="btnRegionReset" onclick="resetAll()" style="display:none">↺ Vaciar mediciones</button>
+      <button class="btn-region-reset" id="btnRegionReset" onclick="resetAll()" style="display:none">↺</button>
     </div>
 
     <!-- Barra de contexto (lado / modo) -->

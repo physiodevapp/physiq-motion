@@ -678,7 +678,7 @@ function selectRegion(id) {
   state.regionId = id;
   document.getElementById('regionScreen').style.display = 'none';
   document.getElementById('measureScreen').style.display = '';
-  document.getElementById('activeRegionLabel').textContent = REGIONS[id].label;
+  document.getElementById('activeRegionLabel').innerHTML = `${REGIONS[id].label} <span class="badge-count" id="completionBadge"></span>`;
   renderMovementGrid();
 }
 
