@@ -668,7 +668,7 @@ function renderGlobalExport() {
   if (!measured.length) { card.style.display = 'none'; return; }
   chips.innerHTML = measured.map(([id, def]) => {
     const { done, total } = countSlots(id);
-    return `<span class="region-chip">${def.label} <span class="chip-count">${done}/${total}</span></span>`;
+    return `<span class="region-chip" onclick="selectRegion('${id}')">${def.label} <span class="chip-count">${done}/${total}</span></span>`;
   }).join('');
   card.style.display = 'block';
 }
