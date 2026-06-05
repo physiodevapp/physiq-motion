@@ -2,7 +2,9 @@
 
 Mobile-first inclinometer web app for measuring joint range of motion (ROM) using the phone's built-in sensors.
 
-**[→ Open app](https://physiodevapp.github.io/physiq-motion/)**
+**Primary entry point: [PhysiQ Hub](https://physiodevapp.github.io/physiq/)** — installs as a single PWA covering all PhysiQ apps.
+
+**Standalone: [→ Open app](https://physiodevapp.github.io/physiq-motion/)**
 
 ---
 
@@ -10,28 +12,30 @@ Mobile-first inclinometer web app for measuring joint range of motion (ROM) usin
 
 PhysiQ Motion uses the browser's `DeviceOrientationEvent` (fused accelerometer + magnetometer) to measure angular displacement without any external hardware. The examiner holds the phone against the patient's body segment, calibrates neutral, and records peak displacement for each movement.
 
-Results are classified against reference norms and can be exported directly to [PhysiQ Report](https://physiodevapp.github.io/physiq-report/).
+Results are classified against reference norms and shared with the rest of the PhysiQ ecosystem via a shared IndexedDB session.
 
 ## Features
 
-- Measure up to 6 movements per session (flexion, extension, lateral flexion L/R, rotation L/R)
+- **8 anatomical regions:** cervical, hombro, codo, muñeca, cadera, rodilla, tobillo, lumbar
+- **Bilateral tracking:** side-by-side Izquierda / Derecha slots for bilateral movements
+- **Active and passive ROM:** separate slots per movement where clinically relevant
 - Calibrate neutral position before each measurement
 - Live degree readout during measurement
 - Automatic deficit classification: Normal / Borderline / Deficit
-- Summary table with all measured movements
-- One-tap export to PhysiQ Report
+- Asymmetry index chips for bilateral movements
+- Global summary with all measured regions
+- Copy measurements to clipboard (📋)
 - Works on any modern Android or iOS device (iOS 13+ requires a permission tap)
 - No install, no account, no backend — runs entirely in the browser
 
 ## Sensor mapping
 
-| Axis | Movement | Phone placement |
-|------|----------|-----------------|
-| `beta` | Flexion / Extension | Vertical, screen facing examiner, against forehead |
-| `gamma` | Lateral flexion L/R | Vertical, screen facing examiner, against temple |
-| `alpha` | Rotation L/R | Flat on top of head, screen facing up |
+Movements in the sagittal or frontal plane use the gravity vector (`axis: 'gravity'` or `'beta'`) — reliable indoors. Axial rotations use the compass heading (`axis: 'alpha'`) — sensitive to nearby metal and magnetic equipment; always calibrate from neutral.
 
-> **Note — rotation accuracy:** `alpha` is a compass heading (0–360°) and is sensitive to nearby metal surfaces and magnetic equipment. Always calibrate from neutral and keep the phone away from ferromagnetic objects.
+| Axis | Anatomical plane | Example movements |
+|------|-----------------|-------------------|
+| `gravity` / `beta` | Sagittal or Frontal | Cervical flex/ext, shoulder flex, knee flex |
+| `alpha` | Transverse (axial rotation) | Cervical rot, hip rot |
 
 ## Deficit classification
 
@@ -51,11 +55,13 @@ npx serve .
 
 Then open the URL shown in the terminal on your phone (same Wi-Fi network required).
 
-## Session & export
+## Session & data sharing
 
-Measurements and the patient name are saved to a shared IndexedDB session (`physiq` DB) as you work — no manual save required. A session chip in the header shows the active patient. The session is shared across the PhysiQ ecosystem so any app can pick it up on startup.
+Measurements and the patient name are saved to a shared IndexedDB session (`physiq` DB v3) as you work — no manual save required. A session button (person icon) in the header shows when a session is active.
 
-Tapping **Export** opens PhysiQ Assessment or PhysiQ Report and writes the ROM payload to the shared session:
+The session is shared across the PhysiQ ecosystem via `BroadcastChannel('physiq-session')` and IDB. physiq-report picks up the ROM data automatically on startup or in real time.
+
+### ROM payload schema
 
 ```json
 {
@@ -65,7 +71,17 @@ Tapping **Export** opens PhysiQ Assessment or PhysiQ Report and writes the ROM p
   "regions": {
     "<regionId>": {
       "label": "...",
-      "rom": { "<movementId>": { "label": "...", "value": 45, "ref": 50, "deficit": false } }
+      "rom": {
+        "<movementId>": {
+          "label": "...", "ref": 50,
+          "bilateral": true,
+          "modes": ["activa", "pasiva"],
+          "slots": {
+            "izquierda": { "activa": { "value": 45, "deficit": false }, "pasiva": null },
+            "derecha":   { "activa": { "value": 40, "deficit": true },  "pasiva": null }
+          }
+        }
+      }
     }
   }
 }
@@ -73,12 +89,13 @@ Tapping **Export** opens PhysiQ Assessment or PhysiQ Report and writes the ROM p
 
 ## PhysiQ ecosystem
 
-| App | URL | Role |
-|-----|-----|------|
-| PhysiQ Assessment | https://physiodevapp.github.io/physiq-assessment/ | 5-phase clinical assessment |
-| PhysiQ Report | https://physiodevapp.github.io/physiq-report/ | Audio transcription + AI report generation |
-| PhysiQ Motion | https://physiodevapp.github.io/physiq-motion/ | Joint motion measurement |
+| App | Role |
+|-----|------|
+| [PhysiQ Hub](https://physiodevapp.github.io/physiq/) | Single installable PWA, navigation shell, audio recorder |
+| [PhysiQ Assessment](https://physiodevapp.github.io/physiq-assessment/) | 5-phase clinical assessment |
+| [PhysiQ Report](https://physiodevapp.github.io/physiq-report/) | Audio transcription + AI report generation |
+| [PhysiQ Motion](https://physiodevapp.github.io/physiq-motion/) | Joint motion measurement |
 
 ## Deployment
 
-Push to `main` — GitHub Pages deploys automatically.
+Push to `main` — GitHub Pages deploys automatically. The CD pipeline also copies files into the hub repo (`physiq/motion/`).

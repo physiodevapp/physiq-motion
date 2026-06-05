@@ -4,9 +4,9 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ## Project Overview
 
-PhysiQ-Motion is a mobile-first inclinometer web app for measuring joint range of motion (ROM) using the phone's built-in accelerometer and magnetometer via `DeviceOrientationEvent`. It measures movements across any joint region and exports results to PhysiQ-Report.
+PhysiQ-Motion is a mobile-first inclinometer web app for measuring joint range of motion (ROM) using the phone's built-in accelerometer and magnetometer via `DeviceOrientationEvent`. It measures movements across any joint region and shares results with the PhysiQ ecosystem via a shared IDB session.
 
-**Deployment:** GitHub Pages — push to `main` deploys automatically.
+**Deployment:** GitHub Pages — push to `main` deploys automatically. The hub (`physiodevapp.github.io/physiq/`) is the primary entry point; this app is also accessible standalone at its own Pages URL.
 
 ## Development
 
@@ -37,7 +37,7 @@ git commit -m "short imperative title" -m "description when needed"
 | File | Role |
 |------|------|
 | `index.html` | DOM structure + all embedded CSS |
-| `app.js` | Sensor logic, state, measurement flow, UI updates, export |
+| `app.js` | Sensor logic, state, measurement flow, UI updates |
 | `lib/session.js` | Shared IDB session helpers (`openSessionDB`, `readSession`, `writeSession`, `clearSession`) |
 | `favicon.svg` | Protractor/angle icon |
 
@@ -50,7 +50,7 @@ Identical to `physiq-assessment` and `physiq-report`:
 - **Accent:** `--accent: #4f9cf9` (blue), `--accent2: #38d9a9` (green)
 - **Header:** Fixed 64px, `backdrop-filter: blur(16px)`, `rgba(10,13,18,0.92)` bg
 - **Cards:** `border-radius: 12px`, border `var(--border: #232d45)`
-- **Bottom sheet:** Fixed overlay, `transform: translateY(100%) → translateY(0)` transition, same pattern as physiq-assessment's action sheet
+- **Bottom sheet:** Fixed overlay, `transform: translateY(100%) → translateY(0)` transition
 
 ## Sensor Architecture
 
@@ -87,24 +87,24 @@ function angularDiff(a, b) {
 
 ## Regions
 
-7 regions defined in `REGIONS` (app.js:4). Each has `label`, `abbr`, `groups` (display grouping) and `movements` (keyed by movement ID):
+8 regions defined in `REGIONS` (app.js:4). Each has `label`, `abbr`, `groups` (display grouping) and `movements` (keyed by movement ID):
 
 | Region | Key | Movements |
 |--------|-----|-----------|
-| Cervical | `cervical` | flexion, extension, lat_izq, lat_der, rot_izq, rot_der |
-| Hombro | `hombro` | flexion, rot_ext, rot_int |
-| Codo | `codo` | flexion, extension, pronacion, supinacion |
-| Muñeca | `muneca` | flexion, extension, desv_rad, desv_cub |
-| Cadera | `cadera` | flex_supino, abd_supino, rot_ext_supino, rot_int_supino, rot_ext_sed, rot_int_sed |
-| Rodilla | `rodilla` | extension, flexion, pkb |
-| Tobillo | `tobillo` | dorsiflexion, plantarflexion |
-| Lumbar | `lumbar` | flexion |
+| Cervical | `cervical` | flexion, extension, lat *(bilateral)*, rot *(bilateral)* |
+| Hombro | `hombro` | flexion, rot_ext, rot_int *(all bilateral)* |
+| Codo | `codo` | flexion, extension, pronacion, supinacion *(all bilateral)* |
+| Muñeca | `muneca` | flexion, extension, desv_rad, desv_cub *(all bilateral, solo activa)* |
+| Cadera | `cadera` | flex_supino, abd_supino, rot_ext_supino, rot_int_supino, rot_ext_sed, rot_int_sed *(all bilateral)* |
+| Rodilla | `rodilla` | extension, flexion, pkb *(all bilateral)* |
+| Tobillo | `tobillo` | dorsiflexion, plantarflexion *(both bilateral)* |
+| Lumbar | `lumbar` | flexion *(unilateral)* |
 
-Each movement definition includes: `label`, `axis`, `phoneOrientation`, `ref` (reference value in degrees), `icon`, `instruction` (HTML), and optionally `measureType` (defaults to `'standard'`).
+Each movement definition includes: `label`, `bilateral` (bool), `modes` (`['activa']` or `['activa','pasiva']`), `axis`, `phoneOrientation`, `ref` (reference value in degrees), `icon`, `instruction` (HTML), and optionally `measureType` (defaults to `'standard'`).
 
 ## Measurement Strategies
 
-`STRATEGIES` (app.js:191) maps `measureType` to a full measurement lifecycle. Each strategy defines `steps`, `show` (which DOM elements are visible per phase), `onOpen`, `liveAngle`, and optionally `capture1`/`capture2` for two-segment types.
+`STRATEGIES` (app.js) maps `measureType` to a full measurement lifecycle. Each strategy defines `steps`, `show` (which DOM elements are visible per phase), `onOpen`, `liveAngle`, and optionally `capture1`/`capture2` for two-segment types.
 
 | `measureType` | Description | Used by |
 |--------------|-------------|---------|
@@ -120,15 +120,21 @@ Each movement definition includes: `label`, `axis`, `phoneOrientation`, `ref` (r
 ```js
 const state = {
   regionId: null,            // string key in REGIONS, or null
-  measurements: {            // nested by region → movement → value (degrees) or null
-    cervical: { flexion: null, extension: null, ... },
-    hombro:   { flexion: null, rot_ext: null, rot_int: null },
-    // ... all 8 regions
+  context: {
+    side: 'izquierda',       // 'izquierda' | 'derecha'
+    mode: 'activa'           // 'activa' | 'pasiva'
   },
-  segmentData: {             // two-segment results: { seg1, seg2 } per movement, or null
-    rodilla: { extension: null, flexion: null, pkb: null },
-    lumbar:  { flexion: null },
-    // ... mirrored structure for all regions
+  measurements: {            // nested by region → movement → bilateral/mode slots
+    cervical: {
+      flexion:   { centro:    { activa: null, pasiva: null } },
+      lat:       { izquierda: { activa: null, pasiva: null }, derecha: { activa: null, pasiva: null } },
+      // ...
+    },
+    // ... all 8 regions, each slot matches { bilateral, modes } from REGIONS definition
+  },
+  segmentData: {             // same slot structure as measurements; values are { seg1, seg2 } or null
+    rodilla: { extension: { ... }, flexion: { ... }, pkb: { ... } },
+    lumbar:  { flexion: { centro: { activa: null, pasiva: null } } },
   },
   active: {
     movementId: null,        // string key in current region's movements, or null
@@ -144,6 +150,12 @@ const state = {
 const sensor = { alpha: 0, beta: 0, gamma: 0 }; // beta/gamma derived from grav vector
 const grav   = { x: 0, y: 0, z: 0 };            // raw accelerationIncludingGravity
 ```
+
+**Slot helpers:**
+- `effectiveSide(def)` → `def.bilateral ? state.context.side : 'centro'`
+- `effectiveMode(def)` → mode from context, falling back to `def.modes[0]`
+- `countSlots(regionId)` → `{ done, total }` counting all non-null slots
+- `hasAnySlot(regionId)` → true if any slot ≠ null
 
 ## Measurement State Machine
 
@@ -165,19 +177,7 @@ idle ──[captureSegment1()]──► seg1 ──[captureSegment2()]──► 
 
 ## Reference Values
 
-Reference values (`ref`) are defined per movement inside `REGIONS` (app.js:4), not as a separate table. Examples:
-
-| Region | Movement | Reference |
-|--------|----------|-----------|
-| Cervical | Flexión / Extensión | 50° / 60° |
-| Cervical | Lat. Izq/Der | 45° |
-| Cervical | Rotación Izq/Der | 80° |
-| Hombro | Flexión | 170° |
-| Cadera | Flexión | 120° |
-| Rodilla | Flexión | 135° |
-| Tobillo | Dorsiflexión | 20° |
-
-Deficit classification (shown in summary table and card badges):
+Reference values (`ref`) are defined per movement inside `REGIONS`. Deficit classification:
 - **Normal** (green): ≥ 90% of reference
 - **Borderline** (orange): 75–89%
 - **Deficit** (red): < 75%
@@ -188,7 +188,7 @@ Movements with `skipStatus: true` (rodilla extensión) show no badge — the val
 
 IDB (`lib/session.js`) is the only persistence layer — no localStorage.
 
-**IDB schema** — DB `'physiq'` v2, store `'session'`, key `'active'`:
+**IDB schema** — DB `'physiq'` v3, store `'session'`, key `'active'`:
 ```js
 {
   sessionId:  timestamp,
@@ -202,35 +202,86 @@ IDB (`lib/session.js`) is the only persistence layer — no localStorage.
 ```
 
 **Session helpers** (`lib/session.js` — same contract in every physiq repo):
-- `openSessionDB()` — opens DB v2, creates `'session'` store on upgrade
+- `openSessionDB()` — opens DB v3, creates `'session'` store on upgrade
 - `readSession()` — reads `'active'`, returns null if expired (TTL 24h)
 - `writeSession(patch)` — merge-writes into `'active'`, creates if absent
 - `clearSession()` — deletes `'active'`
 
 **Write triggers:**
 - Patient name `input` → `scheduleIDBSync()` (debounced 800ms) → writes `{ patient, date, rom: buildROMPayload() }`
-- `saveResult()` → `scheduleIDBSync()` — same patch, captures latest measurements
-- `exportTo()` — also writes immediately before opening the destination app
+- `saveResult()` → `scheduleIDBSync()` — same patch
+- Optimistic UI update: `saveResult()` also calls `updateSessionChip()` immediately (before the debounced IDB write) using in-memory data
 
-**On startup:** `readSession()` silently fills the patient field and restores measurements from `session.rom.regions` into `state.measurements`, then re-renders the region grid. No prompt needed.
+**On startup:** `readSession()` silently fills the patient field and restores measurements from `session.rom` into `state.measurements`, then re-renders the region grid.
 
-**Session chip** in the header (`#sessionChip`) shows `● patient · date [×]` when active. `[×]` triggers `promptClearSession()` which shows a `showConfirmBanner` modal, then clears IDB and resets all state and DOM.
+**Session button** in the header (`#sessionBtn`) is a person-silhouette SVG icon, shown with `.active` class when a session is active. Clicking it calls `promptClearSession()` → `showConfirmBanner` → clears IDB and resets all state and DOM.
 
-## Export
+## BroadcastChannel protocol
 
-`buildROMPayload()` — collects all regions with at least one measurement:
+All satellites use `const _sessionCh = new BroadcastChannel('physiq-session')`.
+
+Messages emitted by physiq-motion:
+
+| Type | When | Payload |
+|------|------|---------|
+| `SESSION_PATIENT` | after each IDB write or reset | `{ patient: string }` |
+| `SESSION_ROM` | after each IDB write (`scheduleIDBSync`) or `resetAll()` | `{ rom: object \| null }` |
+| `SESSION_CLEAR` | after `promptClearSession()` full clear | — |
+
+## ROM Payload schema
+
+`buildROMPayload()` — collects all regions with at least one measured slot:
 ```js
 {
   src: 'physiq-motion',
   patient: string,
   fecha: 'DD/MM/YYYY',
   regions: {
-    [regionId]: { label, rom: { [movId]: { label, value, ref, deficit } } }
+    [regionId]: {
+      label,
+      rom: {
+        [movId]: {
+          label, ref,
+          bilateral: boolean,
+          modes: string[],
+          slots: {
+            izquierda: { activa: { value, deficit } | null, pasiva: ... },
+            derecha:   { ... },
+            // or: centro: { activa: ..., pasiva: ... }  (for unilateral movements)
+          }
+        }
+      }
+    }
   }
 }
 ```
 
-`exportTo(destination)` — opens `physiq-assessment` or `physiq-report` and writes `{ patient, date, rom }` to IDB. The destination reads from IDB on startup. URL params (`?rom=`) are kept for backward compatibility but IDB is the primary handoff.
+In physiq-report, always access `mov.slots[side][mode]`. Check `mov.bilateral` before iterating sides.
+
+## Resets
+
+- **`resetAll()`** — clears only the active region's measurements; emits `SESSION_ROM: null`. Does not touch patient or full session.
+- **`promptSoftResetMotion()`** — clears all measurements and patient name; emits `SESSION_ROM: null` + `SESSION_PATIENT: ''`. Leaves IDB intact for other satellites.
+- **`promptClearSession()`** — full clear: `clearSession()` + emits `SESSION_ROM: null` + `SESSION_CLEAR`.
+
+## Hub integration
+
+physiq-motion runs inside an iframe in the PhysiQ hub (`physiodevapp.github.io/physiq/`). On load:
+
+```js
+if (window.self !== window.top) {
+  document.body.classList.add('in-hub');
+  document.querySelector('.logo-main').addEventListener('click', () => {
+    window.parent.postMessage({ type: 'PHYSIQ_GO_HOME' }, '*');
+  });
+}
+```
+
+CSS `.in-hub .logo-main` adds a `‹` back-arrow hint. When running in-hub, clicking the logo navigates back to the hub home.
+
+`showConfirmBanner` sends `{ type: 'PHYSIQ_WIDGET_HIDE' }` to the parent when opening and `{ type: 'PHYSIQ_WIDGET_SHOW' }` when closing, so the hub recorder widget is hidden during modals.
+
+Navigation between satellites is the hub's responsibility — physiq-motion does not call `window.open` to launch other satellites.
 
 ## Dialogs
 
@@ -238,7 +289,9 @@ All confirmations use `showConfirmBanner(title, text, actionLabel, onConfirm)` �
 
 ## Sibling repos
 
-| Repo | URL | Role |
-|------|-----|------|
-| physiq-assessment | https://physiodevapp.github.io/physiq-assessment/ | 5-phase clinical assessment; exports to physiq-report |
-| physiq-report | https://physiodevapp.github.io/physiq-report/ | Audio transcription + Claude report generation |
+The hub at `physiodevapp.github.io/physiq/` is the primary entry point for the ecosystem.
+
+| Repo | Hub path | Role |
+|------|----------|------|
+| physiq-assessment | /physiq/assessment/ | 5-phase clinical assessment |
+| physiq-report | /physiq/report/ | Audio transcription + Claude report generation |
