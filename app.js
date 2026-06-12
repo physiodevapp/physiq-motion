@@ -1285,14 +1285,12 @@ function promptClearSession() {
 
 function promptSoftResetMotion() {
   showConfirmBanner(
-    '↺ Reiniciar ROM completo',
-    'Se eliminarán las mediciones y el nombre del paciente. Los datos de otros satélites se conservarán.',
-    'Reiniciar',
+    '↺ Borrar mediciones',
+    'Se eliminarán las mediciones de ROM. Los datos de otros satélites se conservarán.',
+    'Borrar',
     () => {
       clearAllSlots(state.measurements);
       clearAllSlots(state.segmentData);
-      const el = document.getElementById('patientName');
-      if (el) el.value = '';
       if (state.regionId !== null) {
         state.regionId = null;
         document.getElementById('measureScreen').style.display = 'none';
@@ -1300,10 +1298,9 @@ function promptSoftResetMotion() {
         if (history.state?.view === 'measure') history.back();
       }
       renderRegionGrid();
-      writeSession({ rom: null, patient: '' }).then(session => {
+      writeSession({ rom: null }).then(session => {
         updateSessionChip(session);
         _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });
-        _sessionCh.postMessage({ type: 'SESSION_PATIENT', patient: '' });
       });
     }
   );
@@ -1312,9 +1309,9 @@ function promptSoftResetMotion() {
 // ── Reset todas las mediciones ────────────────────────────────────────────
 function resetAll() {
   showConfirmBanner(
-    '¿Vaciar todas las mediciones?',
-    'Se eliminarán las mediciones de todas las regiones. La sesión y el nombre del paciente se conservarán.',
-    'Vaciar mediciones',
+    '↺ Borrar mediciones',
+    'Se eliminarán las mediciones de ROM. Los datos de otros satélites se conservarán.',
+    'Borrar',
     () => {
       clearAllSlots(state.measurements);
       clearAllSlots(state.segmentData);
