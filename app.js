@@ -451,6 +451,7 @@ const state = {
 const sensor = { alpha: 0, beta: 0, gamma: 0 };
 const grav   = { x: 0, y: 0, z: 0 };
 let _popstateLock = false;
+let _gridInstant  = false;
 function _pushState(state) {
   history.pushState(state, '');
 }
@@ -714,13 +715,17 @@ function renderContextBar() {
 function setContextSide(side) {
   state.context.side = side;
   renderContextBar();
+  _gridInstant = true;
   renderMovementGrid();
+  _gridInstant = false;
 }
 
 function setContextMode(mode) {
   state.context.mode = mode;
   renderContextBar();
+  _gridInstant = true;
   renderMovementGrid();
+  _gridInstant = false;
 }
 
 // ── Renderizado de tarjetas de movimiento ─────────────────────────────────
@@ -780,7 +785,11 @@ function buildCard(id, def, i) {
 
   const card = document.createElement('div');
   card.className = 'movement-card' + (worstStatus ? ' ' + worstStatus : '');
-  card.style.animationDelay = (i * 0.05) + 's';
+  if (_gridInstant) {
+    card.style.animation = 'none';
+  } else {
+    card.style.animationDelay = (i * 0.05) + 's';
+  }
 
   const refHtml = def.ref != null ? `<div class="mov-ref">Ref: ${def.ref}°</div>` : '';
 
@@ -1397,14 +1406,8 @@ function hideTranslateBanner() {
     let startY = 0, startTime = 0, dragging = false, delta = 0, snapTimer = null;
     const EASE = 'transform 0.3s cubic-bezier(0.32,0.72,0,1)';
 
-    function isHeaderTouch(target) {
-      return ['.sheet-handle', '.sheet-title']
-        .map(s => sheet.querySelector(s))
-        .some(el => el && el.contains(target));
-    }
-
     sheet.addEventListener('touchstart', e => {
-      if (!isHeaderTouch(e.target)) return;
+      if (e.touches[0].clientY - sheet.getBoundingClientRect().top > 72) return;
       startY = e.touches[0].clientY;
       startTime = Date.now();
       delta = 0;

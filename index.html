@@ -190,8 +190,6 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .measure-overlay.open .measure-sheet{transform:translateY(0);}
 .sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:14px auto 18px;touch-action:none;}
 .sheet-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
-.sheet-close{background:var(--surface2);border:1px solid var(--border);color:var(--text2);width:34px;height:34px;border-radius:8px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.2s;}
-.sheet-close:hover{background:var(--surface3);}
 .sheet-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);flex:1;touch-action:none;}
 .sheet-region{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);border:1px solid rgba(192,132,252,0.3);padding:4px 8px;border-radius:6px;}
 .sheet-instruction{background:var(--surface2);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--text2);line-height:1.55;margin-bottom:16px;}
@@ -359,7 +357,6 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
     <div class="sheet-handle"></div>
 
     <div class="sheet-header">
-      <button class="sheet-close" onclick="closeMeasurement()">✕</button>
       <div class="sheet-title" id="sheetTitle">—</div>
     </div>
 
