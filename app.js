@@ -1338,7 +1338,21 @@ let _idbSyncTimer = null;
 
 const _sessionCh = new BroadcastChannel('physiq-session');
 _sessionCh.onmessage = ({ data }) => {
-  if (data.type === 'SESSION_CLEAR') { updateSessionChip(null); return; }
+  if (data.type === 'SESSION_CLEAR') {
+    clearAllSlots(state.measurements);
+    clearAllSlots(state.segmentData);
+    const el = document.getElementById('patientName');
+    if (el) el.value = '';
+    if (state.regionId !== null) {
+      state.regionId = null;
+      document.getElementById('measureScreen').style.display = 'none';
+      document.getElementById('regionScreen').style.display = '';
+      if (history.state?.view === 'measure') history.back();
+    }
+    renderRegionGrid();
+    updateSessionChip(null);
+    return;
+  }
   if (data.type !== 'SESSION_PATIENT') return;
   const el = document.getElementById('patientName');
   if (!el || document.activeElement === el) return;
