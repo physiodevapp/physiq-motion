@@ -658,6 +658,8 @@ function renderRegionGrid() {
       <div class="region-count">${countText}</div>`;
     grid.appendChild(card);
   });
+  document.querySelector('.btn-reset').style.display =
+    Object.keys(REGIONS).some(id => hasAnySlot(id)) ? '' : 'none';
   renderGlobalExport();
 }
 
@@ -760,6 +762,8 @@ function renderMovementGrid() {
     Object.values(mov).some(sideSlots => Object.values(sideSlots).some(v => v !== null))
   );
   document.getElementById('btnRegionReset').style.display = any ? '' : 'none';
+  document.querySelector('.btn-reset').style.display =
+    Object.keys(REGIONS).some(id => hasAnySlot(id)) ? '' : 'none';
 }
 
 function buildCard(id, def, i) {
