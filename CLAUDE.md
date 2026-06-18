@@ -38,7 +38,7 @@ git commit -m "short imperative title" -m "description when needed"
 |------|------|
 | `index.html` | DOM structure + all embedded CSS |
 | `app.js` | Sensor logic, state, measurement flow, UI updates |
-| `lib/session.js` | Shared IDB session helpers (`openSessionDB`, `readSession`, `writeSession`, `clearSession`) |
+| `lib/session.js` | Shared IDB session helpers (`openSessionDB`, `readSession`, `writeSession`, `updateSession`, `clearSession`) |
 | `favicon.svg` | Protractor/angle icon |
 
 ## Design System
@@ -204,13 +204,18 @@ IDB (`lib/session.js`) is the only persistence layer — no localStorage.
 **Session helpers** (`lib/session.js` — same contract in every physiq repo):
 - `openSessionDB()` — opens DB v3, creates `'session'` store on upgrade
 - `readSession()` — reads `'active'`, returns null if expired (TTL 24h)
-- `writeSession(patch)` — merge-writes into `'active'`, creates if absent
+- `writeSession(patch)` — merge-writes into `'active'`, **creates if absent**
+- `updateSession(patch)` — atomic read-modify-write; **returns null if no session exists** (never creates one)
 - `clearSession()` — deletes `'active'`
 
 **Write triggers:**
 - Patient name `input` → `scheduleIDBSync()` (debounced 800ms) → writes `{ patient, date, rom: buildROMPayload() }`
 - `saveResult()` → `scheduleIDBSync()` — same patch
 - Optimistic UI update: `saveResult()` also calls `updateSessionChip()` immediately (before the debounced IDB write) using in-memory data
+
+**Ghost-write protection** — `scheduleIDBSync` uses two guards to prevent a stale `writeSession` from recreating a deleted session:
+- `_sessionGen` (integer) — incremented on every clear. The gen value is captured before the async `writeSession` call; if `_sessionGen !== gen` when the promise resolves, `clearSession()` is called to undo the stale write.
+- `_sessionCleared` (boolean) — set `true` synchronously on clear; blocks new writes from starting until genuine new session data appears (patient name or measurements), at which point it resets to `false`.
 
 **On startup:** `readSession()` silently fills the patient field and restores measurements from `session.rom` into `state.measurements`, then re-renders the region grid.
 
