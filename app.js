@@ -1276,6 +1276,9 @@ function promptClearSession() {
     `${_sessionLabel}<br>¿Borrar y empezar de nuevo?`,
     'Borrar sesión',
     () => {
+      clearTimeout(_idbSyncTimer);
+      _idbSyncTimer = null;
+      _sessionGen++;
       clearAllSlots(state.measurements);
       clearAllSlots(state.segmentData);
       const el = document.getElementById('patientName');
@@ -1339,10 +1342,14 @@ function resetAll() {
 
 // ── IDB sync ─────────────────────────────────────────────────────────────────
 let _idbSyncTimer = null;
+let _sessionGen   = 0;  // incremented on clear; stale writeSession .then() calls detect mismatch
 
 const _sessionCh = new BroadcastChannel('physiq-session');
 _sessionCh.onmessage = ({ data }) => {
   if (data.type === 'SESSION_CLEAR') {
+    clearTimeout(_idbSyncTimer);
+    _idbSyncTimer = null;
+    _sessionGen++;
     clearSession();
     clearAllSlots(state.measurements);
     clearAllSlots(state.segmentData);
@@ -1376,7 +1383,9 @@ function scheduleIDBSync() {
     const rom     = buildROMPayload();
     const hasMeasurements = Object.keys(rom.regions).length > 0;
     if (!patient && !hasMeasurements) return;
+    const gen = _sessionGen;
     writeSession({ patient, date, rom }).then(session => {
+      if (_sessionGen !== gen) { clearSession(); return; }
       if (session) updateSessionChip(session);
       if (patient) _sessionCh.postMessage({ type: 'SESSION_PATIENT', patient });
       _sessionCh.postMessage({ type: 'SESSION_ROM', rom });
