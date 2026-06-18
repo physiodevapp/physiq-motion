@@ -1361,6 +1361,7 @@ _sessionCh.onmessage = ({ data }) => {
   const el = document.getElementById('patientName');
   if (!el || document.activeElement === el) return;
   el.value = data.patient || '';
+  if (!data.patient) return;
   writeSession({ patient: data.patient || '' });
 };
 
