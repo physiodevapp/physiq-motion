@@ -1279,6 +1279,7 @@ function promptClearSession() {
       clearTimeout(_idbSyncTimer);
       _idbSyncTimer = null;
       _sessionGen++;
+      _sessionCleared = true;
       clearAllSlots(state.measurements);
       clearAllSlots(state.segmentData);
       const el = document.getElementById('patientName');
@@ -1341,8 +1342,9 @@ function resetAll() {
 }
 
 // ── IDB sync ─────────────────────────────────────────────────────────────────
-let _idbSyncTimer = null;
-let _sessionGen   = 0;  // incremented on clear; stale writeSession .then() calls detect mismatch
+let _idbSyncTimer   = null;
+let _sessionGen     = 0;    // incremented on clear; stale writeSession .then() calls detect mismatch
+let _sessionCleared = false; // true after a clear; blocks new writes until real data appears
 
 const _sessionCh = new BroadcastChannel('physiq-session');
 _sessionCh.onmessage = ({ data }) => {
@@ -1350,6 +1352,7 @@ _sessionCh.onmessage = ({ data }) => {
     clearTimeout(_idbSyncTimer);
     _idbSyncTimer = null;
     _sessionGen++;
+    _sessionCleared = true;
     clearSession();
     clearAllSlots(state.measurements);
     clearAllSlots(state.segmentData);
@@ -1383,6 +1386,7 @@ function scheduleIDBSync() {
     const rom     = buildROMPayload();
     const hasMeasurements = Object.keys(rom.regions).length > 0;
     if (!patient && !hasMeasurements) return;
+    if (_sessionCleared) _sessionCleared = false; // new data present — release the lock
     const gen = _sessionGen;
     writeSession({ patient, date, rom }).then(session => {
       if (_sessionGen !== gen) { clearSession(); return; }
