@@ -1343,6 +1343,7 @@ let _idbSyncTimer = null;
 const _sessionCh = new BroadcastChannel('physiq-session');
 _sessionCh.onmessage = ({ data }) => {
   if (data.type === 'SESSION_CLEAR') {
+    clearSession();
     clearAllSlots(state.measurements);
     clearAllSlots(state.segmentData);
     const el = document.getElementById('patientName');
@@ -1362,7 +1363,9 @@ _sessionCh.onmessage = ({ data }) => {
   if (!el || document.activeElement === el) return;
   el.value = data.patient || '';
   if (!data.patient) return;
-  writeSession({ patient: data.patient || '' });
+  writeSession({ patient: data.patient || '' }).then(session => {
+    if (session) updateSessionChip(session);
+  });
 };
 
 function scheduleIDBSync() {
