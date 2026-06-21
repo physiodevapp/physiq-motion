@@ -502,7 +502,12 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('popstate', () => {
   if (_popstateLock) { _popstateLock = false; return; }
   if (document.getElementById('measureOverlay').classList.contains('open')) {
-    closeMeasurement(true);
+    const p = state.active.phase;
+    if (p === 'measuring' || p === 'seg1') {
+      history.pushState({ view: 'overlay' }, '');
+    } else {
+      closeMeasurement(true);
+    }
   } else if (state.regionId !== null) {
     goBackToRegions(true);
   }
