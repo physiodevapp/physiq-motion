@@ -658,7 +658,6 @@ function renderRegionGrid() {
       : hasData ? `${done} / ${total}` : `${total} mediciones`;
 
     card.innerHTML = `
-      <div class="region-abbr">${def.abbr}</div>
       <div class="region-label">${def.label}</div>
       <div class="region-count">${countText}</div>`;
     grid.appendChild(card);
