@@ -571,11 +571,6 @@ function renderMovementGrid() {
 
   const { done, total } = countSlots(state.regionId);
   document.getElementById('completionBadge').textContent = `${done} / ${total}`;
-  const meas = state.measurements[state.regionId];
-  const any  = Object.values(meas).some(mov =>
-    Object.values(mov).some(sideSlots => Object.values(sideSlots).some(v => v !== null))
-  );
-  document.getElementById('btnRegionReset').style.display = any ? '' : 'none';
   document.querySelector('.btn-reset').style.display =
     Object.keys(REGIONS).some(id => hasAnySlot(id)) ? '' : 'none';
 }
@@ -1129,24 +1124,6 @@ function promptSoftResetMotion() {
         if (history.state?.view === 'measure') history.back();
       }
       renderRegionGrid();
-      writeSession({ rom: null }).then(session => {
-        updateSessionChip(session);
-        _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });
-      });
-    }
-  );
-}
-
-// ── Reset todas las mediciones ────────────────────────────────────────────
-function resetAll() {
-  showConfirmBanner(
-    '↺ Borrar mediciones',
-    'Se eliminarán las mediciones de ROM. Los datos de otros satélites se conservarán.',
-    'Borrar',
-    () => {
-      clearAllSlots(state.measurements);
-      clearAllSlots(state.segmentData);
-      renderMovementGrid();
       writeSession({ rom: null }).then(session => {
         updateSessionChip(session);
         _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });
