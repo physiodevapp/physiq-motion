@@ -1184,6 +1184,8 @@ _sessionCh.onmessage = ({ data }) => {
   }
   if (data.type === 'SESSION_ROM') {
     if (data.rom?.regions && Object.keys(data.rom.regions).length > 0) {
+      clearAllSlots(state.measurements);
+      clearAllSlots(state.segmentData);
       Object.entries(data.rom.regions).forEach(([regionId, regionData]) => {
         if (!state.measurements[regionId]) return;
         Object.entries(regionData.rom || {}).forEach(([movId, movData]) => {
