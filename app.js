@@ -1182,6 +1182,33 @@ _sessionCh.onmessage = ({ data }) => {
     updateSessionChip(null);
     return;
   }
+  if (data.type === 'SESSION_ROM') {
+    if (data.rom?.regions && Object.keys(data.rom.regions).length > 0) {
+      Object.entries(data.rom.regions).forEach(([regionId, regionData]) => {
+        if (!state.measurements[regionId]) return;
+        Object.entries(regionData.rom || {}).forEach(([movId, movData]) => {
+          if (!movData || !state.measurements[regionId][movId]) return;
+          Object.entries(movData.slots || {}).forEach(([side, sideSlots]) => {
+            if (!state.measurements[regionId][movId][side]) return;
+            Object.entries(sideSlots || {}).forEach(([mode, slotData]) => {
+              if (slotData?.value != null)
+                state.measurements[regionId][movId][side][mode] = slotData.value;
+            });
+          });
+        });
+      });
+    } else {
+      clearAllSlots(state.measurements);
+      clearAllSlots(state.segmentData);
+    }
+    renderRegionGrid();
+    if (state.regionId !== null) renderMovementGrid();
+    updateSessionChip({
+      patient: document.getElementById('patientName')?.value.trim() || '',
+      date: new Date().toLocaleDateString('es-ES')
+    });
+    return;
+  }
   if (data.type !== 'SESSION_PATIENT') return;
   const el = document.getElementById('patientName');
   if (!el || document.activeElement === el) return;
