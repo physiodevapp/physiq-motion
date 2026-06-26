@@ -42,6 +42,7 @@ git commit -m "short imperative title" -m "description when needed"
 |------|------|
 | `index.html` | DOM structure + all embedded CSS |
 | `app.js` | Sensor logic, state, measurement flow, UI updates |
+| `lib/regions.js` | Static REGIONS config — all 8 regions, movements, bilateral/mode/axis/ref/instruction |
 | `lib/session.js` | Shared IDB session helpers (`openSessionDB`, `readSession`, `writeSession`, `updateSession`, `clearSession`) |
 | `favicon.svg` | Protractor/angle icon |
 
@@ -91,7 +92,7 @@ function angularDiff(a, b) {
 
 ## Regions
 
-8 regions defined in `REGIONS` (app.js:4). Each has `label`, `abbr`, `groups` (display grouping) and `movements` (keyed by movement ID):
+8 regions defined in `REGIONS` (lib/regions.js). Each has `label`, `abbr`, `groups` (display grouping) and `movements` (keyed by movement ID):
 
 | Region | Key | Movements |
 |--------|-----|-----------|

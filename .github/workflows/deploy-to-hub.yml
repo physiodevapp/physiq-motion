@@ -25,6 +25,7 @@ jobs:
           cp index.html app.js sw.js manifest.json favicon.svg .nojekyll physiq-hub/motion/
           cp icons/icon-192.png icons/icon-512.png physiq-hub/motion/icons/
           cp lib/session.js physiq-hub/motion/lib/
+          cp lib/regions.js physiq-hub/motion/lib/
 
       - name: Commit and push
         working-directory: physiq-hub
