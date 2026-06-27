@@ -1,6 +1,26 @@
 'use strict';
 
 // ── Estrategias de medición ───────────────────────────────────────────────
+function makeTwoSegStrategy({ steps, seg1Label, seg2Label, btn1, btn2, captureSeg, liveDeg, calcResult }) {
+  const _liveDeg = liveDeg || captureSeg;
+  return {
+    steps, pulses: false, twoSeg: true,
+    seg1Label, seg2Label, btn1, btn2,
+    show: { idle: ['btnCaptureSeg1'], measuring: [], seg1: ['rowSeg1'], done: ['rowDone'] },
+    onOpen(def) {},
+    liveAngle(def) {
+      const p = state.active.phase;
+      if (p !== 'idle' && p !== 'seg1') return null;
+      return { deg: Math.round(_liveDeg()), isLive: true };
+    },
+    capture1(def) { return captureSeg(); },
+    capture2(def, seg1) {
+      const seg2 = captureSeg();
+      return { result: calcResult(seg1, seg2), seg1, seg2 };
+    },
+  };
+}
+
 // Cada entrada encapsula toda la lógica de un measureType:
 //   steps      — etiquetas de los 3 indicadores de fase
 //   pulses     — si el dot de paso 2 pulsa durante 'measuring'
@@ -86,100 +106,49 @@ const STRATEGIES = {
     },
   },
 
-  'two-segment-signed': {
-    steps: ['Muslo', 'Pierna', 'Listo'], pulses: false, twoSeg: true,
+  'two-segment-signed': makeTwoSegStrategy({
+    steps: ['Muslo', 'Pierna', 'Listo'],
     seg1Label: 'Muslo', seg2Label: 'Pierna',
     btn1: 'Capturar muslo',
     btn2: '<span class="sheet-lbl-full">Capturar pierna</span><span class="sheet-lbl-short">Pierna</span>',
-    show: { idle: ['btnCaptureSeg1'], measuring: [], seg1: ['rowSeg1'], done: ['rowDone'] },
-    onOpen(def) {},
-    liveAngle(def) {
-      const p = state.active.phase;
-      if (p !== 'idle' && p !== 'seg1') return null;
-      return { deg: Math.round(segmentInclination()), isLive: true };
-    },
-    capture1(def) { return segmentInclination(); },
-    capture2(def, seg1) {
-      const seg2 = segmentInclination();
-      return { result: Math.round(seg1 - seg2), seg1, seg2 };
-    },
-  },
+    captureSeg: () => segmentInclination(),
+    calcResult: (s1, s2) => Math.round(s1 - s2),
+  }),
 
-  'two-segment-beta': {
-    steps: ['Muslo', 'Pierna', 'Listo'], pulses: false, twoSeg: true,
+  'two-segment-beta': makeTwoSegStrategy({
+    steps: ['Muslo', 'Pierna', 'Listo'],
     seg1Label: 'Muslo', seg2Label: 'Pierna',
     btn1: 'Capturar muslo',
     btn2: '<span class="sheet-lbl-full">Capturar pierna</span><span class="sheet-lbl-short">Pierna</span>',
-    show: { idle: ['btnCaptureSeg1'], measuring: [], seg1: ['rowSeg1'], done: ['rowDone'] },
-    onOpen(def) {},
-    liveAngle(def) {
-      const p = state.active.phase;
-      if (p !== 'idle' && p !== 'seg1') return null;
-      return { deg: Math.round(Math.abs(angularDiff(sensor.beta, 90))), isLive: true };
-    },
-    capture1(def) { return Math.abs(angularDiff(sensor.beta, 90)); },
-    capture2(def, seg1) {
-      const seg2 = Math.abs(angularDiff(sensor.beta, 90));
-      return { result: Math.max(0, Math.round(180 - seg1 - seg2)), seg1, seg2 };
-    },
-  },
+    captureSeg: () => Math.abs(angularDiff(sensor.beta, 90)),
+    calcResult: (s1, s2) => Math.max(0, Math.round(180 - s1 - s2)),
+  }),
 
-  'two-segment-vertical': {
-    steps: ['S1', 'T12', 'Listo'], pulses: false, twoSeg: true,
+  'two-segment-vertical': makeTwoSegStrategy({
+    steps: ['S1', 'T12', 'Listo'],
     seg1Label: 'S1', seg2Label: 'T12',
-    btn1: 'Capturar S1',
-    btn2: 'Capturar T12',
-    show: { idle: ['btnCaptureSeg1'], measuring: [], seg1: ['rowSeg1'], done: ['rowDone'] },
-    onOpen(def) {},
-    liveAngle(def) {
-      const p = state.active.phase;
-      if (p !== 'idle' && p !== 'seg1') return null;
-      return { deg: Math.round(verticalInclination()), isLive: true };
-    },
-    capture1(def) { return verticalInclination(); },
-    capture2(def, seg1) {
-      const seg2 = verticalInclination();
-      return { result: Math.max(0, Math.round(seg2 - seg1)), seg1, seg2 };
-    },
-  },
+    btn1: 'Capturar S1', btn2: 'Capturar T12',
+    captureSeg: () => verticalInclination(),
+    calcResult: (s1, s2) => Math.max(0, Math.round(s2 - s1)),
+  }),
 
-  'two-segment-vertical-signed': {
-    steps: ['S1', 'T12', 'Listo'], pulses: false, twoSeg: true,
+  'two-segment-vertical-signed': makeTwoSegStrategy({
+    steps: ['S1', 'T12', 'Listo'],
     seg1Label: 'S1', seg2Label: 'T12',
-    btn1: 'Capturar S1',
-    btn2: 'Capturar T12',
-    show: { idle: ['btnCaptureSeg1'], measuring: [], seg1: ['rowSeg1'], done: ['rowDone'] },
-    onOpen(def) {},
-    liveAngle(def) {
-      const p = state.active.phase;
-      if (p !== 'idle' && p !== 'seg1') return null;
-      return { deg: Math.round(signedVerticalInclination()), isLive: true };
-    },
-    capture1(def) { return signedVerticalInclination(); },
-    capture2(def, seg1) {
-      const seg2 = signedVerticalInclination();
-      return { result: Math.round(seg2 - seg1), seg1, seg2 };
-    },
-  },
+    btn1: 'Capturar S1', btn2: 'Capturar T12',
+    captureSeg: () => signedVerticalInclination(),
+    calcResult: (s1, s2) => Math.round(s2 - s1),
+  }),
 
-  'two-segment-abs': {
-    steps: ['Muslo', 'Pierna', 'Listo'], pulses: false, twoSeg: true,
+  'two-segment-abs': makeTwoSegStrategy({
+    steps: ['Muslo', 'Pierna', 'Listo'],
     seg1Label: 'Muslo', seg2Label: 'Pierna',
     btn1: 'Capturar muslo',
     btn2: '<span class="sheet-lbl-full">Capturar pierna</span><span class="sheet-lbl-short">Pierna</span>',
-    show: { idle: ['btnCaptureSeg1'], measuring: [], seg1: ['rowSeg1'], done: ['rowDone'] },
-    onOpen(def) {},
-    liveAngle(def) {
-      const p = state.active.phase;
-      if (p !== 'idle' && p !== 'seg1') return null;
-      return { deg: Math.round(Math.abs(segmentInclination())), isLive: true };
-    },
-    capture1(def) { return segmentInclination(); },
-    capture2(def, seg1) {
-      const seg2 = segmentInclination();
-      return { result: Math.round(Math.min(180, Math.abs(seg1) + Math.abs(seg2))), seg1, seg2 };
-    },
-  },
+    captureSeg: () => segmentInclination(),
+    liveDeg:    () => Math.abs(segmentInclination()),
+    calcResult: (s1, s2) => Math.round(Math.min(180, Math.abs(s1) + Math.abs(s2))),
+  }),
 };
 
 function getStrategy() {
@@ -575,62 +544,42 @@ function renderMovementGrid() {
     Object.keys(REGIONS).some(id => hasAnySlot(id)) ? '' : 'none';
 }
 
-function buildCard(id, def, i) {
-  const meas     = state.measurements[state.regionId][id];
-  const segStore = state.segmentData[state.regionId];
-  const strategy = STRATEGIES[def.measureType || 'standard'];
+function calcWorstStatus(def, meas) {
+  if (def.skipStatus) return '';
+  const rank = { ok: 1, borderline: 2, deficit: 3 };
+  let worst = '';
+  const sides = def.bilateral ? ['izquierda', 'derecha'] : ['centro'];
+  sides.forEach(s => def.modes.forEach(m => {
+    const v = meas?.[s]?.[m] ?? null;
+    if (v === null) return;
+    const s2 = statusFor(v, def.ref);
+    if (!worst || (rank[s2] || 0) > (rank[worst] || 0)) worst = s2;
+  }));
+  return worst;
+}
 
-  const currentDataSide = effectiveSide(def);   // 'izquierda'|'derecha'|'centro'
-  const currentMode     = effectiveMode(def);
+function buildAsymmetryHtml(def, meas) {
+  if (!def.bilateral) return '';
+  const chips = def.modes.map(mode => {
+    const ia = asymmetryFor(meas?.izquierda?.[mode] ?? null, meas?.derecha?.[mode] ?? null);
+    if (ia === null) return '';
+    const cls    = ia < 10 ? 'ia-sym' : ia <= 20 ? 'ia-mod' : 'ia-asym';
+    const prefix = def.modes.length > 1 ? (mode === 'activa' ? 'A ' : 'P ') : '';
+    return `<span class="ia-chip ${cls}">${prefix}${ia}%</span>`;
+  }).filter(Boolean).join('');
+  return `<div class="mov-ia-chips">${chips}</div>`;
+}
 
-  // Card border = worst status across all measured slots
-  let worstStatus = '';
-  if (!def.skipStatus) {
-    const rank = { ok: 1, borderline: 2, deficit: 3 };
-    const dataSides = def.bilateral ? ['izquierda', 'derecha'] : ['centro'];
-    dataSides.forEach(s => def.modes.forEach(m => {
-      const v = meas?.[s]?.[m] ?? null;
-      if (v === null) return;
-      const s2 = statusFor(v, def.ref);
-      if (!worstStatus || (rank[s2] || 0) > (rank[worstStatus] || 0)) worstStatus = s2;
-    }));
-  }
-
-  const card = document.createElement('div');
-  card.className = 'movement-card' + (worstStatus ? ' ' + worstStatus : '');
-  if (_gridInstant) {
-    card.style.animation = 'none';
-  } else {
-    card.style.animationDelay = (i * 0.05) + 's';
-  }
-
-  const refHtml = def.ref != null ? `<div class="mov-ref">Ref: ${def.ref}°</div>` : '';
-
-  // Asymmetry index chips (bilateral only)
-  const iaHtml = (() => {
-    if (!def.bilateral) return '';
-    const chips = def.modes.map(mode => {
-      const ia = asymmetryFor(meas?.izquierda?.[mode] ?? null, meas?.derecha?.[mode] ?? null);
-      if (ia === null) return '';
-      const cls    = ia < 10 ? 'ia-sym' : ia <= 20 ? 'ia-mod' : 'ia-asym';
-      const prefix = def.modes.length > 1 ? (mode === 'activa' ? 'A ' : 'P ') : '';
-      return `<span class="ia-chip ${cls}">${prefix}${ia}%</span>`;
-    }).filter(Boolean).join('');
-    return `<div class="mov-ia-chips">${chips}</div>`;
-  })();
-
-  // Grid rows always cover both modes; columns always Izq + Der
-  const dataRows = ['activa', 'pasiva'].map(mode => {
+function buildDataRows(id, def, meas, strategy, segStore, currentDataSide, currentMode) {
+  return ['activa', 'pasiva'].map(mode => {
     const cells = ['izquierda', 'derecha'].map(gridSide => {
-      // map grid column to actual data key
       const dataSide = def.bilateral ? gridSide : (gridSide === 'izquierda' ? 'centro' : null);
       if (dataSide === null || !def.modes.includes(mode))
         return `<td class="na">N/A</td>`;
 
-      const v    = meas?.[dataSide]?.[mode] ?? null;
-      const segs = strategy.twoSeg ? (segStore[state.regionId]?.[id]?.[dataSide]?.[mode] ?? null) : null;
-      const isCurrent = dataSide === currentDataSide && mode === currentMode;
-      const curCls    = isCurrent ? ' cur' : '';
+      const v      = meas?.[dataSide]?.[mode] ?? null;
+      const segs   = strategy.twoSeg ? (segStore?.[id]?.[dataSide]?.[mode] ?? null) : null;
+      const curCls = (dataSide === currentDataSide && mode === currentMode) ? ' cur' : '';
 
       if (v !== null) {
         const sc     = def.skipStatus ? '' : statusFor(v, def.ref);
@@ -643,18 +592,36 @@ function buildCard(id, def, i) {
     }).join('');
     return `<tr><th>${mode === 'activa' ? 'Act' : 'Pas'}</th>${cells}</tr>`;
   }).join('');
+}
 
-  const segDetailHtml = strategy.twoSeg
-    ? `<div class="mov-segs-detail" id="segs-${id}"></div>`
-    : '';
-
+function buildCardButtons(id, meas, currentDataSide, currentMode) {
   const currentVal = meas?.[currentDataSide]?.[currentMode] ?? null;
-  const btnHtml    = currentVal !== null
+  return currentVal !== null
     ? `<div class="btn-measure-row">
          <button class="btn-clear" onclick="clearMeasurement('${id}','${currentDataSide}','${currentMode}')">✕</button>
          <button class="btn-measure remeasure" onclick="openMeasurement('${id}')">Repetir</button>
        </div>`
     : `<button class="btn-measure" onclick="openMeasurement('${id}')">Medir</button>`;
+}
+
+function buildCard(id, def, i) {
+  const meas        = state.measurements[state.regionId][id];
+  const segStore    = state.segmentData[state.regionId];
+  const strategy    = STRATEGIES[def.measureType || 'standard'];
+  const currentSide = effectiveSide(def);
+  const currentMode = effectiveMode(def);
+  const worstStatus = calcWorstStatus(def, meas);
+
+  const card = document.createElement('div');
+  card.className = 'movement-card' + (worstStatus ? ' ' + worstStatus : '');
+  if (_gridInstant) card.style.animation = 'none';
+  else card.style.animationDelay = (i * 0.05) + 's';
+
+  const refHtml       = def.ref != null ? `<div class="mov-ref">Ref: ${def.ref}°</div>` : '';
+  const iaHtml        = buildAsymmetryHtml(def, meas);
+  const dataRows      = buildDataRows(id, def, meas, strategy, segStore, currentSide, currentMode);
+  const segDetailHtml = strategy.twoSeg ? `<div class="mov-segs-detail" id="segs-${id}"></div>` : '';
+  const btnHtml       = buildCardButtons(id, meas, currentSide, currentMode);
 
   card.innerHTML = `
     <div class="mov-top">
