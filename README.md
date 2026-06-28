@@ -59,7 +59,7 @@ Then open the URL shown in the terminal on your phone (same Wi-Fi network requir
 
 Measurements and the patient name are saved to a shared IndexedDB session (`physiq` DB v3) as you work — no manual save required. A session button (person icon) in the header appears once a patient name is entered; clicking it clears the full session across all PhysiQ satellites.
 
-The session is shared across the PhysiQ ecosystem via `BroadcastChannel('physiq-session')` and IDB. physiq-report picks up the ROM data automatically on startup or in real time.
+The session is shared across the PhysiQ ecosystem via `BroadcastChannel('physiq-session')` and IDB. physiq-report picks up the ROM data in real time via BroadcastChannel; on startup it restores ROM data from IDB only if a patient name was entered in the prior session.
 
 ### ROM payload schema
 
