@@ -1054,10 +1054,8 @@ let _sessionLabel = '';
 function updateSessionChip(session) {
   const btn = document.getElementById('sessionBtn');
   if (!btn) return;
-  if (!session) { _sessionLabel = ''; btn.classList.remove('active'); return; }
-  _sessionLabel = session.patient
-    ? `${session.patient} · ${session.date || '—'}`
-    : `Sesión · ${session.date || '—'}`;
+  if (!session || !session.patient) { _sessionLabel = ''; btn.classList.remove('active'); return; }
+  _sessionLabel = `${session.patient} · ${session.date || '—'}`;
   btn.classList.add('active');
 }
 
@@ -1188,13 +1186,14 @@ function scheduleIDBSync() {
     const rom     = buildROMPayload();
     const hasMeasurements = Object.keys(rom.regions).length > 0;
     if (!patient && !hasMeasurements) return;
-    if (_sessionCleared) _sessionCleared = false; // new data present — release the lock
+    if (patient) _sessionCh.postMessage({ type: 'SESSION_PATIENT', patient });
+    _sessionCh.postMessage({ type: 'SESSION_ROM', rom });
+    if (!patient) return;
+    if (_sessionCleared) _sessionCleared = false;
     const gen = _sessionGen;
     writeSession({ patient, date, rom }).then(session => {
       if (_sessionGen !== gen) { clearSession(); return; }
       if (session) updateSessionChip(session);
-      if (patient) _sessionCh.postMessage({ type: 'SESSION_PATIENT', patient });
-      _sessionCh.postMessage({ type: 'SESSION_ROM', rom });
     });
   }, 800);
 }
