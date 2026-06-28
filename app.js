@@ -572,15 +572,30 @@ function buildAsymmetryHtml(def, meas) {
 
 function buildDataRows(id, def, meas, strategy, segStore, currentDataSide, currentMode) {
   return ['activa', 'pasiva'].map(mode => {
-    const cells = ['izquierda', 'derecha'].map(gridSide => {
-      const dataSide = def.bilateral ? gridSide : (gridSide === 'izquierda' ? 'centro' : null);
-      if (dataSide === null || !def.modes.includes(mode))
-        return `<td class="na">N/A</td>`;
+    const thLabel = mode === 'activa' ? 'Act' : 'Pas';
 
+    if (!def.bilateral) {
+      if (!def.modes.includes(mode))
+        return `<tr><th>${thLabel}</th><td colspan="2" class="na">N/A</td></tr>`;
+      const v      = meas?.centro?.[mode] ?? null;
+      const segs   = strategy.twoSeg ? (segStore?.[id]?.centro?.[mode] ?? null) : null;
+      const curCls = (currentDataSide === 'centro' && mode === currentMode) ? ' cur' : '';
+      if (v !== null) {
+        const sc     = def.skipStatus ? '' : statusFor(v, def.ref);
+        const segBtn = segs
+          ? ` <button class="seg-expand" onclick="toggleSegDetail('${id}','centro','${mode}',event)">▸</button>`
+          : '';
+        return `<tr><th>${thLabel}</th><td colspan="2" class="${sc}${curCls}">${v}°${segBtn}</td></tr>`;
+      }
+      return `<tr><th>${thLabel}</th><td colspan="2" class="empty${curCls}">—</td></tr>`;
+    }
+
+    const cells = ['izquierda', 'derecha'].map(dataSide => {
+      if (!def.modes.includes(mode))
+        return `<td class="na">N/A</td>`;
       const v      = meas?.[dataSide]?.[mode] ?? null;
       const segs   = strategy.twoSeg ? (segStore?.[id]?.[dataSide]?.[mode] ?? null) : null;
       const curCls = (dataSide === currentDataSide && mode === currentMode) ? ' cur' : '';
-
       if (v !== null) {
         const sc     = def.skipStatus ? '' : statusFor(v, def.ref);
         const segBtn = segs
@@ -590,7 +605,7 @@ function buildDataRows(id, def, meas, strategy, segStore, currentDataSide, curre
       }
       return `<td class="empty${curCls}">—</td>`;
     }).join('');
-    return `<tr><th>${mode === 'activa' ? 'Act' : 'Pas'}</th>${cells}</tr>`;
+    return `<tr><th>${thLabel}</th>${cells}</tr>`;
   }).join('');
 }
 
@@ -632,7 +647,7 @@ function buildCard(id, def, i) {
       ${iaHtml}
     </div>
     <table class="mov-grid">
-      <thead><tr><th></th><th>Izq</th><th>Der</th></tr></thead>
+      ${def.bilateral ? '<thead><tr><th></th><th>Izq</th><th>Der</th></tr></thead>' : ''}
       <tbody>${dataRows}</tbody>
     </table>
     ${segDetailHtml}
