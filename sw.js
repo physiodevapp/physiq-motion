@@ -1,10 +1,11 @@
 'use strict';
 
-const CACHE = 'physiq-motion-v2';
+const CACHE = 'physiq-motion-v3';
 const ASSETS = [
   './',
   './index.html',
   './app.js',
+  './style.css',
   './favicon.svg',
   './manifest.json'
 ];
