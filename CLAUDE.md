@@ -215,16 +215,16 @@ IDB (`lib/session.js`) is the only persistence layer — no localStorage.
 
 **Write triggers:**
 - Patient name `input` → `scheduleIDBSync()` (debounced 800ms) → writes `{ patient, date, rom: buildROMPayload() }`
-- `saveResult()` → `scheduleIDBSync()` — same patch
+- `saveResult()` → `scheduleIDBSync()` — emits `SESSION_ROM` always (when measurements exist); writes IDB only if patient name is present
 - Optimistic UI update: `saveResult()` also calls `updateSessionChip()` immediately (before the debounced IDB write) using in-memory data
 
 **Ghost-write protection** — `scheduleIDBSync` uses two guards to prevent a stale `writeSession` from recreating a deleted session:
 - `_sessionGen` (integer) — incremented on every clear. The gen value is captured before the async `writeSession` call; if `_sessionGen !== gen` when the promise resolves, `clearSession()` is called to undo the stale write.
-- `_sessionCleared` (boolean) — set `true` synchronously on clear; blocks new writes from starting until genuine new session data appears (patient name or measurements), at which point it resets to `false`.
+- `_sessionCleared` (boolean) — set `true` synchronously on clear; blocks new writes from starting until a patient name is entered, at which point it resets to `false`.
 
 **On startup:** `readSession()` silently fills the patient field and restores measurements from `session.rom` into `state.measurements`, then re-renders the region grid.
 
-**Session button** in the header (`#sessionBtn`) is a person-silhouette SVG icon, shown with `.active` class when a session is active. Clicking it calls `promptClearSession()` → `showConfirmBanner` → clears IDB and resets all state and DOM.
+**Session button** in the header (`#sessionBtn`) is a person-silhouette SVG icon, shown with `.active` class only when a patient name is set (measurements without a name do not activate it). Clicking it calls `promptClearSession()` → `showConfirmBanner` → clears IDB and resets all state and DOM.
 
 ## BroadcastChannel protocol
 
@@ -234,8 +234,8 @@ Messages emitted by physiq-motion:
 
 | Type | When | Payload |
 |------|------|---------|
-| `SESSION_PATIENT` | after each IDB write or reset | `{ patient: string }` |
-| `SESSION_ROM` | after each IDB write (`scheduleIDBSync`) or `resetAll()` | `{ rom: object \| null }` |
+| `SESSION_PATIENT` | after `scheduleIDBSync` when patient name is present, or on reset | `{ patient: string }` |
+| `SESSION_ROM` | after `scheduleIDBSync` when measurements exist (with or without patient name), or `resetAll()` | `{ rom: object \| null }` |
 | `SESSION_CLEAR` | after `promptClearSession()` full clear | — |
 
 ## ROM Payload schema
