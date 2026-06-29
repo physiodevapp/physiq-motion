@@ -464,6 +464,7 @@ function selectRegion(id) {
   state.regionId = id;
   document.getElementById('regionScreen').style.display = 'none';
   document.getElementById('measureScreen').style.display = '';
+  document.querySelector('main').classList.add('in-measure');
   document.getElementById('activeRegionLabel').innerHTML = `${REGIONS[id].label} <span class="badge-count" id="completionBadge"></span>`;
   renderMovementGrid();
 }
@@ -472,6 +473,7 @@ function goBackToRegions(fromPopstate = false) {
   state.regionId = null;
   document.getElementById('measureScreen').style.display = 'none';
   document.getElementById('regionScreen').style.display = '';
+  document.querySelector('main').classList.remove('in-measure');
   renderRegionGrid();
   if (!fromPopstate && history.state?.view === 'measure') history.back();
 }
@@ -1077,6 +1079,7 @@ function promptClearSession() {
         state.regionId = null;
         document.getElementById('measureScreen').style.display = 'none';
         document.getElementById('regionScreen').style.display = '';
+        document.querySelector('main').classList.remove('in-measure');
         if (history.state?.view === 'measure') history.back();
       }
       renderRegionGrid();
@@ -1101,6 +1104,7 @@ function promptSoftResetMotion() {
         state.regionId = null;
         document.getElementById('measureScreen').style.display = 'none';
         document.getElementById('regionScreen').style.display = '';
+        document.querySelector('main').classList.remove('in-measure');
         if (history.state?.view === 'measure') history.back();
       }
       renderRegionGrid();
@@ -1133,6 +1137,7 @@ _sessionCh.onmessage = ({ data }) => {
       state.regionId = null;
       document.getElementById('measureScreen').style.display = 'none';
       document.getElementById('regionScreen').style.display = '';
+      document.querySelector('main').classList.remove('in-measure');
       if (history.state?.view === 'measure') history.back();
     }
     renderRegionGrid();
