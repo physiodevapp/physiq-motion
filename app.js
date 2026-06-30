@@ -248,9 +248,29 @@ let smoothedDelta = 0;
 let cfAngle    = 0;
 let cfLastTime = null;
 
+// ── Hub history helpers ───────────────────────────────────────────────────
+function _rebuildHubHistory() {
+  history.replaceState({ view: 'hub-exit' }, '');
+  history.pushState({ view: 'home' }, '');
+  if (state.regionId) history.pushState({ view: 'measure' }, '');
+}
+
+let _firstVisible = true;
+window.addEventListener('message', e => {
+  if (e.data?.type === 'PHYSIQ_SAT_VISIBLE' && document.body.classList.contains('in-hub')) {
+    if (_firstVisible) { _firstVisible = false; return; }
+    _rebuildHubHistory();
+  }
+});
+
 // ── Init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  history.replaceState(null, '');
+  if (document.body.classList.contains('in-hub')) {
+    history.replaceState({ view: 'hub-exit' }, '');
+    history.pushState({ view: 'home' }, '');
+  } else {
+    history.replaceState(null, '');
+  }
   renderRegionGrid();
   initSensor();
   document.getElementById('patientName').addEventListener('input', scheduleIDBSync);
@@ -278,7 +298,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-window.addEventListener('popstate', () => {
+window.addEventListener('popstate', (e) => {
+  if (e.state?.view === 'hub-exit' && document.body.classList.contains('in-hub')) {
+    window.parent.postMessage({ type: 'PHYSIQ_GO_HOME' }, '*');
+    return;
+  }
   if (_popstateLock) { _popstateLock = false; return; }
   if (document.getElementById('measureOverlay').classList.contains('open')) {
     const p = state.active.phase;
