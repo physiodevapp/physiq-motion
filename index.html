@@ -98,13 +98,15 @@
 <div class="session-panel-overlay" id="sessionPanelOverlay" onclick="closeSessionPanel()">
   <div class="session-panel" id="sessionPanel" onclick="event.stopPropagation()">
     <div class="session-panel-handle"></div>
-    <div class="session-panel-title" id="sessionPanelTitle">Sin sesión activa</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="session-panel-title" style="margin-bottom:0;" id="sessionPanelTitle">Sin sesión activa</div>
+      <button class="session-panel-clear" id="sessionPanelClear" onclick="promptClearSession()" title="Borrar sesión"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h9M5 4V2h3v2M3.5 4l.5 7h5l.5-7"/></svg></button>
+    </div>
     <div class="field">
       <label class="field-label" for="patientName">Paciente</label>
       <input class="field-input" type="text" id="patientName" placeholder="Nombre (opcional)"
         onkeydown="if(event.key==='Enter') closeSessionPanel()">
     </div>
-    <button class="session-panel-clear" id="sessionPanelClear" onclick="promptClearSession()">Borrar sesión</button>
   </div>
 </div>
 
