@@ -22,7 +22,7 @@
     <span class="logo-sub">— <span class="logo-sub-word">Motion</span><span class="logo-sub-initial">M</span></span>
   </div>
   <div class="header-right">
-    <button id="sessionBtn" class="session-btn" onclick="promptClearSession()" aria-label="Sesión activa" title="Sesión activa"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg></button>
+    <button id="sessionBtn" class="session-btn" onclick="toggleSessionPanel()" aria-label="Sesión" title="Sesión"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg></button>
     <button class="btn-reset" onclick="promptSoftResetMotion()" style="display:none">↺ <span class="btn-reset-text">Reiniciar</span></button>
     <button class="btn-translate" onclick="handleTranslateClick()" aria-label="View in English">🌐<span class="translate-tooltip">Long-press or right-click → Translate to English</span></button>
     <span class="sensor-badge" id="sensorBadge"><svg width="12" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/></svg><span class="sensor-text">Sensor</span></span>
@@ -46,14 +46,6 @@
     <div class="perm-title">Activar sensor de movimiento</div>
     <div class="perm-desc">PhysiQ Motion necesita acceso al acelerómetro y giroscopio del dispositivo para medir ángulos en tiempo real.</div>
     <button class="btn-primary" onclick="requestPermission()">Activar sensor</button>
-  </div>
-
-  <!-- Paciente (siempre visible) -->
-  <div class="info-row">
-    <div class="field">
-      <label class="field-label" for="patientName">Paciente</label>
-      <input type="text" class="field-input" id="patientName" placeholder="Nombre (opcional)">
-    </div>
   </div>
 
   <!-- Pantalla 1: Selección de región -->
@@ -101,6 +93,20 @@
   </section>
 
 </main>
+
+<!-- Panel de sesión (bottom sheet) -->
+<div class="session-panel-overlay" id="sessionPanelOverlay" onclick="closeSessionPanel()">
+  <div class="session-panel" id="sessionPanel" onclick="event.stopPropagation()">
+    <div class="session-panel-handle"></div>
+    <div class="session-panel-title" id="sessionPanelTitle">Sin sesión activa</div>
+    <div class="field">
+      <label class="field-label" for="patientName">Paciente</label>
+      <input class="field-input" type="text" id="patientName" placeholder="Nombre (opcional)"
+        onkeydown="if(event.key==='Enter') closeSessionPanel()">
+    </div>
+    <button class="session-panel-clear" id="sessionPanelClear" onclick="promptClearSession()">Borrar sesión</button>
+  </div>
+</div>
 
 <!-- Overlay de medición (bottom sheet) -->
 <div class="measure-overlay" id="measureOverlay" onclick="handleOverlayClick(event)">
