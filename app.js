@@ -291,7 +291,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   renderRegionGrid();
   initSensor();
-  document.getElementById('patientName').addEventListener('input', scheduleIDBSync);
+  document.getElementById('patientName').addEventListener('input', () => {
+    scheduleIDBSync();
+    _updateSessionPanelTitle();
+  });
   readSession().then(session => {
     if (!session) return;
     updateSessionChip(session);
@@ -313,6 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       renderRegionGrid();
     }
+    _updateSessionPanelTitle();
   });
 });
 
@@ -1102,12 +1106,81 @@ let _sessionLabel = '';
 function updateSessionChip(session) {
   const btn = document.getElementById('sessionBtn');
   if (!btn) return;
-  if (!session || !session.patient) { _sessionLabel = ''; btn.classList.remove('active'); return; }
-  _sessionLabel = `${session.patient} · ${session.date || '—'}`;
-  btn.classList.add('active');
+  if (!session || !session.patient) { _sessionLabel = ''; btn.classList.remove('active'); }
+  else { _sessionLabel = `${session.patient} · ${session.date || '—'}`; btn.classList.add('active'); }
+  _updateSessionPanelTitle();
+}
+
+function _updateSessionPanelTitle() {
+  const panelTitle = document.getElementById('sessionPanelTitle');
+  const panel      = document.getElementById('sessionPanel');
+  if (!panelTitle) return;
+  const name = (document.getElementById('patientName')?.value || '').trim();
+  if (name) {
+    panelTitle.textContent = `${name} · ${new Date().toLocaleDateString('es-ES')}`;
+    panel?.classList.add('has-session');
+  } else {
+    panelTitle.textContent = 'Sin sesión activa';
+    panel?.classList.remove('has-session');
+  }
+}
+
+function _openSessionSheet() {
+  const overlay = document.getElementById('sessionPanelOverlay');
+  if (!overlay || overlay.classList.contains('open')) return;
+  overlay.classList.add('open');
+  lockBodyScroll();
+  setTimeout(() => document.getElementById('patientName')?.focus(), 60);
+}
+
+function closeSessionPanel() {
+  const panel   = document.getElementById('sessionPanel');
+  const overlay = document.getElementById('sessionPanelOverlay');
+  const wasOpen = overlay?.classList.contains('open');
+  overlay?.classList.remove('open');
+  if (wasOpen) unlockBodyScroll();
+  if (panel) { panel.style.transition = ''; panel.style.transform = ''; }
+}
+
+function toggleSessionPanel() {
+  const overlay = document.getElementById('sessionPanelOverlay');
+  if (!overlay) return;
+  if (overlay.classList.contains('open')) { closeSessionPanel(); return; }
+  if ((document.getElementById('patientName')?.value || '').trim()) {
+    _showSessionInfoBanner();
+  } else {
+    _openSessionSheet();
+  }
+}
+
+function _showSessionInfoBanner() {
+  const existing = document.getElementById('sessionInfoBanner');
+  if (existing) existing.remove();
+  const label = _sessionLabel || `${(document.getElementById('patientName')?.value || '').trim()} · ${new Date().toLocaleDateString('es-ES')}`;
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-banner';
+  overlay.id = 'sessionInfoBanner';
+  overlay.innerHTML = `
+    <div class="confirm-box">
+      <div class="confirm-box-title">Sesión en curso</div>
+      <div class="confirm-box-text">${label}</div>
+      <div class="confirm-box-btns" style="justify-content:stretch;gap:0.5rem;">
+        <button class="confirm-btn-cancel" id="sib-cancel" style="flex:1;">Cancelar</button>
+        <button class="confirm-btn-ok" id="sib-edit" style="flex:1;">Editar</button>
+        <button class="confirm-btn-cancel" id="sib-delete" style="flex:1;color:var(--red);border-color:var(--red);">Borrar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  lockBodyScroll();
+  window.parent.postMessage({ type: 'PHYSIQ_WIDGET_HIDE' }, '*');
+  const dismiss = () => { overlay.remove(); unlockBodyScroll(); window.parent.postMessage({ type: 'PHYSIQ_WIDGET_SHOW' }, '*'); };
+  document.getElementById('sib-cancel').onclick = dismiss;
+  document.getElementById('sib-edit').onclick   = () => { dismiss(); _openSessionSheet(); };
+  document.getElementById('sib-delete').onclick = () => { dismiss(); promptClearSession(); };
 }
 
 function promptClearSession() {
+  closeSessionPanel();
   showConfirmBanner(
     'Sesión en curso',
     `${_sessionLabel}<br>¿Borrar y empezar de nuevo?`,
@@ -1223,7 +1296,7 @@ _sessionCh.onmessage = ({ data }) => {
   const el = document.getElementById('patientName');
   if (!el || document.activeElement === el) return;
   el.value = data.patient || '';
-  if (!data.patient) return;
+  if (!data.patient) { _updateSessionPanelTitle(); return; }
   updateSession({ patient: data.patient }).then(session => {
     if (session) updateSessionChip(session);
   });
