@@ -1,5 +1,23 @@
 'use strict';
 
+// ─── SCROLL LOCK (dialogs / bottom sheets) ───────────────────
+// Reference-counted: varios overlays pueden estar apilados o abrirse
+// en secuencia. Cada uno debe liberar su propio lock sin desbloquear
+// el scroll mientras otro overlay siga abierto.
+let _scrollLockCount = 0;
+function lockBodyScroll() {
+  _scrollLockCount++;
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+}
+function unlockBodyScroll() {
+  _scrollLockCount = Math.max(0, _scrollLockCount - 1);
+  if (_scrollLockCount === 0) {
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  }
+}
+
 // ── Estrategias de medición ───────────────────────────────────────────────
 function makeTwoSegStrategy({ steps, seg1Label, seg2Label, btn1, btn2, captureSeg, liveDeg, calcResult }) {
   const _liveDeg = liveDeg || captureSeg;
@@ -753,14 +771,18 @@ function openMeasurement(id) {
   resetAngleDisplay();
   strategy.onOpen(def);
   refreshSheetUI();
-  document.getElementById('measureOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  const overlay = document.getElementById('measureOverlay');
+  const wasOpen = overlay.classList.contains('open');
+  overlay.classList.add('open');
+  if (!wasOpen) lockBodyScroll();
   _pushState({ view: 'overlay' });
 }
 
 function closeMeasurement(fromPopstate = false) {
-  document.getElementById('measureOverlay').classList.remove('open');
-  document.body.style.overflow = '';
+  const overlay = document.getElementById('measureOverlay');
+  const wasOpen = overlay.classList.contains('open');
+  overlay.classList.remove('open');
+  if (wasOpen) unlockBodyScroll();
   state.active.movementId = null;
   state.active.phase = 'idle';
   if (!fromPopstate && history.state?.view === 'overlay') { _popstateLock = true; history.back(); }
@@ -1243,8 +1265,9 @@ function showConfirmBanner(title, text, actionLabel, onConfirm) {
       </div>
     </div>`;
   document.body.appendChild(overlay);
+  lockBodyScroll();
   window.parent.postMessage({ type: 'PHYSIQ_WIDGET_HIDE' }, '*');
-  const dismiss = () => { overlay.remove(); window.parent.postMessage({ type: 'PHYSIQ_WIDGET_SHOW' }, '*'); };
+  const dismiss = () => { overlay.remove(); unlockBodyScroll(); window.parent.postMessage({ type: 'PHYSIQ_WIDGET_SHOW' }, '*'); };
   document.getElementById('confirmCancel').onclick = dismiss;
   document.getElementById('confirmAction').onclick = () => { dismiss(); onConfirm(); };
 }
