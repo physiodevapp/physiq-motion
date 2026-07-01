@@ -1272,9 +1272,9 @@ function _showSessionInfoBanner() {
       <div class="confirm-box-title">Sesión en curso</div>
       <div class="confirm-box-text">${label}</div>
       <div class="confirm-box-btns" style="justify-content:stretch;gap:0.5rem;">
-        <button class="confirm-btn-cancel" id="sib-cancel" style="flex:1;">Cancelar</button>
-        <button class="confirm-btn-ok" id="sib-edit" style="flex:1;">Editar</button>
-        <button class="confirm-btn-cancel" id="sib-delete" style="flex:1;color:var(--red);border-color:var(--red);">Borrar</button>
+        <button class="confirm-btn-cancel" id="sib-cancel" style="flex:1;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cancelar</button>
+        <button class="confirm-btn-ok" id="sib-edit" style="flex:1;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> Editar</button>
+        <button class="confirm-btn-cancel" id="sib-delete" style="flex:1;justify-content:center;color:var(--red);border-color:var(--red);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> Borrar</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -1442,8 +1442,8 @@ function showConfirmBanner(title, text, actionLabel, onConfirm) {
       <div class="confirm-box-title">${title}</div>
       <div class="confirm-box-text">${text}</div>
       <div class="confirm-box-btns">
-        <button class="confirm-btn-cancel" id="confirmCancel">Cancelar</button>
-        <button class="confirm-btn-ok" id="confirmAction">${actionLabel}</button>
+        <button class="confirm-btn-cancel" id="confirmCancel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cancelar</button>
+        <button class="confirm-btn-ok" id="confirmAction"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> ${actionLabel}</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
