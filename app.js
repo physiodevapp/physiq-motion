@@ -1271,10 +1271,10 @@ function _showSessionInfoBanner() {
     <div class="confirm-box">
       <div class="confirm-box-title">Sesión en curso</div>
       <div class="confirm-box-text">${label}</div>
-      <div class="confirm-box-btns" style="flex-direction:column;gap:0.5rem;">
-        <button class="confirm-btn-ok" id="sib-edit" style="justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> Editar</button>
-        <button class="confirm-btn-cancel" id="sib-delete" style="justify-content:center;color:var(--red);border-color:var(--red);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> Borrar</button>
-        <button class="confirm-btn-cancel" id="sib-cancel" style="justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cancelar</button>
+      <div class="confirm-box-btns" style="justify-content:stretch;gap:0.5rem;">
+        <button class="confirm-btn-cancel" id="sib-cancel" style="flex:1;font-size:0.8rem;padding:9px 6px;display:flex;align-items:center;justify-content:center;gap:5px;border-color:transparent;color:var(--text3);"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l9 9M11 2L2 11"/></svg> Cancelar</button>
+        <button class="confirm-btn-ok" id="sib-edit" style="flex:1;font-size:0.8rem;padding:9px 6px;display:flex;align-items:center;justify-content:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 2.5l2 2-6 6H3v-2.5l6-6z"/></svg> Editar</button>
+        <button class="confirm-btn-cancel" id="sib-delete" style="flex:1;font-size:0.8rem;padding:9px 6px;display:flex;align-items:center;justify-content:center;gap:5px;color:var(--red);border-color:var(--red);"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h9M5 4V2h3v2M3.5 4l.5 7h5l.5-7"/></svg> Borrar</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
