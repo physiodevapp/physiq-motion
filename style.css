@@ -248,19 +248,19 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .session-panel-overlay{display:none;position:fixed;inset:0;z-index:999;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 .session-panel-overlay.open{display:flex;animation:fadeUp 0.2s ease;}
 .session-panel{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:1.8rem;max-width:400px;width:90%;}
-.session-panel-title{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.session-panel-title{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:none;}
 .session-panel.has-session .session-panel-title{color:var(--accent2);}
 .session-panel .field{display:flex;flex-direction:column;gap:4px;}
 .session-panel-clear{display:none;margin-top:16px;width:100%;background:none;border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-family:'Outfit',sans-serif;font-size:0.85rem;color:var(--text3);cursor:pointer;transition:color 0.2s,border-color 0.2s;}
 .session-panel-clear:hover{color:var(--red);border-color:var(--red);}
 .session-panel.has-session .session-panel-clear{display:block;}
-.session-panel-handle{display:none;width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 14px;}
+.session-panel-handle{display:none;width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 14px;touch-action:none;}
 
 @media (max-width: 768px) {
   @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
   .session-panel-overlay{align-items:flex-end;background:rgba(0,0,0,0.5);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
   .session-panel-overlay.open{animation:none;}
   .session-panel-overlay.open .session-panel{animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);}
-  .session-panel{max-width:100%;width:100%;border-radius:16px 16px 0 0;border:none;border-top:1px solid var(--border2);padding:12px 1.4rem 32px;}
+  .session-panel{max-width:100%;width:100%;border-radius:16px 16px 0 0;border:none;border-top:1px solid var(--border2);padding:12px 1.4rem 32px;touch-action:none;}
   .session-panel-handle{display:block;}
 }

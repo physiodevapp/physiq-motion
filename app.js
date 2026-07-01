@@ -275,6 +275,17 @@ function _rebuildHubHistory() {
 
 let _firstVisible = true;
 window.addEventListener('message', e => {
+  // The hub only toggles the `hidden` attribute on satellite iframes — it
+  // never navigates away — so document.visibilitychange (tab-level) never
+  // fires here. The hub tells us explicitly when it's about to hide us so
+  // any open dialog (delete session, edit patient name…) doesn't linger.
+  if (e.data?.type === 'PHYSIQ_SAT_HIDDEN') {
+    clearTimeout(_idbSyncTimer);
+    _idbSyncTimer = null;
+    _flushIDBSync();
+    _closeAllOverlays();
+    return;
+  }
   if (e.data?.type === 'PHYSIQ_SAT_VISIBLE' && document.body.classList.contains('in-hub')) {
     if (_firstVisible) { _firstVisible = false; return; }
     _rebuildHubHistory();
@@ -291,6 +302,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   renderRegionGrid();
   initSensor();
+  _setupSessionPanelDrag();
+
+  // Autosave when app is backgrounded (covers swipe-away on Android PWA)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      clearTimeout(_idbSyncTimer);
+      _idbSyncTimer = null;
+      _flushIDBSync();
+      _closeAllOverlays();
+    }
+  });
+
   document.getElementById('patientName').addEventListener('input', () => {
     scheduleIDBSync();
     _updateSessionPanelTitle();
@@ -1153,6 +1176,90 @@ function toggleSessionPanel() {
   }
 }
 
+// Closes every open sheet/dialog. Called when the hub hides this satellite
+// (e.g. navigating back to hub home) so a stale open dialog isn't still
+// showing when the user returns.
+function _closeAllOverlays() {
+  if (document.getElementById('measureOverlay')?.classList.contains('open')) closeMeasurement(true);
+  closeSessionPanel();
+  ['sessionInfoBanner', 'confirmBanner'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.remove();
+    unlockBodyScroll();
+    window.parent.postMessage({ type: 'PHYSIQ_WIDGET_SHOW' }, '*');
+  });
+}
+
+function _setupSessionPanelDrag() {
+  const panel = document.getElementById('sessionPanel');
+  if (!panel) return;
+  const EASE = 'transform 0.3s cubic-bezier(0.32,0.72,0,1)';
+  let startY = 0, startTime = 0, dragging = false, delta = 0, snapTimer = null;
+  let vvHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+  // Closing the keyboard mid-drag resizes the visual viewport, which shifts
+  // the panel's on-screen position by the same amount. Without compensating
+  // startY, that shift cancels out the manual translateY delta and the sheet
+  // feels stuck/resistant instead of following the finger.
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      const newHeight = window.visualViewport.height;
+      if (dragging) startY += newHeight - vvHeight;
+      vvHeight = newHeight;
+    });
+  }
+
+  panel.addEventListener('touchstart', e => {
+    if (window.innerWidth > 768) return;
+    if (e.touches[0].clientY - panel.getBoundingClientRect().top > 72) return;
+    if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+    startY = e.touches[0].clientY;
+    startTime = Date.now();
+    delta = 0;
+    dragging = true;
+    clearTimeout(snapTimer);
+    panel.style.transition = 'none';
+  }, { passive: true });
+
+  panel.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    delta = Math.max(0, e.touches[0].clientY - startY);
+    panel.style.transform = delta > 0 ? `translateY(${delta}px)` : 'translateY(0)';
+  }, { passive: true });
+
+  function onRelease() {
+    if (!dragging) return;
+    dragging = false;
+    const velocity = delta / (Date.now() - startTime);
+    if (delta > 80 || velocity > 0.3) {
+      panel.style.transition = EASE;
+      panel.style.transform = 'translateY(110%)';
+      setTimeout(() => {
+        panel.style.transition = 'none';
+        closeSessionPanel();
+        panel.style.transform = '';
+        panel.style.transition = '';
+      }, 300);
+    } else {
+      panel.style.transition = EASE;
+      panel.style.transform = 'translateY(0)';
+      snapTimer = setTimeout(() => {
+        panel.style.transform = '';
+        panel.style.transition = '';
+      }, 310);
+    }
+  }
+
+  panel.addEventListener('touchend', onRelease, { passive: true });
+  panel.addEventListener('touchcancel', () => {
+    if (!dragging) return;
+    dragging = false;
+    panel.style.transform = '';
+    panel.style.transition = '';
+  }, { passive: true });
+}
+
 function _showSessionInfoBanner() {
   const existing = document.getElementById('sessionInfoBanner');
   if (existing) existing.remove();
@@ -1302,24 +1409,26 @@ _sessionCh.onmessage = ({ data }) => {
   });
 };
 
+function _flushIDBSync() {
+  const patient = document.getElementById('patientName')?.value.trim() || '';
+  const date    = new Date().toLocaleDateString('es-ES');
+  const rom     = buildROMPayload();
+  const hasMeasurements = Object.keys(rom.regions).length > 0;
+  if (!patient && !hasMeasurements) return;
+  if (patient) _sessionCh.postMessage({ type: 'SESSION_PATIENT', patient });
+  _sessionCh.postMessage({ type: 'SESSION_ROM', rom });
+  if (!patient) return;
+  if (_sessionCleared) _sessionCleared = false;
+  const gen = _sessionGen;
+  writeSession({ patient, date, rom }).then(session => {
+    if (_sessionGen !== gen) { clearSession(); return; }
+    if (session) updateSessionChip(session);
+  });
+}
+
 function scheduleIDBSync() {
   clearTimeout(_idbSyncTimer);
-  _idbSyncTimer = setTimeout(() => {
-    const patient = document.getElementById('patientName')?.value.trim() || '';
-    const date    = new Date().toLocaleDateString('es-ES');
-    const rom     = buildROMPayload();
-    const hasMeasurements = Object.keys(rom.regions).length > 0;
-    if (!patient && !hasMeasurements) return;
-    if (patient) _sessionCh.postMessage({ type: 'SESSION_PATIENT', patient });
-    _sessionCh.postMessage({ type: 'SESSION_ROM', rom });
-    if (!patient) return;
-    if (_sessionCleared) _sessionCleared = false;
-    const gen = _sessionGen;
-    writeSession({ patient, date, rom }).then(session => {
-      if (_sessionGen !== gen) { clearSession(); return; }
-      if (session) updateSessionChip(session);
-    });
-  }, 800);
+  _idbSyncTimer = setTimeout(_flushIDBSync, 800);
 }
 
 function showConfirmBanner(title, text, actionLabel, onConfirm) {
