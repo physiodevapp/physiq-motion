@@ -1125,6 +1125,7 @@ function showCopyFeedback() {
 
 // ── Session chip ──────────────────────────────────────────────────────────────
 let _sessionLabel = '';
+let _panelPatientName = '';
 
 function updateSessionChip(session) {
   const btn = document.getElementById('sessionBtn');
@@ -1160,7 +1161,10 @@ function closeSessionPanel() {
 function _showSessionState(st) {
   const panel = document.getElementById('sessionPanel');
   if (!panel) return;
-  const patientVal = (document.getElementById('patientName')?.value || '').trim();
+  // #patientName only exists in 'edit' state; cache its value so delete→edit roundtrip preserves it
+  const inputEl = document.getElementById('patientName');
+  if (inputEl) _panelPatientName = inputEl.value.trim();
+  const patientVal = _panelPatientName;
   const hasSession = !!patientVal;
   const label = _sessionLabel || (hasSession
     ? `${patientVal} · ${new Date().toLocaleDateString('es-ES')}` : '');
@@ -1184,7 +1188,8 @@ function _showSessionState(st) {
     input.value = patientVal;
     input.addEventListener('keydown', e => { if (e.key === 'Enter') closeSessionPanel(); });
     input.addEventListener('input', () => {
-      const name = input.value.trim();
+      _panelPatientName = input.value.trim();
+      const name = _panelPatientName;
       const titleEl = panel.querySelector('#sessionPanelTitle');
       if (titleEl) titleEl.textContent = name
         ? `${name} · ${new Date().toLocaleDateString('es-ES')}`
@@ -1207,6 +1212,7 @@ function _showSessionState(st) {
     panel.querySelector('#confirmCancel').onclick = () => _showSessionState('edit');
     panel.querySelector('#confirmAction').onclick = () => {
       closeSessionPanel();
+      _panelPatientName = '';
       clearTimeout(_idbSyncTimer);
       _idbSyncTimer = null;
       _sessionGen++;
