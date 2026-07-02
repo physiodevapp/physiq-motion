@@ -1148,32 +1148,96 @@ function _updateSessionPanelTitle() {
   }
 }
 
-function _openSessionSheet() {
-  const overlay = document.getElementById('sessionPanelOverlay');
-  if (!overlay || overlay.classList.contains('open')) return;
-  overlay.classList.add('open');
-  lockBodyScroll();
-  setTimeout(() => document.getElementById('patientName')?.focus(), 60);
-}
-
 function closeSessionPanel() {
   const panel   = document.getElementById('sessionPanel');
   const overlay = document.getElementById('sessionPanelOverlay');
   const wasOpen = overlay?.classList.contains('open');
   overlay?.classList.remove('open');
-  if (wasOpen) unlockBodyScroll();
+  if (wasOpen) { unlockBodyScroll(); window.parent.postMessage({ type: 'PHYSIQ_WIDGET_SHOW' }, '*'); }
   if (panel) { panel.style.transition = ''; panel.style.transform = ''; }
+}
+
+function _showSessionState(st) {
+  const panel = document.getElementById('sessionPanel');
+  if (!panel) return;
+  const patientVal = (document.getElementById('patientName')?.value || '').trim();
+  const hasSession = !!patientVal;
+  const label = _sessionLabel || (hasSession
+    ? `${patientVal} · ${new Date().toLocaleDateString('es-ES')}` : '');
+  panel.classList.toggle('has-session', hasSession);
+
+  if (st === 'edit') {
+    panel.innerHTML = `
+      <div class="session-panel-handle"></div>
+      <div class="session-panel-title" id="sessionPanelTitle">${label || 'Sin sesión activa'}</div>
+      <div class="field">
+        <label class="field-label">Paciente</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input class="field-input" type="text" id="patientName" style="flex:1;"
+                 placeholder="Nombre (opcional)" autocomplete="off">
+          <button class="session-panel-clear" id="sessionPanelClear" title="Borrar sesión">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h9M5 4V2h3v2M3.5 4l.5 7h5l.5-7"/></svg>
+          </button>
+        </div>
+      </div>`;
+    const input = panel.querySelector('#patientName');
+    input.value = patientVal;
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') closeSessionPanel(); });
+    input.addEventListener('input', () => {
+      const name = input.value.trim();
+      const titleEl = panel.querySelector('#sessionPanelTitle');
+      if (titleEl) titleEl.textContent = name
+        ? `${name} · ${new Date().toLocaleDateString('es-ES')}`
+        : 'Sin sesión activa';
+      panel.classList.toggle('has-session', !!name);
+      scheduleIDBSync();
+    });
+    panel.querySelector('#sessionPanelClear').onclick = () => _showSessionState('delete');
+    setTimeout(() => input.focus(), 60);
+
+  } else if (st === 'delete') {
+    panel.innerHTML = `
+      <div class="session-panel-handle"></div>
+      <div class="session-panel-title">${label || 'Sin sesión activa'}</div>
+      <div class="confirm-box-text" style="margin:12px 0 0;">¿Borrar y empezar de nuevo?</div>
+      <div class="confirm-box-btns" style="margin-top:1rem;">
+        <button class="confirm-btn-cancel" id="confirmCancel">Cancelar</button>
+        <button class="confirm-btn-ok" id="confirmAction">Borrar sesión</button>
+      </div>`;
+    panel.querySelector('#confirmCancel').onclick = () => _showSessionState('edit');
+    panel.querySelector('#confirmAction').onclick = () => {
+      closeSessionPanel();
+      clearTimeout(_idbSyncTimer);
+      _idbSyncTimer = null;
+      _sessionGen++;
+      _sessionCleared = true;
+      clearAllSlots(state.measurements);
+      clearAllSlots(state.segmentData);
+      if (state.regionId !== null) {
+        state.regionId = null;
+        document.getElementById('measureScreen').style.display = 'none';
+        document.getElementById('regionScreen').style.display = '';
+        document.querySelector('main').classList.remove('in-measure');
+        if (history.state?.view === 'measure') history.back();
+      }
+      renderRegionGrid();
+      clearSession().then(() => {
+        updateSessionChip(null);
+        _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });
+        _sessionCh.postMessage({ type: 'SESSION_CLEAR' });
+      });
+    };
+  }
 }
 
 function toggleSessionPanel() {
   const overlay = document.getElementById('sessionPanelOverlay');
   if (!overlay) return;
   if (overlay.classList.contains('open')) { closeSessionPanel(); return; }
-  if ((document.getElementById('patientName')?.value || '').trim()) {
-    _showSessionInfoBanner();
-  } else {
-    _openSessionSheet();
-  }
+  _showSessionState('edit');
+  overlay.classList.add('open');
+  lockBodyScroll();
+  window.parent.postMessage({ type: 'PHYSIQ_WIDGET_HIDE' }, '*');
 }
 
 // Closes every open sheet/dialog. Called when the hub hides this satellite
@@ -1182,13 +1246,12 @@ function toggleSessionPanel() {
 function _closeAllOverlays() {
   if (document.getElementById('measureOverlay')?.classList.contains('open')) closeMeasurement(true);
   closeSessionPanel();
-  ['sessionInfoBanner', 'confirmBanner'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.remove();
+  const banner = document.getElementById('confirmBanner');
+  if (banner) {
+    banner.remove();
     unlockBodyScroll();
     window.parent.postMessage({ type: 'PHYSIQ_WIDGET_SHOW' }, '*');
-  });
+  }
 }
 
 function _setupSessionPanelDrag() {
@@ -1260,62 +1323,14 @@ function _setupSessionPanelDrag() {
   }, { passive: true });
 }
 
-function _showSessionInfoBanner() {
-  const existing = document.getElementById('sessionInfoBanner');
-  if (existing) existing.remove();
-  const label = _sessionLabel || `${(document.getElementById('patientName')?.value || '').trim()} · ${new Date().toLocaleDateString('es-ES')}`;
-  const overlay = document.createElement('div');
-  overlay.className = 'confirm-banner';
-  overlay.id = 'sessionInfoBanner';
-  overlay.innerHTML = `
-    <div class="confirm-box">
-      <div class="confirm-box-title">Sesión en curso</div>
-      <div class="confirm-box-text">${label}</div>
-      <div class="confirm-box-btns" style="justify-content:stretch;gap:0.5rem;">
-        <button class="confirm-btn-cancel" id="sib-cancel" style="flex:1;font-size:0.8rem;padding:9px 6px;display:flex;align-items:center;justify-content:center;gap:5px;border-color:transparent;color:var(--text3);"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l9 9M11 2L2 11"/></svg> Cancelar</button>
-        <button class="confirm-btn-ok" id="sib-edit" style="flex:1;font-size:0.8rem;padding:9px 6px;display:flex;align-items:center;justify-content:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 2.5l2 2-6 6H3v-2.5l6-6z"/></svg> Editar</button>
-        <button class="confirm-btn-cancel" id="sib-delete" style="flex:1;font-size:0.8rem;padding:9px 6px;display:flex;align-items:center;justify-content:center;gap:5px;color:var(--red);border-color:var(--red);"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h9M5 4V2h3v2M3.5 4l.5 7h5l.5-7"/></svg> Borrar</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-  lockBodyScroll();
-  window.parent.postMessage({ type: 'PHYSIQ_WIDGET_HIDE' }, '*');
-  const dismiss = () => { overlay.remove(); unlockBodyScroll(); window.parent.postMessage({ type: 'PHYSIQ_WIDGET_SHOW' }, '*'); };
-  document.getElementById('sib-cancel').onclick = dismiss;
-  document.getElementById('sib-edit').onclick   = () => { dismiss(); _openSessionSheet(); };
-  document.getElementById('sib-delete').onclick = () => { dismiss(); promptClearSession(); };
-}
-
 function promptClearSession() {
-  closeSessionPanel();
-  showConfirmBanner(
-    'Sesión en curso',
-    `${_sessionLabel}<br>¿Borrar y empezar de nuevo?`,
-    'Borrar sesión',
-    () => {
-      clearTimeout(_idbSyncTimer);
-      _idbSyncTimer = null;
-      _sessionGen++;
-      _sessionCleared = true;
-      clearAllSlots(state.measurements);
-      clearAllSlots(state.segmentData);
-      const el = document.getElementById('patientName');
-      if (el) el.value = '';
-      if (state.regionId !== null) {
-        state.regionId = null;
-        document.getElementById('measureScreen').style.display = 'none';
-        document.getElementById('regionScreen').style.display = '';
-        document.querySelector('main').classList.remove('in-measure');
-        if (history.state?.view === 'measure') history.back();
-      }
-      renderRegionGrid();
-      clearSession().then(() => {
-        updateSessionChip(null);
-        _sessionCh.postMessage({ type: 'SESSION_ROM', rom: null });
-        _sessionCh.postMessage({ type: 'SESSION_CLEAR' });
-      });
-    }
-  );
+  _showSessionState('delete');
+  const overlay = document.getElementById('sessionPanelOverlay');
+  if (overlay && !overlay.classList.contains('open')) {
+    overlay.classList.add('open');
+    lockBodyScroll();
+    window.parent.postMessage({ type: 'PHYSIQ_WIDGET_HIDE' }, '*');
+  }
 }
 
 function promptSoftResetMotion() {
