@@ -98,4 +98,4 @@ The session is shared across the PhysiQ ecosystem via `BroadcastChannel('physiq-
 
 ## Deployment
 
-Push to `main` — GitHub Pages deploys automatically. The CD pipeline also copies files into the hub repo (`physiq/motion/`).
+Push to `main` triggers `deploy-to-hub.yml`, which copies the app files into the central PhysiQ hub repo (`physiodevapp/physiq`). The hub's own GitHub Pages deployment serves the app at `physiodevapp.github.io/physiq/motion/`. There is no standalone Pages deployment for this repo.
