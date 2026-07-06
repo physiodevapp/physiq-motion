@@ -6,7 +6,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 PhysiQ-Motion is a mobile-first inclinometer web app for measuring joint range of motion (ROM) using the phone's built-in accelerometer and magnetometer via `DeviceOrientationEvent`. It measures movements across any joint region and shares results with the PhysiQ ecosystem via a shared IDB session.
 
-**Deployment:** GitHub Pages — push to `main` deploys automatically. The hub (`physiodevapp.github.io/physiq/`) is the primary entry point; this app is also accessible standalone at its own Pages URL.
+**Deployment:** Push to `main` triggers `deploy-to-hub.yml`, which copies the app files into the central PhysiQ hub repo (`physiodevapp/physiq`). The hub's own GitHub Pages deployment serves the app at `physiodevapp.github.io/physiq/motion/`. There is no standalone Pages deployment for this repo.
 
 ## Development
 
