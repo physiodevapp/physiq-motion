@@ -240,7 +240,7 @@ main{padding:80px 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-dire
 .confirm-btn-cancel{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:8px;padding:9px 16px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
 .confirm-btn-cancel:hover{border-color:var(--text2);color:var(--text2);}
 .confirm-btn-ok{display:inline-flex;align-items:center;gap:6px;background:var(--accent);border:none;color:#0a0d12;border-radius:8px;padding:9px 18px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.2s;}
-.confirm-btn-ok:hover{background:#a855f7;}
+.confirm-btn-ok:hover{background:#3a8ce8;}
 .session-btn{display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:var(--text3);padding:6px;flex-shrink:0;transition:color 0.2s;}
 .session-btn.active{color:var(--accent2);}
 
