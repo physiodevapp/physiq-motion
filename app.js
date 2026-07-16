@@ -684,8 +684,8 @@ function buildCardButtons(id, meas, currentDataSide, currentMode) {
   const currentVal = meas?.[currentDataSide]?.[currentMode] ?? null;
   return currentVal !== null
     ? `<div class="btn-measure-row">
-         <button class="btn-clear" onclick="clearMeasurement('${id}','${currentDataSide}','${currentMode}')">✕</button>
          <button class="btn-measure remeasure" onclick="openMeasurement('${id}')">Repetir</button>
+         <button class="btn-clear" onclick="clearMeasurement('${id}','${currentDataSide}','${currentMode}')">✕</button>
        </div>`
     : `<button class="btn-measure" onclick="openMeasurement('${id}')">Medir</button>`;
 }
