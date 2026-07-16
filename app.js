@@ -728,9 +728,10 @@ function buildCard(id, def, i) {
 
 function clearMeasurement(movId, side, mode) {
   const label = REGIONS[state.regionId].movements[movId].label;
+  const regionLabel = REGIONS[state.regionId].label.toLowerCase();
   showConfirmBanner(
     'Borrar resultado',
-    `Se eliminará el resultado de ${label}.`,
+    `Se eliminará el resultado de ${label} (${regionLabel}).`,
     'Borrar',
     () => {
       state.measurements[state.regionId][movId][side][mode] = null;
