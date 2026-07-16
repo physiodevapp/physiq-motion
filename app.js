@@ -727,11 +727,19 @@ function buildCard(id, def, i) {
 }
 
 function clearMeasurement(movId, side, mode) {
-  state.measurements[state.regionId][movId][side][mode] = null;
-  const seg = state.segmentData[state.regionId]?.[movId]?.[side];
-  if (seg) seg[mode] = null;
-  scheduleIDBSync();
-  renderMovementGrid();
+  const label = REGIONS[state.regionId].movements[movId].label;
+  showConfirmBanner(
+    'Borrar resultado',
+    `Se eliminará el resultado de ${label}.`,
+    'Borrar',
+    () => {
+      state.measurements[state.regionId][movId][side][mode] = null;
+      const seg = state.segmentData[state.regionId]?.[movId]?.[side];
+      if (seg) seg[mode] = null;
+      scheduleIDBSync();
+      renderMovementGrid();
+    }
+  );
 }
 
 function toggleSegDetail(movId, side, mode, event) {
