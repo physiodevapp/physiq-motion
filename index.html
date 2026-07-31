@@ -119,6 +119,17 @@
       <div class="sheet-title" id="sheetTitle">—</div>
     </div>
 
+    <div class="sheet-context-bar" id="sheetContextBar" style="display:none">
+      <div class="ctx-group" id="sheetCtxSideGroup">
+        <button class="ctx-btn" id="sheetCtxBtnIzq" onclick="setSheetContextSide('izquierda')">Izquierda</button>
+        <button class="ctx-btn" id="sheetCtxBtnDer" onclick="setSheetContextSide('derecha')">Derecha</button>
+      </div>
+      <div class="ctx-group" id="sheetCtxModeGroup">
+        <button class="ctx-btn" id="sheetCtxBtnAct" onclick="setSheetContextMode('activa')">Activa</button>
+        <button class="ctx-btn" id="sheetCtxBtnPas" onclick="setSheetContextMode('pasiva')">Pasiva</button>
+      </div>
+    </div>
+
     <div class="sheet-instruction" id="sheetInstruction"></div>
     <div class="placement-diagram" id="placementDiagram"></div>
 
