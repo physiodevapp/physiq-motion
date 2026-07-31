@@ -584,6 +584,49 @@ function setContextMode(mode) {
   _gridInstant = false;
 }
 
+// ── Contexto (lado / modo) dentro del bottom sheet ─────────────────────────
+function updateSheetTitle() {
+  const def = REGIONS[state.regionId].movements[state.active.movementId];
+  const sideLabel = { izquierda: 'Izq.', derecha: 'Der.' };
+  const ctxParts  = [
+    def.bilateral             ? sideLabel[state.context.side]  : null,
+    def.modes.length > 1      ? state.context.mode             : null
+  ].filter(Boolean);
+  document.getElementById('sheetTitle').textContent = def.label + (ctxParts.length ? ' · ' + ctxParts.join(' · ') : '');
+}
+
+function refreshSheetContextBar() {
+  const def = REGIONS[state.regionId].movements[state.active.movementId];
+  const hasBilateral = def.bilateral;
+  const hasPassive   = def.modes.length > 1;
+
+  const bar    = document.getElementById('sheetContextBar');
+  const sideEl = document.getElementById('sheetCtxSideGroup');
+  const modeEl = document.getElementById('sheetCtxModeGroup');
+  bar.style.display    = (hasBilateral || hasPassive) ? '' : 'none';
+  sideEl.style.display = hasBilateral ? '' : 'none';
+  modeEl.style.display = hasPassive   ? '' : 'none';
+  sideEl.style.gridColumn = '1';
+  modeEl.style.gridColumn = '2';
+
+  document.getElementById('sheetCtxBtnIzq').classList.toggle('active', state.context.side === 'izquierda');
+  document.getElementById('sheetCtxBtnDer').classList.toggle('active', state.context.side === 'derecha');
+  document.getElementById('sheetCtxBtnAct').classList.toggle('active', state.context.mode === 'activa');
+  document.getElementById('sheetCtxBtnPas').classList.toggle('active', state.context.mode === 'pasiva');
+}
+
+function setSheetContextSide(side) {
+  setContextSide(side);
+  refreshSheetContextBar();
+  updateSheetTitle();
+}
+
+function setSheetContextMode(mode) {
+  setContextMode(mode);
+  refreshSheetContextBar();
+  updateSheetTitle();
+}
+
 // ── Renderizado de tarjetas de movimiento ─────────────────────────────────
 function renderMovementGrid() {
   const region = REGIONS[state.regionId];
@@ -797,12 +840,8 @@ function openMeasurement(id) {
     neutralRef: null, gravRef: null, peakDelta: 0, result: null, seg1Value: null
   });
   tiltInvalid = false;
-  const sideLabel = { izquierda: 'Izq.', derecha: 'Der.' };
-  const ctxParts  = [
-    def.bilateral             ? sideLabel[state.context.side]  : null,
-    def.modes.length > 1      ? state.context.mode             : null
-  ].filter(Boolean);
-  document.getElementById('sheetTitle').textContent     = def.label + (ctxParts.length ? ' · ' + ctxParts.join(' · ') : '');
+  updateSheetTitle();
+  refreshSheetContextBar();
   document.getElementById('sheetInstruction').innerHTML = def.instruction || '';
   resetAngleDisplay();
   strategy.onOpen(def);
